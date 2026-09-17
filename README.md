@@ -116,7 +116,7 @@ an exact identity with no step size in it, is the more reliable check.
 
 ## 许可 / License
 
-© 2026 Yisheng Gao (高艺升)
+© 2026 Yisheng Gao
 
 本仓库的两个页面与本 README 以 **知识共享 署名 4.0 国际（CC BY 4.0）** 许可发布：
 您可以自由地共享与改编，包括用于商业目的，只要给出**适当署名**、提供许可协议的链接，
@@ -132,5 +132,5 @@ credit, provide a link to the licence, and indicate if changes were made. Full t
 
 建议的署名 / Suggested attribution:
 
-> 高艺升，《非结构网格格心／格点格式的二维标量方程离散伴随》，CC BY 4.0，
+> Yisheng Gao，《非结构网格格心／格点格式的二维标量方程离散伴随》，CC BY 4.0，
 > <https://gitee.com/gaoyishenggg/adjoint_education>
