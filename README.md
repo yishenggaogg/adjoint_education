@@ -1,24 +1,27 @@
 # 离散伴随教学页 / Discrete adjoint, taught page by page
 
-两个**单文件、可交互**的网页，把非结构网格有限体积法的**全离散伴随**从头到尾讲一遍：
+**四个**单文件、可交互的网页，把有限体积法的**全离散伴随**从头到尾讲一遍：
 从一个面上的一维通量开始，把同一个循环依次改写成 primal、matrix-free 前向（$Av$）与
-matrix-free 伴随（$A^{\mathsf T}w$），再做伴随求解、几何导数 $\mathrm dR/\mathrm dX$、
-$\mathrm dL/\mathrm dX$，最后用有限差分逐项校验。
+matrix-free 伴随（$A^{\mathsf T}w$），再做伴随求解、几何导数，最后用有限差分逐项校验。
+两组算例——**二维标量方程**与**拟一维 Euler 方程**——各有**格心**与**格点**两版。
 
-Two **self-contained, interactive** web pages that develop the **fully discrete adjoint**
-of an unstructured finite-volume scheme end to end: starting from the one-dimensional flux
-on a single face, the same loop is rewritten as the primal, as matrix-free forward mode
-($Av$) and as matrix-free adjoint mode ($A^{\mathsf T}w$), followed by the adjoint solve,
-the geometric derivatives $\mathrm dR/\mathrm dX$ and $\mathrm dL/\mathrm dX$, and a
-term-by-term finite-difference verification.
+**Four** self-contained, interactive web pages that develop the **fully discrete adjoint**
+of a finite-volume scheme end to end: starting from the one-dimensional flux on a single
+face, the same loop is rewritten as the primal, as matrix-free forward mode ($Av$) and as
+matrix-free adjoint mode ($A^{\mathsf T}w$), followed by the adjoint solve, the geometric
+derivatives and a term-by-term finite-difference verification. Two model problems &mdash;
+a **two-dimensional scalar equation** and the **quasi-one-dimensional Euler equations**
+&mdash; each in a **cell-centred** and a **node-centred** version.
 
-| 文件 / File | 格式 / Scheme | 大小 |
-|---|---|---|
-| [`adjoint_cell.html`](adjoint_cell.html) | **格心**格式（单元中心有限体积）/ **cell-centred** finite volume | 516 KB |
-| [`adjoint_node.html`](adjoint_node.html) | **格点**格式（中位对偶控制体）/ **node-centred** median-dual | 677 KB |
+| 文件 / File | 算例 / Problem | 格式 / Scheme | 大小 |
+|---|---|---|---|
+| [`adjoint_cell.html`](adjoint_cell.html) | 二维标量 / 2-D scalar | **格心** / cell-centred | 516 KB |
+| [`adjoint_node.html`](adjoint_node.html) | 二维标量 / 2-D scalar | **格点** / node-centred | 677 KB |
+| [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | 拟一维 Euler / quasi-1-D Euler | **格心** / cell-centred | 194 KB |
+| [`adjoint_q1d_node.html`](adjoint_q1d_node.html) | 拟一维 Euler / quasi-1-D Euler | **格点** / node-centred | 174 KB |
 
 直接用浏览器打开即可：**没有任何外部依赖**，不联网、不需要构建、不需要服务器。
-Just open either file in a browser — **no external dependencies**, no network, no build step,
+Just open any of them in a browser — **no external dependencies**, no network, no build step,
 no server. Each page has a 中文 / English toggle in the top-right corner.
 
 **在线阅读 / Read online:** <https://yishenggaogg.github.io/adjoint_education/>
@@ -29,87 +32,128 @@ no server. Each page has a 中文 / English toggle in the top-right corner.
 
 ---
 
-## 两个页面讲的是同一件事的两种格式
+## 四个页面怎么排布 / How the four pages are arranged
 
-两页结构完全平行，都是 12 节，用的是**同一张网格**、同一个标量方程、同一个目标函数，
-只有未知量的位置不同——因此可以并排对照阅读。
+两组算例，每组两种离散。**四页结构完全平行**（都是 12 节），所以任意两页都能并排对照：
+横着比是**两种格式**，竖着比是**标量与方程组**。
 
-The two pages are strictly parallel — 12 sections each, the **same mesh**, the same scalar
-equation and the same objective. Only the location of the unknowns differs, so they can be
-read side by side.
+Two model problems, each discretised two ways. All four are **strictly parallel** — 12 sections
+each — so any two can be read side by side: across, the **two schemes**; down, **a scalar
+against a system**.
 
 | | 格心 / cell-centred | 格点 / node-centred |
 |---|---|---|
-| 未知量 / Unknowns | 24 个单元平均值 / 24 cell averages | 24 个节点值 / 24 nodal values |
-| 循环 / Loop | 面循环，48 个面 / face loop, 48 faces | 边循环，80 个面 / edge loop, 80 faces |
-| 面的构成 / Faces | 32 内部 + 8 壁面 + 8 远场 | 48 个对偶面 + 32 个边界半面 |
-| $A$ 的非零元 / nnz | 88 | 120 |
-| 无滑移 / No-slip | **弱**加：通量里取常数右状态 $u_R=u_w$ / **weak**: a constant right state inside the flux | **强**加：整行换成 $u_i-u_w$ / **strong**: whole-row replacement |
+| **二维标量** / 2-D scalar | [`adjoint_cell.html`](adjoint_cell.html) | [`adjoint_node.html`](adjoint_node.html) |
+| **拟一维 Euler** / quasi-1-D Euler | [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | [`adjoint_q1d_node.html`](adjoint_q1d_node.html) |
 
-物面无滑移的这一处差别正是两页的重点：格心格式物面上**没有**自由度，只能弱加；
-格点格式壁面节点**本身就是未知量**，所以强加才是真实做法，代价是 primal 换行、tangent
-覆盖行、adjoint 在循环**前**清零、循环**后**加回——四处动作必须一致。
+### 横着比：两种格式的边界条件 / Across: what the two schemes do at a boundary
 
-That single difference is the point of the pair: a cell-centred scheme has **no** degree of
-freedom on the body and can only impose no-slip weakly, whereas a node-centred scheme has the
-wall node **as an unknown**, so strong imposition is what a solver really does — at the price
-of a replaced row in the primal, an overwritten row in the tangent, and a zeroing **before**
-the loop with an add-back **after** it in the adjoint. All four must agree.
+这是每一组里两页的分歧所在。**格心格式**的未知量是单元平均值，边界上没有任何自由度，
+所以边界条件只能**弱**加——在通量里给一个外侧状态。**格点格式**的边界节点<u>就在边界上</u>，
+它本身就是未知量，所以可以**强**加——直接把它的方程换掉。伴随里对应的是「进循环前清零、
+出循环后加回」，而且顺序不能反。
 
-## 模型问题 / The model problem
+That is where the two pages in each row part company. A **cell-centred** scheme's unknowns are
+cell averages and no degree of freedom sits on the boundary, so the conditions can only be
+imposed **weakly**, through an outer state in the flux. A **node-centred** scheme's boundary
+node <u>is</u> on the boundary and is itself an unknown, so the conditions can be imposed
+**strongly**, by replacing its equations — which the adjoint answers with "zero before the
+loop, add back after", in that order and no other.
 
-- 标量守恒律 $F(u)=\tfrac12u^2\beta$，$\beta=(1,\,0.5)$，一阶、无重构，常数耗散 $\varepsilon=0.8$
-- 环形（O 型）混合网格：贴壁一层四边形（8 个）+ 外层三角形（16 个）
-- 内圈物面，外圈远场特征边界（4 个入流 + 4 个出流，开关在 $u^*$ 处冻结）
-- Newton 固定跑 60 轮并检查判据 $\max_i|\delta u_i|<10^{-13}$，稠密 LU
-- 目标函数：类似阻力的物面积分 $L=\sum_{\text{wall}}\tfrac12u^2(n\cdot e)$
-- 设计变量：全部节点坐标，共 48 个分量
+### 竖着比：标量与方程组 / Down: a scalar against a system
 
-A scalar conservation law on a hybrid annular O-mesh, first order with no reconstruction and
-constant dissipation; an inviscid or no-slip body on the inner ring, a characteristic
-far-field on the outer ring with the switch frozen at $u^*$; Newton with a dense LU; a
-drag-like surface integral as the objective; and all 48 node coordinates as design variables.
+| | 二维标量 / 2-D scalar | 拟一维 Euler / quasi-1-D Euler |
+|---|---|---|
+| 每个自由度 / Per unknown | 一个数 / one number | 三个数 ρ, ρu, ρE / three |
+| 局部导数 / Local derivative | 两个数 $c_L,c_R$ / two numbers | 两个 **3×3 块** / two **3×3 blocks** |
+| 源项 / Source term | 没有 / none | 有，且不经过任何面 / yes, crossing no face |
+| 边界条件 / Boundary conditions | 常数或外推 / a constant, or extrapolation | 内点状态的**非线性函数** / **nonlinear functions** of the interior |
+| 强加的形状 / Shape of strong imposition | 整行换成 $e_i^{\mathsf T}$ / the whole row becomes $e_i^{\mathsf T}$ | **部分行**换成约束梯度 / **partial rows** become constraint gradients |
+| 信息传播 / Information travels | 单向（纯对流）/ one way | 双向（亚声速）/ both ways |
+| 设计变量 / Design variables | 48 个网格坐标 / 48 mesh coordinates | 13 个截面积 / 13 duct areas |
+
+二维那一对页面结尾写过一句话：「把标量换成状态向量、把局部导数换成块矩阵即可。」
+拟一维那一对就是把这句话兑现出来——并且顺带说明，兑现过程中会冒出源项、非线性边界条件
+和双向传播这些标量模型里根本不存在的东西。
+
+The two-dimensional pair closes with a promise: "replace the scalar by a state vector and the
+local derivatives by block matrices." The quasi-one-dimensional pair delivers on it — and shows
+that delivering on it brings out a source term, nonlinear boundary conditions and two-way
+propagation, none of which the scalar model contains at all.
+
+## 两个模型问题 / The two model problems
+
+**二维标量 / 2-D scalar** — 标量守恒律 $F(u)=\tfrac12u^2\beta$，$\beta=(1,\,0.5)$，常数耗散
+$\varepsilon=0.8$；环形 O 型混合网格（8 个四边形 + 16 个三角形，24 个未知量）；内圈物面、
+外圈远场特征边界；目标是类似阻力的物面积分；设计变量是全部 48 个节点坐标。
+
+**拟一维 Euler / quasi-1-D Euler** — 变截面流道 $A(x)=1-0.3\sin^2(\pi x)$，两端为 1、喉部 0.7；
+入口给**总压与总温**、出口给**背压**，全场亚声速；Rusanov 通量（耗散系数取两侧平均而非
+$\max$，以保可微）；目标有两个可切换：**反设计**（压力分布匹配）与**推力**；设计变量是
+13 个截面积。
+
+Both are first order with no reconstruction, solved by Newton with a dense LU, and every
+constant quoted on the pages is measured live rather than written into the text.
 
 ## 每页的 12 节 / The twelve sections
 
-1. 网格 / Mesh — 单元与面，或对偶控制体的构造
-2. 方程与面上的一维通量 / The equation and the one-dimensional flux
+1. 网格（或流道）/ Mesh, or the duct
+2. 方程与面上的一维通量 / The equations and the one-dimensional flux
 3. 边界条件 / Boundary conditions
 4. 残差 = 循环：收集、计算、分发 / Residual = the loop: gather, compute, scatter
 5. 求解：Jacobian 与 Newton 法 / The solve: the Jacobian and Newton
 6. 目标函数 / The objective function
-7. matrix-free 前向：计算 $Av$ / Matrix-free forward: computing $Av$
-8. matrix-free 伴随：计算 $A^{\mathsf T}w$ / Matrix-free adjoint: computing $A^{\mathsf T}w$
+7. matrix-free 前向：计算 $Av$ / Matrix-free forward
+8. matrix-free 伴随：计算 $A^{\mathsf T}w$ / Matrix-free adjoint
 9. 求解伴随方程 / Solving the adjoint equation
-10. 几何导数 $\mathrm dR/\mathrm dX$ 与 $\mathrm dL/\mathrm dX$ / Geometric derivatives
-11. 验证：$\mathrm dL/\mathrm dX$ 对有限差分 / Verification against finite differences
+10. 几何导数 / Geometric derivatives
+11. 验证：对有限差分 / Verification against finite differences
 12. 总结 / Summary
 
 ## 可以动手的地方 / What is interactive
 
-每页 6–7 个交互面板，12–14 幅图全部由代码生成：
+每页 6–10 个交互面板，图全部由代码生成：
 
-- **网格浏览器**：点任意单元／节点，看它的面、法向、残差各项与 $u^*$ 处的值
-- **一维通量**：拖滑块，看中心项与耗散项怎么合成通量
+- **网格／流道浏览器**：点任意单元或节点，看它的面、法向、守恒量、源项与残差
 - **三个循环逐句播放**：primal、tangent、adjoint 各一个，每一行伪代码对应一步，
   数组里的数字随之变化——转置在数据流上长什么样，一眼可见
-- **Newton 与 Jacobi 面板**：逐轮、逐面播放
 - **点积测试**：随机向量，现场验证 $\langle w,Av\rangle=\langle A^{\mathsf T}w,v\rangle$
-- **梯度与步长扫描**：逐个设计变量把有限差分误差随 $h$ 的曲线扫出来
+- **矩阵视图**：拟一维页上可以直接看到 $A$ 的 3×3 块三对角结构
+- **边界块与它的秩**：拟一维格心页把两个边界 Jacobian 和它们的秩算出来
+- **梯度面板**：格点页把「忘记清零 $\Psi$」的后果和正确结果画在一起
 
-Six to seven interactive panels per page and 12–14 generated figures. The three loops can be
-played statement by statement, with the arrays updating as each pseudocode line executes.
+Six to ten interactive panels per page, every figure generated from code. The three loops can
+be played statement by statement, with the arrays updating as each pseudocode line executes.
 
 ## 页面上的数字都是实测的 / Every number is measured
 
 页面引用的每一个数值都是在浏览器里现场算出来的，不是写死的文字：
 
-| 检验 / Check | 格心 | 格点 |
-|---|---|---|
-| 点积测试 $\langle w,Av\rangle=\langle A^{\mathsf T}w,v\rangle$ | 8.9e−16 | 6.7e−16 |
-| 清零／加回顺序写反 / with the zero-and-add-back order reversed | — | 0.31 |
-| 梯度对全链路中心差分 / gradient vs full-chain central differences | 5.4e−11 | 5.1e−11 |
-| 前向 vs 伴随的求解次数 / solves: forward vs adjoint | 48 : 1 | 48 : 1 |
+| 检验 / Check | 二维格心 | 二维格点 | 拟一维格心 | 拟一维格点 |
+|---|---|---|---|---|
+| 点积测试 $\langle w,Av\rangle=\langle A^{\mathsf T}w,v\rangle$ | 8.9e−16 | 6.7e−16 | 2.7e−16 | 2.9e−16 |
+| 几何点积测试 / geometric dot test | 4.0e−11 ¹ | 1.0e−10 ¹ | **4.6e−16** ² | **3.4e−16** ² |
+| 梯度对全链路差分 / gradient vs full-chain FD | 5.4e−11 | 5.1e−11 | 3.1e−9 | 1.0e−9 |
+| 漏掉一步的后果 / cost of one missing step | — | 0.31 ³ | 1.0e−2 ⁴ | **108 %** ⁵ |
+
+¹ 被差分步长卡住：二维页没有解析的前向几何算子。
+² 两个方向都解析，所以落在机器精度——这也说明二维页那个 $10^{-11}$ 是差分的锅，不是转置的锅。
+³ 清零／加回顺序写反。 ⁴ 伴随里漏掉源项。 ⁵ 组装几何梯度前忘记把 $\Psi$ 在约束行上清零。
+
+¹ limited by the finite-difference step: the 2-D pages have no analytic forward geometric
+operator. ² analytic in both directions, hence machine precision — which also shows the
+$10^{-11}$ above is the differencing, not the transpose. ³ zero-and-add-back in the wrong
+order. ⁴ the source term dropped from the adjoint. ⁵ $\Psi$ not zeroed on the constrained
+rows before assembling the geometric gradient.
+
+反设计目标还有一个更强的检验：目标压力取自一条**已知**的流道，于是在那条流道上 $L$ 与
+$\mathrm dL/\mathrm dA$ 都**逐比特为零**——梯度在一个独立构造的最优点上归零，比任何差分
+对照都更有说服力。
+
+The inverse-design objective carries a stronger check still: its target pressures come from a
+**known** duct, so on that duct both $L$ and $\mathrm dL/\mathrm dA$ are **zero to the last
+bit** — a gradient vanishing at an independently constructed optimum is better evidence than
+any finite-difference comparison.
 
 第 11 节还专门演示了差分校验本身的陷阱：步长取大取小都会让“验证”看起来像失败，
 而点积测试是精确恒等式，根本不含步长。

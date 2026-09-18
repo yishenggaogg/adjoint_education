@@ -1,0 +1,2867 @@
+<!doctype html>
+<html lang="zh-CN" data-lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="在 13 个节点的变截面流道上，逐句演示拟一维 Euler 方程格点格式的边循环、源项、强加边界条件（部分行替换），以及 matrix-free 前向与伴随、几何导数 dL/dA。">
+<title>变截面流道拟一维 Euler 方程的格点格式离散伴随</title>
+<script>
+  /* restore the saved language BEFORE first paint, so an English reader
+     never sees a flash of Chinese */
+  try {
+    var L = localStorage.getItem("adjlang");
+    if (L === "en") { document.documentElement.setAttribute("data-lang", "en");
+      document.documentElement.setAttribute("lang", "en"); }
+  } catch (e) {}
+</script>
+<style>
+:root {
+  --ground: #F3F5F7;
+  --surface: #FFFFFF;
+  --sunken: #EAEEF2;
+  --ink: #18202B;
+  --ink2: #3A4553;
+  --muted: #667283;
+  --rule: #D3DAE2;
+  --grid: #C4CCD6;
+  --primal: #2F5E9E;
+  --primal-soft: #E1EAF6;
+  --tangent: #0B7A69;
+  --tangent-soft: #DAF0EB;
+  --adjoint: #B8432A;
+  --adjoint-soft: #F7E3DC;
+  --amber: #B97809;
+  --amber-soft: #FBEFD6;
+  /* amber marks the wall and nothing else; highlights and accents are violet */
+  --violet: #7A4CB0;
+  --violet-soft: #EFE7F8;
+  --hl: #F3ECFB;
+  --shadow: 0 1px 2px rgba(20, 30, 45, .06), 0 6px 18px rgba(20, 30, 45, .05);
+  --font-body: system-ui, -apple-system, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Source Han Sans SC", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
+  --font-display: Georgia, "Times New Roman", "Songti SC", "SimSun", "Noto Serif CJK SC", "Source Han Serif SC", serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", "DejaVu Sans Mono", monospace;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #0F141A;
+    --surface: #161C24;
+    --sunken: #1C2430;
+    --ink: #E6EAF0;
+    --ink2: #C3CBD6;
+    --muted: #8F9BAB;
+    --rule: #2A3441;
+    --grid: #3A4656;
+    --primal: #8DB3EA;
+    --primal-soft: #1C2A3D;
+    --tangent: #4CC3AE;
+    --tangent-soft: #14302B;
+    --adjoint: #F0876C;
+    --adjoint-soft: #3A221C;
+    --amber: #E8B04A;
+    --amber-soft: #3A2E17;
+    --violet: #B79AF0;
+    --violet-soft: #2A2342;
+    --hl: #2B2440;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 18px rgba(0, 0, 0, .25);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --ground: #0F141A;
+  --surface: #161C24;
+  --sunken: #1C2430;
+  --ink: #E6EAF0;
+  --ink2: #C3CBD6;
+  --muted: #8F9BAB;
+  --rule: #2A3441;
+  --grid: #3A4656;
+  --primal: #8DB3EA;
+  --primal-soft: #1C2A3D;
+  --tangent: #4CC3AE;
+  --tangent-soft: #14302B;
+  --adjoint: #F0876C;
+  --adjoint-soft: #3A221C;
+  --amber: #E8B04A;
+  --amber-soft: #3A2E17;
+  --violet: #B79AF0;
+  --violet-soft: #2A2342;
+  --hl: #2B2440;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 18px rgba(0, 0, 0, .25);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.8;
+  padding-inline: 20px;
+  padding-block: 0 80px;
+}
+
+.page { max-width: 1120px; margin: 0 auto; }
+.prose { max-width: 720px; margin: 0 auto; }
+
+h1, h2, h3 { font-family: var(--font-display); font-weight: 600; text-wrap: balance; color: var(--ink); }
+h1 { font-size: clamp(30px, 5vw, 44px); line-height: 1.2; margin: 0 0 14px; letter-spacing: .01em; }
+h2 { font-size: 26px; line-height: 1.3; margin: 0 0 10px; }
+h3 { font-size: 19px; line-height: 1.4; margin: 34px 0 6px; }
+p { margin: 10px 0; }
+b, strong { font-weight: 700; }
+code, .mono { font-family: var(--font-mono); font-size: .88em; }
+code { background: var(--sunken); padding: 1px 5px; border-radius: 4px; }
+
+/* header */
+.masthead { padding-block: 44px 20px; }
+.eyebrow {
+  font-family: var(--font-mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 12px;
+}
+.lede { font-size: 18px; color: var(--ink2); max-width: 720px; }
+.route { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 18px; padding: 0; list-style: none; }
+.route li { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.route a {
+  text-decoration: none; color: var(--ink); border: 1px solid var(--rule); background: var(--surface);
+  padding: 4px 12px; border-radius: 999px;
+}
+.route a:hover { border-color: var(--ink2); }
+.route .sep { color: var(--muted); }
+
+nav.toc {
+  position: sticky; top: 0; z-index: 5; background: var(--ground);
+  border-bottom: 1px solid var(--rule); margin-inline: -20px; padding-inline: 20px;
+}
+nav.toc ul { display: flex; gap: 22px; list-style: none; margin: 0 auto; padding: 10px 0; max-width: 1120px; overflow-x: auto; white-space: nowrap; }
+nav.toc a { color: var(--muted); text-decoration: none; font-size: 14px; }
+nav.toc a:hover, nav.toc a:focus-visible { color: var(--ink); }
+nav.toc .num { font-family: var(--font-mono); color: var(--violet); margin-right: 4px; }
+
+/* ---- collapsible side navigation -------------------------------------
+   The page is long, so on wide screens nav.toc becomes a sticky left rail
+   instead of the horizontal bar. Same markup, same anchors: below 1000px
+   it reverts to the original scrolling bar, so narrow screens are
+   unchanged. The toggle only exists in the rail layout.               */
+.navtoggle { display: none; }
+@media (min-width: 1000px) {
+  body { padding-inline: 20px; }
+  nav.toc {
+    position: fixed; top: 0; left: 0; bottom: 0; width: 248px; z-index: 6;
+    margin-inline: 0; padding: 18px 12px 18px 20px; overflow-y: auto;
+    border-bottom: 0; border-right: 1px solid var(--rule);
+    transition: width .18s ease, padding .18s ease;
+  }
+  nav.toc ul {
+    display: block; max-width: none; padding: 0; margin: 0;
+    white-space: normal; overflow-x: visible;
+  }
+  nav.toc li { margin: 2px 0; }
+  nav.toc a {
+    display: block; padding: 6px 10px; border-radius: 6px; font-size: 14px;
+    line-height: 1.45; overflow: hidden; text-overflow: ellipsis;
+  }
+  nav.toc a:hover, nav.toc a:focus-visible { background: var(--sunken); color: var(--ink); }
+  nav.toc a[aria-current="true"] { background: var(--sunken); color: var(--ink); font-weight: 600; }
+  .navtoggle {
+    display: block; margin: 0 0 10px; width: 100%; text-align: left;
+    font: inherit; font-size: 13px; color: var(--muted); cursor: pointer;
+    background: var(--surface); border: 1px solid var(--rule);
+    border-radius: 6px; padding: 5px 10px;
+  }
+  .navtoggle:hover { border-color: var(--ink2); color: var(--ink); }
+  .page { margin-left: 248px; transition: margin-left .18s ease; }
+  /* collapsed: rail shrinks to a strip, content reclaims the width */
+  body.navhid nav.toc { width: 44px; padding-inline: 6px; }
+  body.navhid nav.toc ul { display: none; }
+  body.navhid .navtoggle { text-align: center; padding-inline: 4px; }
+  body.navhid .page { margin-left: 44px; }
+}
+
+section.sec { padding-block: 56px 8px; border-top: 1px solid var(--rule); margin-top: 40px; }
+section.sec:first-of-type { border-top: 0; margin-top: 0; }
+.secnum { font-family: var(--font-mono); font-size: 13px; color: var(--violet); letter-spacing: .08em; }
+
+.note {
+  background: var(--sunken); border-radius: 8px; padding: 12px 16px; margin: 16px 0; font-size: 15px;
+}
+.note b { color: var(--ink); }
+
+/* role words */
+.r-primal { color: var(--primal); font-weight: 600; }
+.r-tangent { color: var(--tangent); font-weight: 600; }
+.r-adjoint { color: var(--adjoint); font-weight: 600; }
+.r-amber { color: var(--amber); font-weight: 600; }
+.r-violet { color: var(--violet); font-weight: 600; }
+
+/* lab panel */
+.lab {
+  background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; box-shadow: var(--shadow);
+  margin: 24px 0 8px; overflow: hidden;
+}
+.lab-head {
+  display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; justify-content: space-between;
+  padding: 14px 18px 10px; border-bottom: 1px solid var(--rule);
+}
+.lab-title { font-weight: 700; font-size: 15px; }
+.lab-sub { color: var(--muted); font-size: 13px; }
+.lab-body { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 0; }
+.lab-body > * { min-width: 0; }
+.lab-pane { padding: 14px 18px; }
+.lab-pane + .lab-pane { border-left: 1px solid var(--rule); }
+.lab-foot { border-top: 1px solid var(--rule); padding: 12px 18px; }
+@media (max-width: 860px) {
+  .lab-body { grid-template-columns: 1fr; }
+  .lab-pane + .lab-pane { border-left: 0; border-top: 1px solid var(--rule); }
+}
+
+.svgbox { width: 100%; }
+.svgbox svg { width: 100%; height: auto; display: block; }
+.scrollx { overflow-x: auto; }
+.scrollx svg { min-width: 720px; }
+
+/* pseudocode */
+.code {
+  font-family: var(--font-mono); font-size: 13px; line-height: 1.75; background: var(--sunken);
+  border-radius: 8px; padding: 8px 0; overflow-x: auto;
+}
+.code .ln {
+  display: grid; grid-template-columns: 2.4em max-content 1fr; column-gap: 12px; padding: 0 12px 0 0;
+  border-left: 3px solid transparent;
+}
+.code .ln.active { background: var(--hl); border-left-color: var(--violet); }
+.code .no { color: var(--muted); text-align: right; user-select: none; }
+.code .src { white-space: pre; color: var(--ink); }
+.code .cm { font-family: var(--font-body); color: var(--muted); font-size: 12.5px; white-space: normal; min-width: 8em; }
+.code .kw { color: var(--primal); font-weight: 600; }
+.code-static .ln { border-left: 0; }
+
+/* status line under code */
+.status {
+  margin-top: 10px; font-size: 14px; min-height: 3.6em; color: var(--ink2);
+  font-variant-numeric: tabular-nums;
+}
+.status .big { font-family: var(--font-mono); font-size: 13px; color: var(--ink); }
+
+/* controls */
+.controls { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.btn {
+  font: inherit; font-size: 14px; color: var(--ink); background: var(--surface);
+  border: 1px solid var(--rule); border-radius: 8px; padding: 5px 12px; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px; line-height: 1.4;
+}
+.btn:hover { border-color: var(--ink2); }
+.btn:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible {
+  outline: 2px solid var(--violet); outline-offset: 2px;
+}
+.btn.primary { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.btn.primary:hover { opacity: .9; }
+.btn[aria-pressed="true"] { background: var(--violet-soft); border-color: var(--violet); }
+.btn svg { width: 14px; height: 14px; fill: currentColor; }
+input.numinput { font: inherit; font-size: 14px; font-family: var(--font-mono); color: var(--ink);
+  background: var(--surface); border: 1px solid var(--rule); border-radius: 8px;
+  padding: 4px 8px; width: 92px; }
+.range { flex: 1 1 180px; accent-color: var(--violet); min-width: 120px; }
+select { font: inherit; font-size: 14px; color: var(--ink); background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 4px 8px; }
+.counter { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* sliders form */
+.sliders { display: grid; grid-template-columns: max-content 1fr 5.5em; gap: 6px 12px; align-items: center; font-size: 14px; }
+.sliders output { font-family: var(--font-mono); font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; }
+.sliders input[type="range"] { width: 100%; accent-color: var(--violet); }
+
+/* small tables */
+table.kv { border-collapse: collapse; font-size: 13.5px; width: 100%; font-variant-numeric: tabular-nums; }
+table.kv th, table.kv td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+table.kv th { color: var(--muted); font-weight: 500; white-space: nowrap; width: 1%; }
+table.kv td.num { font-family: var(--font-mono); font-size: 13px; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 12.5px; border: 1px solid var(--rule); border-radius: 999px; padding: 1px 10px; color: var(--ink2); background: var(--surface); }
+
+figure { margin: 22px 0; }
+figcaption { font-size: 13.5px; color: var(--muted); margin-top: 8px; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink2); margin-top: 8px; }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 5px; }
+
+.cmp { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 760px) { .cmp { grid-template-columns: 1fr; } }
+.cmp .col { border: 1px solid var(--rule); border-radius: 10px; padding: 10px 12px; background: var(--surface); }
+.cmp .col h4 { margin: 0 0 6px; font-size: 14px; }
+.cmp .col .code { font-size: 12px; }
+
+.summary { width: 100%; border-collapse: collapse; font-size: 14px; margin: 16px 0; }
+.summary th, .summary td { border-bottom: 1px solid var(--rule); padding: 8px 10px; text-align: left; vertical-align: top; }
+.summary thead th { font-weight: 600; color: var(--ink); border-bottom: 2px solid var(--ink2); }
+.summary tbody th { color: var(--muted); font-weight: 500; white-space: nowrap; }
+.tablewrap { overflow-x: auto; }
+
+mjx-container { color: inherit; }
+mjx-container[display="true"] { overflow-x: auto; overflow-y: hidden; padding-block: 4px; }
+
+.foot { color: var(--muted); font-size: 13px; margin-top: 48px; }
+
+.matwrap { margin-top: 14px; border-top: 1px solid var(--rule); padding-top: 10px; }
+.matwrap > summary { cursor: pointer; font-size: 13.5px; color: var(--ink2); font-weight: 600;
+  list-style: none; display: flex; align-items: center; gap: 6px; }
+.matwrap > summary::before { content: "▾"; color: var(--violet); font-size: 11px; }
+.matwrap:not([open]) > summary::before { content: "▸"; }
+.matwrap > summary::-webkit-details-marker { display: none; }
+.matwrap > .svgbox { margin-top: 8px; }
+
+.errbar { background: var(--adjoint-soft); color: var(--adjoint); border: 1px solid var(--adjoint);
+  border-radius: 8px; padding: 10px 14px; margin: 16px 0; font-size: 14px; }
+
+a.fref { color: var(--violet); text-decoration: none; border-bottom: 1px dashed var(--violet);
+  white-space: nowrap; padding: 0 1px; }
+a.fref:hover { color: var(--ink); border-bottom-color: var(--ink); }
+.figno { color: var(--violet); font-weight: 700; }
+
+/* ---- language switch: one set shown, the other hidden ---- */
+html[data-lang="zh"] [lang="en"] { display: none; }
+html[data-lang="en"] [lang="zh"] { display: none; }
+.langtoggle { float: right; margin-left: 16px; font-size: 13px; padding: 3px 10px; }
+
+/* ---- plain HTML math (no external renderer) ---- */
+.eq, .eqd { font-family: var(--font-display); white-space: nowrap;
+  display: inline-flex; align-items: baseline; vertical-align: middle; }
+.eq { font-size: 1.02em; }
+.eqwrap { margin: 16px 0; text-align: center; overflow-x: auto; overflow-y: hidden; }
+.eqd { font-size: 1.12em; padding: 2px 0 1.35em; }
+.eq i, .eqd i { font-style: italic; }
+.eq sub, .eqd sub, .eq sup, .eqd sup { font-size: .72em; font-style: normal; }
+.eq .op, .eqd .op { padding: 0 .16em; }
+.sp1 { display: inline-block; width: 1em; }
+.sp2 { display: inline-block; width: 1.8em; }
+.spt { display: inline-block; width: .18em; }
+.frac { display: inline-flex; flex-direction: column; vertical-align: 0.663em; text-align: center; margin: 0 .16em; position: relative; }
+.frac .num { border-bottom: 1px solid currentColor; padding: 0 .3em 1px; line-height: 1.25; }
+.frac .den { padding: 1px .3em 0; line-height: 1.25; }
+/* .eq/.eqd align their children on the BASELINE, not centred: an .ub group is
+   2.08em to 3.17em tall depending on its content, and only baseline alignment
+   puts its interior text on the row baseline at every height (measured: 0.000
+   for all of them). Everything below is then a fixed offset from that baseline,
+   measured in Chrome. A fraction bar belongs on the math axis, 0.25em above the
+   baseline; at rest its bar sits 0.413em BELOW, in every context. Flex items
+   ignore vertical-align, so the two flex cases use top instead. */
+.eq > .frac, .eqd > .frac { top: -0.665em; }
+/* sub/sup are flex items in .eq/.eqd, so their default vertical-align is
+   dropped and align-items:center renders subscripts and superscripts at the
+   SAME height. Put them back on the baseline and offset them explicitly. */
+/* Leave them centred by align-items (deterministic: zero spread) and
+   offset from there. align-self:baseline is NOT usable here - with only
+   sub/sup opting in, the flex line baseline varies per formula. */
+.eq > sub, .eqd > sub, .eq > sup, .eqd > sup { position: relative; }
+/* Measured in Chrome: centred, a sub/sup baseline sits 0.083em ABOVE the
+   parent baseline, so sub is indistinguishable from sup. Shift each onto the
+   position the browser itself uses for a sub/sup in normal inline flow
+   (measured on nested ones: sub +0.230em, sup -0.361em), so direct children
+   and nested ones agree. top is in the child's own em, ie 0.72 of parent. */
+.eq > sub, .eqd > sub { top: 0.317em; }
+.eq > sup, .eqd > sup { top: -0.501em; }
+/* Tall block constructs have no meaningful text baseline of their own, so
+   they stay centred even though the row aligns on the baseline. */
+.eq > .pmat, .eqd > .pmat, .eq > .mgrid, .eqd > .mgrid { align-self: center; }
+.ub { position: relative; display: inline-block; margin: 0 .14em;
+  border-bottom: 2px solid var(--muted); padding-bottom: 2px; }
+.ub .ubx { display: inline-block; }
+.ub .ubl { position: absolute; left: 50%; top: calc(100% + 3px);
+  transform: translateX(-50%); font-size: .6em; color: var(--muted);
+  font-style: normal; font-family: var(--font-body); white-space: nowrap; }
+.pmat { display: inline-flex; align-items: stretch; vertical-align: middle; margin: 0 .1em; }
+.pmat .par { font-size: 2.1em; line-height: .96; color: var(--ink2); }
+.mgrid { display: inline-grid; gap: 2px 14px; align-items: center; justify-items: center; padding: 0 .2em; }
+.mcell { font-size: .92em; }
+
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="masthead">
+  <button class="btn langtoggle" type="button" id="langtoggle">English</button>
+  <h1 lang="zh">变截面流道拟一维 Euler 方程的格点格式离散伴随</h1><h1 lang="en">The discrete adjoint of the quasi-one-dimensional Euler equations in a variable-area duct, node-centred</h1>
+  <p class="lede"><span lang="zh">算例是一段<b>收缩—扩张流道</b>：截面积 <span class="eq"><i>A</i>(<i>x</i>)</span> 从 1 收到喉部的 0.7 再张回 1，左端给<b>总压 <span class="eq"><i>p</i><sub>0</sub></span> 与总温 <span class="eq"><i>T</i><sub>0</sub></span></b>，右端给<b>背压 <span class="eq"><i>p</i><sub>b</sub></span></b>，全场亚声速。未知量是 13 个节点上的守恒量 <span class="eq">(<i>ρ</i>,<i>ρ</i><i>u</i>,<i>ρ</i><i>E</i>)</span>，一共 39 个。与<b>二维标量</b>那一对页面相比，这里多出三样东西：局部导数从一个数变成 <b>3×3 块</b>、残差里多了一个不经过任何面的<b>源项</b> <span class="eq"><i>p</i><span class="spt"></span>d<i>A</i>/d<i>x</i></span>、边界条件是内点状态的<b>非线性函数</b>。设计变量就是 13 个节点截面积，因此 <span class="eq">d<i>L</i>/d<i>A</i></span> 有直接的物理含义：把流道这里放宽一点，目标会怎么变。</span><span lang="en">The test case is a <b>converging&ndash;diverging duct</b>: the area <span class="eq"><i>A</i>(<i>x</i>)</span> falls from 1 to 0.7 at the throat and opens back to 1, with <b>total pressure <span class="eq"><i>p</i><sub>0</sub></span> and total temperature <span class="eq"><i>T</i><sub>0</sub></span></b> prescribed at the left, a <b>back pressure <span class="eq"><i>p</i><sub>b</sub></span></b> at the right, and subsonic flow throughout. The unknowns are the conserved variables <span class="eq">(<i>ρ</i>,<i>ρ</i><i>u</i>,<i>ρ</i><i>E</i>)</span> on 13 nodes, 39 in all. Against the <b>two-dimensional scalar</b> pair of pages, three things are new here: the local derivatives become <b>3&times;3 blocks</b>, the residual gains a <b>source term</b> <span class="eq"><i>p</i><span class="spt"></span>d<i>A</i>/d<i>x</i></span> that passes through no face at all, and the boundary conditions are <b>nonlinear functions</b> of the interior state. The design variables are the 13 nodal areas, so <span class="eq">d<i>L</i>/d<i>A</i></span> means something you can point at: widen the duct here, and the objective moves by this much.</span></p>
+  <ol class="route">
+    <li><a href="#s1">1 <span lang="zh">流道与网格</span><span lang="en">Duct &amp; grid</span></a><span class="sep">→</span></li>
+    <li><a href="#s2">2 <span lang="zh">方程与通量</span><span lang="en">Equations &amp; flux</span></a><span class="sep">→</span></li>
+    <li><a href="#s3">3 <span lang="zh">边界条件</span><span lang="en">Boundary conditions</span></a><span class="sep">→</span></li>
+    <li><a href="#s4">4 <span lang="zh">残差</span><span lang="en">Residual</span></a><span class="sep">→</span></li>
+    <li><a href="#s5">5 <span lang="zh">Jacobian 与 Newton法</span><span lang="en">Jacobian &amp; Newton</span></a><span class="sep">→</span></li>
+    <li><a href="#s6">6 <span lang="zh">目标函数</span><span lang="en">Objective function</span></a><span class="sep">→</span></li>
+    <li><a href="#s7">7 <span lang="zh">前向</span><span lang="en">Forward</span></a><span class="sep">→</span></li>
+    <li><a href="#s8">8 <span lang="zh">伴随</span><span lang="en">Adjoint</span></a><span class="sep">→</span></li>
+    <li><a href="#s9">9 <span lang="zh">伴随求解</span><span lang="en">Adjoint solve</span></a><span class="sep">→</span></li>
+    <li><a href="#s10">10 <span lang="zh">几何导数</span><span lang="en">Geometric derivatives</span></a><span class="sep">→</span></li>
+    <li><a href="#s11">11 <span lang="zh">差分验证</span><span lang="en">FD check</span></a><span class="sep">→</span></li>
+    <li><a href="#s12">12 <span lang="zh">总结</span><span lang="en">Summary</span></a></li>
+  </ol>
+</header>
+
+<nav class="toc" aria-label="章节">
+  <ul>
+    <li><a href="#s1"><span class="num">1</span><span lang="zh">流道与网格</span><span lang="en">Duct &amp; grid</span></a></li>
+    <li><a href="#s2"><span class="num">2</span><span lang="zh">方程与通量</span><span lang="en">Equations &amp; flux</span></a></li>
+    <li><a href="#s3"><span class="num">3</span><span lang="zh">边界条件</span><span lang="en">Boundary conditions</span></a></li>
+    <li><a href="#s4"><span class="num">4</span><span lang="zh">残差</span><span lang="en">Residual</span></a></li>
+    <li><a href="#s5"><span class="num">5</span><span lang="zh">Jacobian 与 Newton法</span><span lang="en">Jacobian &amp; Newton</span></a></li>
+    <li><a href="#s6"><span class="num">6</span><span lang="zh">目标函数</span><span lang="en">Objective function</span></a></li>
+    <li><a href="#s7"><span class="num">7</span><span lang="zh">前向</span><span lang="en">Forward</span></a></li>
+    <li><a href="#s8"><span class="num">8</span><span lang="zh">伴随</span><span lang="en">Adjoint</span></a></li>
+    <li><a href="#s9"><span class="num">9</span><span lang="zh">伴随求解</span><span lang="en">Adjoint solve</span></a></li>
+    <li><a href="#s10"><span class="num">10</span><span lang="zh">几何导数</span><span lang="en">Geometric derivatives</span></a></li>
+    <li><a href="#s11"><span class="num">11</span><span lang="zh">差分验证</span><span lang="en">FD check</span></a></li>
+    <li><a href="#s12"><span class="num">12</span><span lang="zh">总结</span><span lang="en">Summary</span></a></li>
+  </ul>
+</nav>
+
+<!-- ============================================================ 1 -->
+<section class="sec" id="s1">
+  <div class="prose">
+    <div class="secnum" lang="zh">第 1 节</div><div class="secnum" lang="en">Section 1</div>
+    <h2 lang="zh">流道与网格</h2><h2 lang="en">The duct and the grid</h2>
+    <p lang="zh"><b>拟一维</b>的意思是：流道沿 <span class="eq"><i>x</i></span> 的截面积 <span class="eq"><i>A</i>(<i>x</i>)</span> 在变，但每个截面上的流动当成均匀的。三维的管内流动于是塌缩成一条线上的三个守恒量，而<b>几何完全由 <span class="eq"><i>A</i>(<i>x</i>)</span> 承担</b>。本页与<a href="index_q1d.html">格心格式那一页</a>用的是<b>同一段流道、同一张网格</b>：<span class="eq"><i>x</i><span class="op">∈</span>[0,1]</span>，<span class="eq"><i>A</i>(<i>x</i>)=1−0.3<span class="up">sin</span><sup>2</sup>(<i>π</i><i>x</i>)</span>，两端为 1、喉部 0.7。</p><p lang="en"><b>Quasi-one-dimensional</b> means the duct's area <span class="eq"><i>A</i>(<i>x</i>)</span> varies along <span class="eq"><i>x</i></span> while the flow across each section is treated as uniform. A three-dimensional duct flow collapses onto a line carrying three conserved quantities, with <b>the geometry carried entirely by <span class="eq"><i>A</i>(<i>x</i>)</span></b>. This page uses <b>the same duct and the same grid</b> as <a href="index_q1d.html">the cell-centred page</a>: <span class="eq"><i>x</i><span class="op">∈</span>[0,1]</span> with <span class="eq"><i>A</i>(<i>x</i>)=1−0.3<span class="up">sin</span><sup>2</sup>(<i>π</i><i>x</i>)</span>, unity at both ends and 0.7 at the throat.</p>
+    <p lang="zh">不同的是未知量放在哪里。<b>格点格式</b>把守恒量放在 <b>13 个节点</b>上，控制体是相邻节点之间的<b>中点</b>围出来的——所以内部节点的控制体长 <span class="eq"><i>Δ</i><i>x</i></span>，而<b>两端的节点只有半个控制体</b>。未知量共 <b>39 个</b>。</p><p lang="en">What differs is where the unknowns live. A <b>node-centred</b> scheme puts the conserved variables on the <b>13 nodes</b>, with control volumes bounded by the <b>midpoints</b> between neighbouring nodes &mdash; so an interior node's volume is <span class="eq"><i>Δ</i><i>x</i></span> long while <b>the two end nodes get half a volume each</b>. There are <b>39 unknowns</b>.</p>
+    <p lang="zh" class="note"><b>这一点差别决定了整页的走向：边界节点<u>就在边界上</u>。</b>格心格式的未知量是单元平均值，物理边界落在两个面上，没有任何未知量住在那里，所以边界条件只能<b>弱</b>加——先用特征关系算出一个外侧状态，再喂给通量。格点格式不同：<span class="eq"><i>n</i><sub>1</sub></span> 与 <span class="eq"><i>n</i><sub>13</sub></span> 本身就是边界点，它们的状态就是边界状态。于是可以<b>强</b>加——直接把它们那几条方程<b>换掉</b>。第 3 节展开。</p><p class="note" lang="en"><b>That one difference sets the course of this page: a boundary node <u>sits on</u> the boundary.</b> A cell-centred scheme's unknowns are cell averages, the physical boundary falls on two faces, and no unknown lives there &mdash; so the conditions can only be imposed <b>weakly</b>, by building an outer state from the characteristic relations and feeding it to the flux. Here <span class="eq"><i>n</i><sub>1</sub></span> and <span class="eq"><i>n</i><sub>13</sub></span> <i>are</i> boundary points and their states <i>are</i> the boundary states. So the conditions can be imposed <b>strongly</b>, by <b>replacing</b> those equations outright. Section 3 does it.</p>
+  </div>
+
+  <div class="lab" id="duct-explorer">
+    <div class="lab-head">
+      <div>
+        <div class="lab-title" lang="zh">交互：点击任意节点</div><div class="lab-title" lang="en">Interactive: click any node</div>
+        <div class="lab-sub" lang="zh">点一个节点，看它的控制体、守恒量、残差，以及它有没有被强加的行</div><div class="lab-sub" lang="en">Click a node to see its control volume, conserved state, residual, and whether any of its rows are strongly imposed</div>
+      </div>
+      <label class="q1d-pick"><span lang="zh">着色：</span><span lang="en">tint by:</span>
+        <select class="q1d-quantity">
+          <option value="p">p</option><option value="M">M</option>
+          <option value="rho">rho</option><option value="u">u</option>
+        </select>
+      </label>
+    </div>
+    <div class="lab-body">
+      <div class="lab-pane">
+        <div class="svgbox"></div>
+        <div class="legend">
+          <span><i style="background:var(--amber)"></i><span lang="zh">流道壁面</span><span lang="en">duct wall</span></span>
+          <span><i style="background:var(--primal)"></i><span lang="zh">入口</span><span lang="en">inflow</span></span>
+          <span><i style="background:var(--adjoint)"></i><span lang="zh">出口</span><span lang="en">outflow</span></span>
+          <span><i style="background:var(--violet)"></i><span lang="zh">选中的节点</span><span lang="en">selected node</span></span>
+        </div>
+      </div>
+      <div class="lab-pane lab-info"></div>
+    </div>
+  </div>
+
+  <div class="prose">
+    <p lang="zh">收敛解沿程的压力与马赫数与格心页几乎重合——同一段物理，两种离散。</p><p lang="en">The converged pressure and Mach number along the duct almost coincide with the cell-centred page's: the same physics, discretised two ways.</p>
+  </div>
+  <div id="field-plots">
+    <div class="svgbox"></div>
+    <div class="svgbox" style="margin-top:10px"></div>
+  </div>
+</section>
+
+<section class="sec" id="s2">
+  <div class="prose">
+    <div class="secnum" lang="zh">第 2 节</div><div class="secnum" lang="en">Section 2</div>
+    <h2 lang="zh">要离散的方程与面上的通量</h2><h2 lang="en">The equations to discretise, and the flux on a face</h2>
+    <p lang="zh">守恒形式，面积写进守恒量里：</p><p lang="en">In conservative form, with the area carried inside the conserved variable:</p>
+    <div class="eqwrap"><span class="eqd"><span class="frac"><span class="num"><i>∂</i>(<i>A</i>U)</span><span class="den"><i>∂</i><i>t</i></span></span>+<span class="frac"><span class="num"><i>∂</i>(<i>A</i>F)</span><span class="den"><i>∂</i><i>x</i></span></span>=S,<span class="sp2"></span>
+      U=<span class="pmat"><span class="par">(</span><span class="mgrid" style="grid-template-columns:repeat(1,auto)"><span class="mcell"><i>ρ</i></span><span class="mcell"><i>ρ</i><i>u</i></span><span class="mcell"><i>ρ</i><i>E</i></span></span><span class="par">)</span></span>,<span class="sp1"></span>
+      F=<span class="pmat"><span class="par">(</span><span class="mgrid" style="grid-template-columns:repeat(1,auto)"><span class="mcell"><i>ρ</i><i>u</i></span><span class="mcell"><i>ρ</i><i>u</i><sup>2</sup>+<i>p</i></span><span class="mcell"><i>ρ</i><i>u</i> <i>H</i></span></span><span class="par">)</span></span>,<span class="sp1"></span>
+      S=<span class="pmat"><span class="par">(</span><span class="mgrid" style="grid-template-columns:repeat(1,auto)"><span class="mcell">0</span><span class="mcell"><i>p</i><span class="spt"></span><span class="frac"><span class="num">d<i>A</i></span><span class="den">d<i>x</i></span></span></span><span class="mcell">0</span></span><span class="par">)</span></span></span></div>
+    <p lang="zh">配理想气体状态方程 <span class="eq"><i>p</i>=(<i>γ</i>−1)<i>ρ</i>(<i>E</i>−<span class="frac"><span class="num">1</span><span class="den">2</span></span><i>u</i><sup>2</sup>)</span>、<span class="eq"><i>H</i>=<i>E</i>+<i>p</i>/<i>ρ</i></span>，取 <span class="eq"><i>γ</i>=1.4</span>、<span class="eq"><i>R</i>=1</span>。</p><p lang="en">closed by the ideal-gas relations <span class="eq"><i>p</i>=(<i>γ</i>−1)<i>ρ</i>(<i>E</i>−<span class="frac"><span class="num">1</span><span class="den">2</span></span><i>u</i><sup>2</sup>)</span> and <span class="eq"><i>H</i>=<i>E</i>+<i>p</i>/<i>ρ</i></span>, with <span class="eq"><i>γ</i>=1.4</span> and <span class="eq"><i>R</i>=1</span>.</p>
+    <p lang="zh" class="note"><b>源项是这一对页面的第一件新东西。</b><span class="eq">S</span> 只进动量方程，而且它是个<b>体积项</b>：它不穿过任何面，是在控制体内部产生的。二维标量那一对页面的残差完全由边循环拼成，这里循环之外还要再走一趟。到了第 8 节会看到，它的转置同样落在节点自己身上，不经过面——而<b>漏掉它，点积测试立刻从 <span class="eq">10<sup>−16</sup></span> 退化到 <span class="eq">10<sup>−2</sup></span></b>。</p><p class="note" lang="en"><b>The source term is the first new thing on these pages.</b> <span class="eq">S</span> enters only the momentum equation, and it is a <b>volume</b> term: it crosses no face, it is produced inside the control volume. On the two-dimensional scalar pages the residual was assembled entirely by the edge loop; here one more pass is needed after it. Section 8 shows that its transpose likewise lands on the cell itself and passes through no face &mdash; and that <b>dropping it collapses the dot-product test from <span class="eq">10<sup>−16</sup></span> to <span class="eq">10<sup>−2</sup></span></b>.</p>
+
+    <h3 lang="zh">面上的数值通量</h3><h3 lang="en">The numerical flux on a face</h3>
+    <p lang="zh">面上取 Rusanov 通量：中心平均减一个正比于状态跳跃的耗散项，</p><p lang="en">Each face takes the Rusanov flux: a central average minus a dissipation proportional to the jump in state,</p>
+    <div class="eqwrap"><span class="eqd">h<sub>f</sub>=<i>A</i><sub>f</sub>[<span class="frac"><span class="num">1</span><span class="den">2</span></span>(F<sub>L</sub>+F<sub>R</sub>)−<span class="frac"><span class="num">1</span><span class="den">2</span></span><i>λ</i><sub>f</sub>(U<sub>R</sub>−U<sub>L</sub>)],<span class="sp2"></span>
+      <i>λ</i><sub>f</sub>=<span class="frac"><span class="num">1</span><span class="den">2</span></span>[(|<i>u</i>|+<i>a</i>)<sub>L</sub>+(|<i>u</i>|+<i>a</i>)<sub>R</sub>]</span></div>
+    <p lang="zh" class="note"><b>为什么 <span class="eq"><i>λ</i></span> 取两侧平均而不是取大者。</b>教科书里的 Rusanov 用 <span class="eq"><span class="up">max</span></span>。<span class="eq"><span class="up">max</span></span> 在两侧相等处<b>不可微</b>，而本页的立身之本是点积测试能打到 <span class="eq">10<sup>−16</sup></span>——一个不可微的地方就会把它毁掉。取平均则处处光滑，而且在本算例的亚声速流场里耗散量级几乎相同。真实代码里要用 <span class="eq"><span class="up">max</span></span> 时的做法是把它<b>冻结</b>在 <span class="eq"><i>u</i><sup>*</sup></span> 处，与二维页冻结远场入流/出流开关完全一样。</p><p class="note" lang="en"><b>Why <span class="eq"><i>λ</i></span> is the average of the two sides rather than the larger.</b> Textbook Rusanov uses <span class="eq"><span class="up">max</span></span>. But <span class="eq"><span class="up">max</span></span> is <b>not differentiable</b> where the two sides cross, and these pages live or die by a dot-product test at the <span class="eq">10<sup>−16</sup></span> level &mdash; one non-differentiable point would wreck it. The average is smooth everywhere and, in this subsonic duct, dissipates by almost the same amount. When a real code does use <span class="eq"><span class="up">max</span></span>, the remedy is to <b>freeze</b> it at <span class="eq"><i>u</i><sup>*</sup></span>, exactly as the two-dimensional pages freeze the far-field inflow/outflow switch.</p>
+    <p lang="zh">本页同样采用<b>一阶</b>空间离散：面上的左右状态直接取两侧单元的当前值，不做重构。代价只在精度上，不在这套代数上。</p><p lang="en">The discretisation here is likewise <b>first order</b>: the left and right states on a face are the current values of the two adjacent cells, with no reconstruction. The cost is accuracy only, not the algebra this page is about.</p>
+
+    <h3 lang="zh">守恒守的是通量，不是单元值</h3><h3 lang="en">What is conserved is the flux, not the cell value</h3>
+    <p lang="zh">稳态下质量方程没有源项，所以<b>数值质量通量在各条对偶面上必须完全相同</b>——下面实测到机器精度。但如果去看单元中心的 <span class="eq"><i>ρ</i><i>u</i><i>A</i></span>，它沿程能差百分之几。两者的差就是耗散项 <span class="eq">−<span class="frac"><span class="num">1</span><span class="den">2</span></span><i>λ</i>(U<sub>R</sub>−U<sub>L</sub>)<i>A</i><sub>f</sub></span>：一阶格式在 13 个节点上就是这个量级。<b>这不是不守恒</b>，这是「节点值」和「通量」不是同一个东西。</p><p lang="en">At steady state the mass equation has no source, so the <b>numerical mass flux must be identical on every dual face</b> &mdash; measured below, to machine precision. Look instead at the cell-centre value of <span class="eq"><i>ρ</i><i>u</i><i>A</i></span> and it varies by a few percent along the duct. The difference between the two is the dissipation term <span class="eq">−<span class="frac"><span class="num">1</span><span class="den">2</span></span><i>λ</i>(U<sub>R</sub>−U<sub>L</sub>)<i>A</i><sub>f</sub></span>, and a first-order scheme on 13 nodes produces exactly this much of it. <b>That is not a loss of conservation</b>; it is the fact that a nodal value and a flux are different objects.</p>
+    <div id="cons-readout"></div>
+  </div>
+</section>
+
+<!-- ============================================================ 3 -->
+<section class="sec" id="s3">
+  <div class="prose">
+    <div class="secnum" lang="zh">第 3 节</div><div class="secnum" lang="en">Section 3</div>
+    <h2 lang="zh">边界条件：强加与部分行替换</h2><h2 lang="en">Boundary conditions: strong imposition and partial row replacement</h2>
+    <p lang="zh">特征分析和格心页完全一样：亚声速时左端有 2 条特征进入区域、右端 1 条，所以<b>左端给 2 个条件（总压 <span class="eq"><i>p</i><sub>0</sub></span>、总温 <span class="eq"><i>T</i><sub>0</sub></span>）、右端给 1 个（背压 <span class="eq"><i>p</i><sub>b</sub></span>）</b>。变的是<b>怎么加</b>。</p><p lang="en">The characteristic analysis is the same as on the cell-centred page: subsonic flow lets 2 characteristics into the domain at the left and 1 at the right, so <b>two conditions are prescribed at the left (<span class="eq"><i>p</i><sub>0</sub></span> and <span class="eq"><i>T</i><sub>0</sub></span>) and one at the right (<span class="eq"><i>p</i><sub>b</sub></span>)</b>. What changes is <b>how they are imposed</b>.</p>
+    <p lang="zh">边界节点本身就是未知量，所以直接把它的方程<b>换掉</b>：</p><p lang="en">The boundary node is itself an unknown, so its equations are simply <b>replaced</b>:</p>
+    <div class="eqwrap"><span class="eqd"><i>R</i><sub>1,mass</sub><span class="op">←</span><i>p</i><sub>0</sub>(u<sub>1</sub>)−<i>p</i><sub>0</sub><sup>given</sup>,<span class="sp2"></span>
+      <i>R</i><sub>1,mom</sub><span class="op">←</span><i>T</i><sub>0</sub>(u<sub>1</sub>)−<i>T</i><sub>0</sub><sup>given</sup>,<span class="sp2"></span>
+      <i>R</i><sub>13,mass</sub><span class="op">←</span><i>p</i>(u<sub>13</sub>)−<i>p</i><sub>b</sub></span></div>
+    <p lang="zh" class="note"><b>注意：这是<u>部分</u>行替换。</b>入口节点有 3 条方程，只换掉 <b>2 条</b>；出口节点只换掉 <b>1 条</b>。剩下的那些照常由通量平衡给出。换几条不是随便定的——<b>正好等于进入区域的特征条数</b>。二维那一对页面里的强加是把某个节点的<b>整行</b>换成 <span class="eq"><i>u</i><sub>i</sub>=<i>u</i><sub>w</sub></span>，那是「一个自由度、一个条件」的特例；这里一个节点携带三条方程，约束只落在其中一部分上。</p><p class="note" lang="en"><b>Note that this is a <u>partial</u> row replacement.</b> The inflow node carries three equations and only <b>two</b> are replaced; the outflow node has only <b>one</b> replaced. The rest come from the flux balance as usual. How many get replaced is not a choice &mdash; it is <b>exactly the number of characteristics entering the domain</b>. The strong imposition on the two-dimensional pair replaced a node's <b>whole</b> equation by <span class="eq"><i>u</i><sub>i</sub>=<i>u</i><sub>w</sub></span>, the special case of "one degree of freedom, one condition"; here a node carries three equations and the constraint lands on a subset.</p>
+
+    <h3 lang="zh">被替换的行是约束的梯度，不是单位行</h3><h3 lang="en">The replaced rows are constraint gradients, not unit rows</h3>
+    <p lang="zh">把 <span class="eq"><i>R</i><span class="op">←</span><i>p</i><sub>0</sub>(u)−<i>p</i><sub>0</sub><sup>given</sup></span> 对 <span class="eq">u</span> 求导，得到的那一行是 <span class="eq"><i>∂</i><i>p</i><sub>0</sub>/<i>∂</i>u</span>——一个<b>一般的行向量</b>，三个分量都不为零。二维页里对应的行是 <span class="eq"><i>e</i><sub>i</sub><sup>T</sup></span>（只有一个 1）。所以<b>二维页是本页的特例</b>：当约束恰好是「某个自由度等于常数」时，它的梯度才退化成单位行。</p><p lang="en">Differentiating <span class="eq"><i>R</i><span class="op">←</span><i>p</i><sub>0</sub>(u)−<i>p</i><sub>0</sub><sup>given</sup></span> with respect to <span class="eq">u</span> gives the row <span class="eq"><i>∂</i><i>p</i><sub>0</sub>/<i>∂</i>u</span> &mdash; a <b>general row vector</b> with all three entries non-zero. The corresponding row on the two-dimensional page was <span class="eq"><i>e</i><sub>i</sub><sup>T</sup></span>, a single 1. So <b>the two-dimensional page is a special case of this one</b>: only when the constraint happens to be "this degree of freedom equals a constant" does its gradient degenerate into a unit row.</p>
+    <p lang="zh">这件事在第 8 节会有直接后果：伴随里那句「出循环后把 <span class="eq"><i>w</i><sub>i</sub></span> <b>加回</b>」要推广成「加回 <span class="eq"><i>w</i><sub>i</sub></span> <b>乘上约束梯度</b>」。</p><p lang="en">That has a direct consequence in Section 8: the adjoint's "after the loop, <b>add</b> <span class="eq"><i>w</i><sub>i</sub></span> back" generalises to "add back <span class="eq"><i>w</i><sub>i</sub></span> <b>times the constraint gradient</b>".</p>
+    <p lang="zh" class="note"><b>还有一处简化：格点格式不需要 ghost 状态。</b>格心页为了给边界面一个外侧状态，必须解一个二次方程、再由等熵关系回到 <span class="eq"><i>p</i>,<i>ρ</i></span>，那整套特征重构在本页<b>完全不存在</b>。边界通量就是 <span class="eq">F(u<sub>1</sub>)<i>A</i><sub>1</sub></span>——用节点自己的状态。强加换来的是边界处理的简化，代价是循环之外多了一步。</p><p class="note" lang="en"><b>And a simplification: a node-centred scheme needs no ghost state.</b> To give its boundary face an outer state, the cell-centred page had to solve a quadratic and return through the isentropic relations; that whole characteristic reconstruction <b>does not exist here</b>. The boundary flux is just <span class="eq">F(u<sub>1</sub>)<i>A</i><sub>1</sub></span>, built from the node's own state. Strong imposition buys a simpler boundary treatment, at the price of one step outside the loop.</p>
+  </div>
+
+  <div class="lab" id="bc-lab">
+    <div class="lab-head">
+      <div>
+        <div class="lab-title" lang="zh">实测：被替换的三行及其梯度</div><div class="lab-title" lang="en">Measured: the three replaced rows and their gradients</div>
+        <div class="lab-sub" lang="zh">给定的 <span class="eq"><i>p</i><sub>0</sub>,<i>T</i><sub>0</sub>,<i>p</i><sub>b</sub></span> 在解上应当精确成立；右侧是每一行实际的行向量</div><div class="lab-sub" lang="en">The prescribed <span class="eq"><i>p</i><sub>0</sub>,<i>T</i><sub>0</sub>,<i>p</i><sub>b</sub></span> should hold exactly at the solution; on the right is the actual row vector of each replaced row</div>
+      </div>
+    </div>
+    <div class="lab-body">
+      <div class="lab-pane lab-info"></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="s4">
+  <div class="prose">
+    <div class="secnum" lang="zh">第 4 节</div><div class="secnum" lang="en">Section 4</div>
+    <h2 lang="zh">残差 = 边循环 + 源项 + 行替换</h2><h2 lang="en">The residual = the edge loop, the source, and the row replacement</h2>
+    <p lang="zh">残差分三段：<b>边循环</b>走 12 条内部对偶面，<b>两个边界通量</b>直接用端点自己的状态，然后每个节点上走一趟<b>源项</b>。到这里为止和格心页是同一套骨架。</p><p lang="en">The residual comes in three parts: the <b>edge loop</b> over the 12 interior dual faces, the <b>two boundary fluxes</b> built from the end nodes' own states, and one <b>source</b> pass per node. Up to here the skeleton is the same as the cell-centred page's.</p>
+    <p lang="zh">然后是第四段，本页独有：<b>循环结束之后</b>，把 3 条受约束的行替换掉。它必须在循环之后——循环里那些行照常参与累加，替换是把累加的结果<b>扔掉</b>，写上约束残差。</p><p lang="en">Then a fourth part, unique to this page: <b>after the loop has finished</b>, the 3 constrained rows are replaced. It has to come after &mdash; those rows take part in the accumulation like any other, and the replacement <b>discards</b> what accumulated and writes the constraint residual instead.</p>
+  </div>
+
+  <div class="lab" id="loop-primal">
+    <div class="lab-head">
+      <div>
+        <div class="lab-title" lang="zh">逐句播放：residual</div><div class="lab-title" lang="en">Play it statement by statement: residual</div>
+        <div class="lab-sub" lang="zh">看最后三步：循环早已结束，那三条行才被替换掉</div><div class="lab-sub" lang="en">Watch the last three steps: the loop is long finished before those three rows are replaced</div>
+      </div>
+      <label class="q1d-pick"><span lang="zh">看哪个分量：</span><span lang="en">component:</span>
+        <select class="q1d-comp"><option value="0">mass</option><option value="1" selected>momentum</option><option value="2">energy</option></select>
+      </label>
+    </div>
+    <div class="lab-body">
+      <div class="lab-pane"><div class="code-host"></div><div class="player-host"></div></div>
+      <div class="lab-pane"><div class="svgbox"></div><p class="lab-note num"></p></div>
+    </div>
+  </div>
+
+  <div class="prose">
+    <p lang="zh" class="note"><b>边界节点的控制体只有一半。</b><span class="eq"><i>n</i><sub>1</sub></span> 的控制体从 <span class="eq"><i>x</i><sub>1</sub></span> 到第一个中点，所以它只被一条对偶面和一个边界通量围住。这在残差里自然出现，不需要特殊处理——真正需要特殊处理的只有那几条被替换的行。</p><p class="note" lang="en"><b>A boundary node's control volume is a half one.</b> The volume of <span class="eq"><i>n</i><sub>1</sub></span> runs from <span class="eq"><i>x</i><sub>1</sub></span> to the first midpoint, so it is bounded by one dual face and one boundary flux. That falls out of the residual by itself and needs no special handling &mdash; the only thing that does is the replaced rows.</p>
+  </div>
+</section>
+
+<section class="sec" id="s5">
+  <div class="prose">
+    <div class="secnum" lang="zh">第 5 节</div><div class="secnum" lang="en">Section 5</div>
+    <h2 lang="zh">求解：Jacobian 与 Newton法</h2><h2 lang="en">The solve: the Jacobian and Newton</h2>
+    <p lang="zh">第 4 节的 <code>residual(u, A)</code> 就是离散残差 <span class="eq">R(u)</span>。它的 Jacobian <span class="eq"><i>A</i>=<i>∂</i>R/<i>∂</i>u</span> 是 <span class="eq">36<span class="op">×</span>36</span> 的，但真正的结构是 <b><span class="eq">12<span class="op">×</span>12</span> 个 <span class="eq">3<span class="op">×</span>3</span> 块</b>：一个单元只与它的两个面邻居相连，所以 <span class="eq"><i>A</i></span> 是<b>块三对角</b>的。</p><p lang="en">The <code>residual(u, A)</code> of Section 4 <i>is</i> the discrete residual <span class="eq">R(u)</span>. Its Jacobian <span class="eq"><i>A</i>=<i>∂</i>R/<i>∂</i>u</span> is <span class="eq">36<span class="op">×</span>36</span>, but its real structure is <b><span class="eq">12<span class="op">×</span>12</span> blocks of <span class="eq">3<span class="op">×</span>3</span></b>: a cell reaches only its two face neighbours, so <span class="eq"><i>A</i></span> is <b>block tridiagonal</b>.</p>
+    <p lang="zh">每个面贡献两个块，来自对一维通量求导：</p><p lang="en">Each face contributes two blocks, obtained by differentiating the one-dimensional flux:</p>
+    <div class="eqwrap"><span class="eqd"><i>c</i><sub>L</sub>=<span class="frac"><span class="num"><i>∂</i>h</span><span class="den"><i>∂</i>U<sub>L</sub></span></span>
+       =<i>A</i><sub>f</sub>[<span class="frac"><span class="num">1</span><span class="den">2</span></span>A(U<sub>L</sub>)+<span class="frac"><span class="num">1</span><span class="den">2</span></span><i>λ</i><sub>f</sub>I
+         −<span class="frac"><span class="num">1</span><span class="den">2</span></span>(U<sub>R</sub>−U<sub>L</sub>)<span class="spt"></span><span class="frac"><span class="num"><i>∂</i><i>λ</i><sub>f</sub></span><span class="den"><i>∂</i>U<sub>L</sub></span></span>],
+      <span class="sp2"></span>A=<span class="frac"><span class="num"><i>∂</i>F</span><span class="den"><i>∂</i>U</span></span></span></div>
+    <p lang="zh"><span class="eq">A</span> 就是经典的 Euler 通量 Jacobian。第三项常被忘记：耗散系数 <span class="eq"><i>λ</i><sub>f</sub></span> 自己也依赖两侧状态，漏掉它 Jacobian 就不精确，Newton 会退化成拟 Newton。</p><p lang="en"><span class="eq">A</span> is the classical Euler flux Jacobian. The third term is the one that gets forgotten: the dissipation coefficient <span class="eq"><i>λ</i><sub>f</sub></span> itself depends on both states, and dropping it makes the Jacobian inexact, degrading Newton to a quasi-Newton method.</p>
+    <p lang="zh" class="note"><b>边界面把 <span class="eq"><i>∂</i>B/<i>∂</i>u</span> 带了进来。</b><span class="eq"><i>f</i>=0</span> 的外侧状态是 <span class="eq">B(u<sub>0</sub>)</span>，所以那个面对 <span class="eq"><i>A</i></span> 的贡献是 <span class="eq"><i>c</i><sub>R</sub>+<i>c</i><sub>L</sub><span class="spt"></span><i>∂</i>B/<i>∂</i>u</span>——两个槽位合并成一个块，落在贴边单元自己的对角块上。第 3 节量出的秩 1 / 秩 2 结构，就这样进入了矩阵。</p><p class="note" lang="en"><b>The boundary faces drag <span class="eq"><i>∂</i>B/<i>∂</i>u</span> in.</b> The outer state at <span class="eq"><i>f</i>=0</span> is <span class="eq">B(u<sub>0</sub>)</span>, so that face contributes <span class="eq"><i>c</i><sub>R</sub>+<i>c</i><sub>L</sub><span class="spt"></span><i>∂</i>B/<i>∂</i>u</span> &mdash; the two slots merge into one block sitting on the boundary cell's own diagonal block. The rank-1 and rank-2 structure measured in Section 3 enters the matrix right here.</p>
+  </div>
+
+  <div class="lab" id="jac-view">
+    <div class="lab-head">
+      <div>
+        <div class="lab-title" lang="zh">实测：<span class="eq"><i>A</i></span> 的块结构</div><div class="lab-title" lang="en">Measured: the block structure of <span class="eq"><i>A</i></span></div>
+        <div class="lab-sub" lang="zh">深浅表示元素大小；细线划出 12×12 个 3×3 块</div><div class="lab-sub" lang="en">Shading is the magnitude of each entry; the thin grid marks the 12×12 blocks of 3×3</div>
+      </div>
+    </div>
+    <div class="lab-body">
+      <div class="lab-pane"><div class="svgbox"></div></div>
+      <div class="lab-pane lab-info"></div>
+    </div>
+  </div>
+
+  <div class="prose">
+    <h3 lang="zh">怎么把 <span class="eq">R(u)=0</span> 解出来</h3><h3 lang="en">How <span class="eq">R(u)=0</span> is actually solved</h3>
+    <p lang="zh">Newton 迭代：在当前状态处线性化，解一个 <span class="eq">36<span class="op">×</span>36</span> 的线性系统，更新状态。前几轮加一点欠松弛——边界条件是非线性的，从均匀初值直接跨一大步会把某个单元推到负压。</p><p lang="en">Newton iteration: linearise at the current state, solve one <span class="eq">36<span class="op">×</span>36</span> linear system, update. The first few sweeps are under-relaxed &mdash; the boundary conditions are nonlinear, and a full step from a uniform guess can drive a cell to negative pressure.</p>
+    <div id="newton-readout"></div>
+    <p lang="zh" class="note"><b>这一步显式地把 <span class="eq"><i>A</i></span> 造了出来。</b>本页其余部分讲的是怎样<b>不</b>形成矩阵地算 <span class="eq"><i>A</i>v</span> 与 <span class="eq"><i>A</i><sup>T</sup>w</span>；primal 求解本身用的是最笨也最稳的办法，因为它唯一的任务是造出随后被<b>冻结</b>的 <span class="eq">u<sup>*</sup></span>。</p><p class="note" lang="en"><b>This step does form <span class="eq"><i>A</i></span> explicitly.</b> The rest of the page is about computing <span class="eq"><i>A</i>v</span> and <span class="eq"><i>A</i><sup>T</sup>w</span> <b>without</b> a matrix; the primal solve itself uses the dullest, most robust method there is, because its only job is to produce the <span class="eq">u<sup>*</sup></span> that is then <b>frozen</b>.</p>
+  </div>
+</section>
+
+<!-- ============================================================ 6 -->
+<section class="sec" id="s6">
+  <div class="prose">
+    <div class="secnum" lang="zh">第 6 节</div><div class="secnum" lang="en">Section 6</div>
+    <h2 lang="zh">目标函数</h2><h2 lang="en">The objective function</h2>
+    <p lang="zh">本页准备了<b>两个</b>目标函数，可以随时切换。它们对整条链路的「加载方式」完全不同，放在一起看最能说明伴随的结构与目标无关。</p><p lang="en">This page carries <b>two</b> objectives, switchable at any time. They load the chain in quite different ways, and seeing them side by side is the clearest demonstration that the adjoint machinery does not care which one you pick.</p>
+    <div class="tablewrap">
+      <table class="summary">
+        <thead><tr>
+          <th lang="zh" scope="col">目标</th><th scope="col" lang="en">Objective</th>
+          <th lang="zh" scope="col">定义</th><th scope="col" lang="en">Definition</th>
+          <th lang="zh" scope="col">特点</th><th scope="col" lang="en">Character</th>
+        </tr></thead>
+        <tbody>
+          <tr><th lang="zh" scope="row">反设计</th><th scope="row" lang="en">Inverse design</th>
+              <td><span class="eq"><i>L</i>=<span class="frac"><span class="num">1</span><span class="den">2</span></span><span class="op">Σ</span><sub>i</sub>(<i>p</i><sub>i</sub>−<i>p</i><sub>i</sub><sup>tgt</sup>)<sup>2</sup> <i>V</i><sub>i</sub></span></td>
+              <td><span class="eq"><i>L</i>=<span class="frac"><span class="num">1</span><span class="den">2</span></span><span class="op">Σ</span><sub>i</sub>(<i>p</i><sub>i</sub>−<i>p</i><sub>i</sub><sup>tgt</sup>)<sup>2</sup> <i>V</i><sub>i</sub></span></td>
+              <td lang="zh"><span class="eq"><i>g</i></span> 铺满全场；最优点已知</td><td lang="en"><span class="eq"><i>g</i></span> is non-zero everywhere; the optimum is known</td></tr>
+          <tr><th lang="zh" scope="row">推力（轴向力）</th><th scope="row" lang="en">Thrust (axial force)</th>
+              <td><span class="eq"><i>L</i>=<span class="op">Σ</span><sub>i</sub> <i>p</i><sub>i</sub><span class="spt"></span>(<i>A</i><sub>i+1</sub>−<i>A</i><sub>i</sub>)</span></td>
+              <td><span class="eq"><i>L</i>=<span class="op">Σ</span><sub>i</sub> <i>p</i><sub>i</sub><span class="spt"></span>(<i>A</i><sub>i+1</sub>−<i>A</i><sub>i</sub>)</span></td>
+              <td lang="zh">显式几何依赖很强</td><td lang="en">strongly, explicitly geometric</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p lang="zh">两者都<b>显式</b>依赖面积：反设计通过单元体积 <span class="eq"><i>V</i><sub>i</sub></span>，推力直接通过 <span class="eq"><i>A</i><sub>i+1</sub>−<i>A</i><sub>i</sub></span>。所以 <span class="eq">d<i>L</i>/d<i>A</i></span> 都有一项根本不经过状态——这正是第 10 节要拆开的结构。</p><p lang="en">Both depend on the areas <b>explicitly</b>: the inverse-design objective through the cell volume <span class="eq"><i>V</i><sub>i</sub></span>, the thrust directly through <span class="eq"><i>A</i><sub>i+1</sub>−<i>A</i><sub>i</sub></span>. So in both cases <span class="eq">d<i>L</i>/d<i>A</i></span> has a term that never passes through the state at all &mdash; the structure Section 10 takes apart.</p>
+    <p lang="zh" class="note"><b>反设计的目标压力取自一个<u>已知</u>的流道。</b>把 <span class="eq"><i>A</i>(<i>x</i>)</span> 乘上 <span class="eq">1−0.04<span class="up">sin</span>(<i>π</i><i>x</i>)</span>，重新收敛，把得到的压力当作 <span class="eq"><i>p</i><sup>tgt</sup></span>。于是这个优化问题的<b>最优解是已知的</b>：在那条面积分布上 <span class="eq"><i>L</i></span> 与 <span class="eq">d<i>L</i>/d<i>A</i></span> 都应当为零。第 11 节会把这件事量出来——不是「很小」，是逐比特为零。</p><p class="note" lang="en"><b>The target pressures come from a <u>known</u> duct.</b> Multiply <span class="eq"><i>A</i>(<i>x</i>)</span> by <span class="eq">1−0.04<span class="up">sin</span>(<i>π</i><i>x</i>)</span>, re-converge, and take the resulting pressures as <span class="eq"><i>p</i><sup>tgt</sup></span>. The optimum of this design problem is therefore <b>known in advance</b>: on that area distribution both <span class="eq"><i>L</i></span> and <span class="eq">d<i>L</i>/d<i>A</i></span> must vanish. Section 11 measures exactly that &mdash; not "small", but zero to the last bit.</p>
+  </div>
+
+  <div class="lab" id="obj-lab">
+    <div class="lab-head">
+      <div>
+        <div class="lab-title" lang="zh">交互：两个目标函数</div><div class="lab-title" lang="en">Interactive: the two objectives</div>
+        <div class="lab-sub" lang="zh">切换目标，看 <span class="eq"><i>L</i></span>、<span class="eq"><i>g</i>=<i>∂</i><i>L</i>/<i>∂</i><i>u</i></span> 的支撑范围与显式几何项</div><div class="lab-sub" lang="en">Switch objective and watch <span class="eq"><i>L</i></span>, the support of <span class="eq"><i>g</i>=<i>∂</i><i>L</i>/<i>∂</i><i>u</i></span>, and the explicit geometric part</div>
+      </div>
+      <label class="q1d-pick"><span lang="zh">目标：</span><span lang="en">objective:</span>
+        <select class="q1d-obj">
+          <option value="inverse">inverse design</option>
+          <option value="thrust">thrust</option>
+        </select>
+      </label>
+    </div>
+    <div class="lab-body">
+      <div class="lab-pane"><div class="svgbox"></div></div>
+      <div class="lab-pane lab-info"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 7 -->
+<section class="sec" id="s7">
+  <div class="prose">
+    <div class="secnum" lang="zh">第 7 节</div><div class="secnum" lang="en">Section 7</div>
+    <h2 lang="zh">matrix-free 前向：计算 <span class="eq"><i>A</i><i>v</i></span></h2><h2 lang="en">Matrix-free forward mode: computing <span class="eq"><i>A</i><i>v</i></span></h2>
+    <p lang="zh">设计变量 <span class="eq">A<span class="op">∈</span>ℝ<sup>13</sup></span> 是各节点的截面积。对 <span class="eq">R(u(A),A)=0</span> 用链式法则消去 <span class="eq">du/dA</span> 有两条路；两条路都要用到同一个乘积，先把它说清楚：给定一个状态扰动 <span class="eq">v</span>，怎样算出 <span class="eq"><i>A</i>v</span> 而<b>不形成</b> <span class="eq"><i>A</i></span>。</p><p lang="en">The design variables <span class="eq">A<span class="op">∈</span>ℝ<sup>13</sup></span> are the nodal areas. Applying the chain rule to <span class="eq">R(u(A),A)=0</span> gives two routes to eliminating <span class="eq">du/dA</span>, and both need the same product. So first: given a state perturbation <span class="eq">v</span>, how to compute <span class="eq"><i>A</i>v</span> <b>without forming</b> <span class="eq"><i>A</i></span>.</p>
+    <p lang="zh">答案是把<b>同一条边循环</b>逐句求导。每条对偶面上 <span class="eq">h<sub>d</sub>=<i>c</i><sub>L</sub>v<sub>L</sub>+<i>c</i><sub>R</sub>v<sub>R</sub></span>，两个 <span class="eq">3<span class="op">×</span>3</span> 块各乘一个 3 向量，再照原样 <span class="eq">+,−</span> 分发；源项那一趟同样线性化。整个函数从头到尾没有出现过矩阵。</p><p lang="en">The answer is to differentiate <b>the same edge loop</b> statement by statement. On each dual face <span class="eq">h<sub>d</sub>=<i>c</i><sub>L</sub>v<sub>L</sub>+<i>c</i><sub>R</sub>v<sub>R</sub></span> &mdash; two <span class="eq">3<span class="op">×</span>3</span> blocks, each times a 3-vector &mdash; scattered with the same <span class="eq">+</span> and <span class="eq">−</span>; the source pass is linearised likewise. No matrix appears anywhere in the function.</p>
+  </div>
+
+  <div class="lab" id="loop-tangent">
+    <div class="lab-head">
+      <div>
+        <div class="lab-title" lang="zh">逐句播放：residual_d</div><div class="lab-title" lang="en">Play it statement by statement: residual_d</div>
+        <div class="lab-sub" lang="zh">与第 4 节的 residual 逐行对照：结构完全相同，只是每一步都换成了它的导数</div><div class="lab-sub" lang="en">Compare it line by line with the residual of Section 4: the structure is identical, every step replaced by its derivative</div>
+      </div>
+      <label class="q1d-pick"><span lang="zh">看哪个分量：</span><span lang="en">component:</span>
+        <select class="q1d-comp">
+          <option value="0">mass</option>
+          <option value="1" selected>momentum</option>
+          <option value="2">energy</option>
+        </select>
+      </label>
+    </div>
+    <div class="lab-body">
+      <div class="lab-pane">
+        <div class="code-host"></div>
+        <div class="player-host"></div>
+      </div>
+      <div class="lab-pane">
+        <div class="svgbox"></div>
+        <p class="lab-note num"></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="prose">
+    <p lang="zh" class="note"><b>边界面上两个槽位合并了。</b>外侧扰动不是独立的，它是 <span class="eq">(<i>∂</i>B/<i>∂</i>u)v</span>。所以边界面只剩一个有效的 <span class="eq">3<span class="op">×</span>3</span> 块 <span class="eq"><i>c</i><sub>R</sub>+<i>c</i><sub>L</sub><span class="spt"></span><i>∂</i>B/<i>∂</i>u</span>——和第 5 节矩阵里看到的那个块是同一个。</p><p class="note" lang="en"><b>On a boundary face the two slots merge.</b> The outer perturbation is not independent: it is <span class="eq">(<i>∂</i>B/<i>∂</i>u)v</span>. One effective <span class="eq">3<span class="op">×</span>3</span> block is left, <span class="eq"><i>c</i><sub>R</sub>+<i>c</i><sub>L</sub><span class="spt"></span><i>∂</i>B/<i>∂</i>u</span> &mdash; the very block seen in the matrix of Section 5.</p>
+  </div>
+</section>
+
+<!-- ============================================================ 8 -->
+<section class="sec" id="s8">
+  <div class="prose">
+    <div class="secnum" lang="zh">第 8 节</div><div class="secnum" lang="en">Section 8</div>
+    <h2 lang="zh">matrix-free 伴随：计算 <span class="eq"><i>A</i><sub>bc</sub><sup>T</sup><i>w</i></span></h2><h2 lang="en">Matrix-free adjoint mode: computing <span class="eq"><i>A</i><sub>bc</sub><sup>T</sup><i>w</i></span></h2>
+    <p lang="zh">伴随仍然是把前向逐句转置：原来<b>写</b>的地方现在<b>读</b>，原来<b>读</b>的地方现在<b>写</b>。面上的一维通量转置成两个 <span class="eq">3<span class="op">×</span>3</span> 块的转置，源项转置回单元自己身上。这些和格心页一样。</p><p lang="en">The adjoint is still the tangent transposed statement by statement: what <b>wrote</b> now <b>reads</b>, what <b>read</b> now <b>writes</b>. The one-dimensional flux transposes into two transposed <span class="eq">3<span class="op">×</span>3</span> blocks, and the source transposes back onto the cell itself. All of that matches the cell-centred page.</p>
+    <p lang="zh">不一样的是那 3 条受约束的行。行替换在转置之后变成<b>列</b>替换，而实现上是两步，<b>顺序不能反</b>：</p><p lang="en">What differs is the 3 constrained rows. A row replacement transposes into a <b>column</b> replacement, and in code that is two steps whose <b>order cannot be reversed</b>:</p>
+    <ul lang="zh">
+      <li>进循环<b>之前</b>，在 <span class="eq"><i>w</i></span> 的一份<b>副本</b>上把受约束的行清零。否则那些行会把本不该存在的贡献分发出去；</li>
+      <li>循环结束<b>之后</b>，把<b>原来</b>的 <span class="eq"><i>w</i><sub>i</sub></span> 乘上该约束的梯度，加回该节点。原地清零就无从加回了，所以必须用副本。</li>
+    </ul>
+    <ul lang="en">
+      <li><b>Before</b> entering the loop, zero the constrained rows on a <b>copy</b> of <span class="eq"><i>w</i></span>. Otherwise those rows scatter contributions that should not exist;</li>
+      <li><b>After</b> the loop, add back the <b>original</b> <span class="eq"><i>w</i><sub>i</sub></span> times that constraint's gradient, onto that node. Zeroing in place would leave nothing to add back, which is why it must be a copy.</li>
+    </ul>
+    <p lang="zh" class="note"><b>这正是二维格点页那条配方的一般形式。</b>那里被替换的行是单位行 <span class="eq"><i>e</i><sub>i</sub><sup>T</sup></span>，于是「加回 <span class="eq"><i>w</i><sub>i</sub></span> 乘约束梯度」退化成「把 <span class="eq"><i>w</i><sub>i</sub></span> 加回 <span class="eq"><i>y</i><sub>i</sub></span>」。这里约束是 <span class="eq"><i>p</i><sub>0</sub></span>、<span class="eq"><i>T</i><sub>0</sub></span>、<span class="eq"><i>p</i></span>，梯度是一般的行向量，所以加回的是一个<b>三分量的向量</b>。两页做的是同一件事，只是这里看得见它的一般形状。</p><p class="note" lang="en"><b>This is the general form of the recipe on the two-dimensional node page.</b> There the replaced row was the unit row <span class="eq"><i>e</i><sub>i</sub><sup>T</sup></span>, so "add back <span class="eq"><i>w</i><sub>i</sub></span> times the constraint gradient" degenerates into "add <span class="eq"><i>w</i><sub>i</sub></span> back into <span class="eq"><i>y</i><sub>i</sub></span>". Here the constraints are <span class="eq"><i>p</i><sub>0</sub></span>, <span class="eq"><i>T</i><sub>0</sub></span> and <span class="eq"><i>p</i></span>, their gradients are general rows, and what gets added back is a <b>three-component vector</b>. The two pages do the same thing; this one shows its general shape.</p>
+  </div>
+
+  <div class="lab" id="loop-adjoint">
+    <div class="lab-head">
+      <div>
+        <div class="lab-title" lang="zh">逐句播放：residual_b</div><div class="lab-title" lang="en">Play it statement by statement: residual_b</div>
+        <div class="lab-sub" lang="zh">第一步就是清零，最后三步是加回——中间的循环和前向一模一样，只是方向反了</div><div class="lab-sub" lang="en">The very first step is the zeroing and the last three are the add-back; in between, the loop is the forward one run backwards</div>
+      </div>
+      <label class="q1d-pick"><span lang="zh">看哪个分量：</span><span lang="en">component:</span>
+        <select class="q1d-comp"><option value="0">mass</option><option value="1" selected>momentum</option><option value="2">energy</option></select>
+      </label>
+    </div>
+    <div class="lab-body">
+      <div class="lab-pane"><div class="code-host"></div><div class="player-host"></div></div>
+      <div class="lab-pane"><div class="svgbox"></div><p class="lab-note num"></p></div>
+    </div>
+  </div>
+
+  <div class="prose">
+    <h3 lang="zh">点积测试</h3><h3 lang="en">The dot-product test</h3>
+    <p lang="zh"><span class="eq"><span class="op">⟨</span>w,<i>A</i><sub>bc</sub>v<span class="op">⟩</span>=<span class="op">⟨</span><i>A</i><sub>bc</sub><sup>T</sup>w,v<span class="op">⟩</span></span> 对<b>受约束</b>的算子同样成立，而且同样是精确恒等式。把清零挪到循环之后，或者忘记加回，这条测试立刻失效。</p><p lang="en"><span class="eq"><span class="op">⟨</span>w,<i>A</i><sub>bc</sub>v<span class="op">⟩</span>=<span class="op">⟨</span><i>A</i><sub>bc</sub><sup>T</sup>w,v<span class="op">⟩</span></span> holds for the <b>constrained</b> operator too, and is just as exact. Move the zeroing to after the loop, or forget the add-back, and the test fails at once.</p>
+  </div>
+
+  <div class="lab" id="dot-lab">
+    <div class="lab-head">
+      <div>
+        <div class="lab-title" lang="zh">交互：点积测试</div><div class="lab-title" lang="en">Interactive: the dot-product test</div>
+        <div class="lab-sub" lang="zh">每次点击换一组新的随机向量</div><div class="lab-sub" lang="en">Each click draws a fresh set of random vectors</div>
+      </div>
+      <button class="btn primary q1d-roll" type="button"><span lang="zh">换一组随机向量</span><span lang="en">New random vectors</span></button>
+    </div>
+    <div class="lab-body"><div class="lab-pane lab-info"></div></div>
+  </div>
+</section>
+
+<section class="sec" id="s9">
+  <div class="prose">
+    <div class="secnum" lang="zh">第 9 节</div><div class="secnum" lang="en">Section 9</div>
+    <h2 lang="zh">求解伴随方程</h2><h2 lang="en">Solving the adjoint equation</h2>
+    <p lang="zh">有了 <span class="eq"><i>A</i><sup>T</sup>w</span>，伴随方程 <span class="eq"><i>A</i><sup>T</sup><i>Ψ</i>=−g</span> 就可以解了，其中 <span class="eq">g=(<i>∂</i><i>L</i>/<i>∂</i>u)<sup>T</sup></span> 来自第 6 节选定的目标。<span class="eq"><i>Ψ</i></span> 有 39 个分量——每个节点三个，对应质量、动量、能量三条方程。</p><p lang="en">With <span class="eq"><i>A</i><sup>T</sup>w</span> in hand the adjoint equation <span class="eq"><i>A</i><sup>T</sup><i>Ψ</i>=−g</span> can be solved, where <span class="eq">g=(<i>∂</i><i>L</i>/<i>∂</i>u)<sup>T</sup></span> comes from whichever objective Section 6 selected. <span class="eq"><i>Ψ</i></span> has 39 components &mdash; three per node, one for each of the mass, momentum and energy equations.</p>
+    <p lang="zh"><span class="eq">−<i>Ψ</i><sub>i</sub></span> 的含义是：<b>在第 <span class="eq"><i>i</i></span> 个节点的那条方程里加一个单位源项，目标 <span class="eq"><i>L</i></span> 会变多少</b>。所以伴随场读起来是一张「敏感度地图」。</p><p lang="en">The meaning of <span class="eq">−<i>Ψ</i><sub>i</sub></span> is: <b>how much the objective <span class="eq"><i>L</i></span> would move if a unit source were added to that equation in that cell</b>. The adjoint field therefore reads as a map of sensitivity.</p>
+    <p lang="zh" class="note"><b>亚声速带来一件二维标量页看不到的事：信息双向传播。</b>那两个页面上的模型方程是纯对流的，特征只朝一个方向走，伴随因此只向上游铺开。这里三条特征是 <span class="eq"><i>u</i>−<i>a</i>&lt;0&lt;<i>u</i>&lt;<i>u</i>+<i>a</i></span>：<b>一条朝上游、两条朝下游</b>。于是扰动会同时向两边传，伴随也就铺满整个流道——出口的背压能影响到入口附近的解，入口的总条件也能影响到出口。</p><p class="note" lang="en"><b>Subsonic flow brings something the two-dimensional scalar pages cannot show: information travels both ways.</b> Their model equation is pure advection, its characteristics all run one way, and the adjoint therefore spreads only upstream. Here the three characteristics are <span class="eq"><i>u</i>−<i>a</i>&lt;0&lt;<i>u</i>&lt;<i>u</i>+<i>a</i></span>: <b>one upstream, two downstream</b>. Disturbances propagate in both directions, and the adjoint fills the whole duct &mdash; the back pressure reaches back towards the inlet, and the inlet's total conditions reach forward to the exit.</p>
+  </div>
+
+  <div class="lab" id="adj-lab">
+    <div class="lab-head">
+      <div>
+        <div class="lab-title" lang="zh">实测：伴随场 <span class="eq"><i>Ψ</i></span></div><div class="lab-title" lang="en">Measured: the adjoint field <span class="eq"><i>Ψ</i></span></div>
+        <div class="lab-sub" lang="zh">三个分量沿流道的分布；换一个目标函数，右端项换了，整个场就换了</div><div class="lab-sub" lang="en">The three components along the duct; change the objective, the right-hand side changes, and so does the entire field</div>
+      </div>
+      <label class="q1d-pick"><span lang="zh">目标：</span><span lang="en">objective:</span>
+        <select class="q1d-obj">
+          <option value="inverse">inverse design</option>
+          <option value="thrust">thrust</option>
+        </select>
+      </label>
+    </div>
+    <div class="lab-body">
+      <div class="lab-pane"><div class="svgbox"></div></div>
+      <div class="lab-pane lab-info"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 10 -->
+<section class="sec" id="s10">
+  <div class="prose">
+    <div class="secnum" lang="zh">第 10 节</div><div class="secnum" lang="en">Section 10</div>
+    <h2 lang="zh">几何导数：<span class="eq">d<i>R</i>/d<i>A</i></span> 与 <span class="eq">d<i>L</i>/d<i>A</i></span></h2><h2 lang="en">Geometric derivatives: <span class="eq">d<i>R</i>/d<i>A</i></span> and <span class="eq">d<i>L</i>/d<i>A</i></span></h2>
+    <p lang="zh">和格心页一样，</p><p lang="en">As on the cell-centred page,</p>
+    <div class="eqwrap"><span class="eqd"><span class="frac"><span class="num">d<i>L</i></span><span class="den">dA</span></span>=<span class="frac"><span class="num"><i>∂</i><i>L</i></span><span class="den"><i>∂</i>A</span></span>
+      +<i>Ψ</i><sup>T</sup><span class="frac"><span class="num"><i>∂</i>R</span><span class="den"><i>∂</i>A</span></span>,<span class="sp2"></span><i>A</i><sub>bc</sub><sup>T</sup><i>Ψ</i>=−g</span></div>
+    <p lang="zh">残差对面积的依赖仍然很简单：对偶面的通量对 <span class="eq"><i>A</i><sub>e</sub>=<span class="frac"><span class="num">1</span><span class="den">2</span></span>(<i>A</i><sub>i</sub>+<i>A</i><sub>j</sub>)</span> 是线性的，边界通量对端点面积是线性的，源项对两侧面积也是线性的。两个方向都解析，几何点积测试因此也是精确的。</p><p lang="en">The residual's dependence on the areas is still simple: a dual face's flux is linear in <span class="eq"><i>A</i><sub>e</sub>=<span class="frac"><span class="num">1</span><span class="den">2</span></span>(<i>A</i><sub>i</sub>+<i>A</i><sub>j</sub>)</span>, a boundary flux is linear in its end area, and the source is linear in the two areas bounding the volume. Both directions are analytic, so the geometric dot-product test is exact here too.</p>
+
+    <h3 lang="zh">被替换的行里没有面积——所以 <span class="eq"><i>Ψ</i></span> 必须先清零</h3><h3 lang="en">The replaced rows contain no areas &mdash; so <span class="eq"><i>Ψ</i></span> must be zeroed first</h3>
+    <p lang="zh">这是本页最容易错的一步，而且理由很干脆：被替换的那三行是 <span class="eq"><i>p</i><sub>0</sub>−<i>p</i><sub>0</sub><sup>given</sup></span>、<span class="eq"><i>T</i><sub>0</sub>−<i>T</i><sub>0</sub><sup>given</sup></span>、<span class="eq"><i>p</i>−<i>p</i><sub>b</sub></span>，<b>它们根本不含 <span class="eq"><i>A</i></span></b>。所以 <span class="eq"><i>∂</i>R/<i>∂</i>A</span> 在这三行上<b>恒为零</b>。</p><p lang="en">This is the step easiest to get wrong on this page, and the reason is blunt: the three replaced rows are <span class="eq"><i>p</i><sub>0</sub>−<i>p</i><sub>0</sub><sup>given</sup></span>, <span class="eq"><i>T</i><sub>0</sub>−<i>T</i><sub>0</sub><sup>given</sup></span> and <span class="eq"><i>p</i>−<i>p</i><sub>b</sub></span>, and <b>none of them contains <span class="eq"><i>A</i></span></b>. Their rows of <span class="eq"><i>∂</i>R/<i>∂</i>A</span> are therefore <b>identically zero</b>.</p>
+    <p lang="zh">而 <span class="eq"><i>Ψ</i></span> 在这三行上<b>并不为零</b>（上一节的面板可以直接读到）。如果照常把整个 <span class="eq"><i>Ψ</i></span> 喂进几何循环，那三个分量就会去乘一堆<b>本该为零</b>的行，凭空造出贡献。所以组装几何梯度<b>之前</b>，必须先把 <span class="eq"><i>Ψ</i></span> 在受约束行上清零——和第 8 节伴随循环里那一步是同一件事，只是这次作用在几何方向上。</p><p lang="en">And <span class="eq"><i>Ψ</i></span> on those rows is <b>not</b> zero &mdash; the panel in the previous section reads it out. Feed the whole <span class="eq"><i>Ψ</i></span> into the geometric loop and those three components multiply rows that <b>ought to be zero</b>, manufacturing contributions out of nothing. So <b>before</b> assembling the geometric gradient, <span class="eq"><i>Ψ</i></span> must be zeroed on the constrained rows &mdash; the same act as in the adjoint loop of Section 8, applied this time in the geometric direction.</p>
+    <p lang="zh" class="note"><b>忘记这一步，梯度不是「略有偏差」。</b>下面的面板把正确的梯度和忘记清零的梯度画在一起，并给出相对误差——它是<b>百分之百量级</b>的，不是百分之一。这也是为什么这条链路上每一处都要用点积测试或全链路差分卡一遍：一个漏掉的清零不会让结果看起来可疑，它会让结果看起来<b>完全正常但完全错误</b>。</p><p class="note" lang="en"><b>Forget it and the gradient is not "slightly off".</b> The panel below draws the correct gradient against the one computed without the zeroing, and reports the relative error &mdash; it is of order <b>one hundred percent</b>, not one percent. Which is why every link in this chain gets pinned by a dot-product test or a full-chain difference: a missing zeroing does not make the answer look suspicious, it makes it look <b>perfectly normal and completely wrong</b>.</p>
+  </div>
+
+  <div class="lab" id="grad-lab">
+    <div class="lab-head">
+      <div>
+        <div class="lab-title" lang="zh">实测：清零与不清零</div><div class="lab-title" lang="en">Measured: with and without the zeroing</div>
+        <div class="lab-sub" lang="zh">两条曲线画的是同一个梯度，区别只有「组装前有没有把 <span class="eq"><i>Ψ</i></span> 在约束行上清零」</div><div class="lab-sub" lang="en">Both curves are the same gradient; the only difference is whether <span class="eq"><i>Ψ</i></span> was zeroed on the constrained rows before assembly</div>
+      </div>
+      <label class="q1d-pick"><span lang="zh">目标：</span><span lang="en">objective:</span>
+        <select class="q1d-obj"><option value="inverse">inverse design</option><option value="thrust">thrust</option></select>
+      </label>
+    </div>
+    <div class="lab-body">
+      <div class="lab-pane"><div class="svgbox"></div></div>
+      <div class="lab-pane lab-info"></div>
+    </div>
+  </div>
+
+  <div class="prose">
+    <p lang="zh">两条路仍然给出同一个 <span class="eq">d<i>L</i>/d<i>A</i></span>：前向对 13 个设计变量各解一次，伴随只解一次。</p><p lang="en">The two routes still agree on <span class="eq">d<i>L</i>/d<i>A</i></span>: the forward one solves once per design variable, 13 times; the adjoint solves once.</p>
+  </div>
+</section>
+
+<section class="sec" id="s11">
+  <div class="prose">
+    <div class="secnum" lang="zh">第 11 节</div><div class="secnum" lang="en">Section 11</div>
+    <h2 lang="zh">验证：<span class="eq">d<i>L</i>/d<i>A</i></span> 对有限差分</h2><h2 lang="en">Verification: <span class="eq">d<i>L</i>/d<i>A</i></span> against finite differences</h2>
+    <p lang="zh">最严格的检验是拿 <span class="eq">d<i>L</i>/d<i>A</i></span> 去对<b>全链路</b>中心差分：每扰动一个 <span class="eq"><i>A</i><sub>k</sub></span>，都<b>重新收敛一次 Newton</b>，再算目标。这样比的是全导数——状态对几何的响应也算在内——而不是冻结状态的偏导数。</p><p lang="en">The strict check is <span class="eq">d<i>L</i>/d<i>A</i></span> against <b>full-chain</b> central differences: perturb one <span class="eq"><i>A</i><sub>k</sub></span>, <b>re-converge Newton</b>, recompute the objective. What is compared is then the total derivative, with the state's response to the geometry included, rather than a partial derivative at frozen state.</p>
+    <div id="verify-readout"></div>
+    <p lang="zh" class="note"><b>还有一个更强的检验：已知的最优点。</b>第 6 节里目标压力取自一条<b>已知</b>的流道。在那条流道上，<span class="eq"><i>L</i></span> 应当为零，梯度也应当为零——而且不是「很小」，是逐比特为零，因为同一个确定性的 Newton 会复现出同一个状态。上表最后两行就是它。一个梯度能在一个<b>独立构造</b>的最优点上归零，比任何差分对照都更有说服力。</p><p class="note" lang="en"><b>And a stronger check still: a known optimum.</b> In Section 6 the target pressures were taken from a <b>known</b> duct. On that duct both <span class="eq"><i>L</i></span> and the gradient must vanish &mdash; and not merely be small, but be zero to the last bit, because the same deterministic Newton reproduces the same state. Those are the last two rows above. A gradient that vanishes at an <b>independently constructed</b> optimum is better evidence than any finite-difference comparison.</p>
+    <p lang="zh" class="note"><b>差分校验本身是会骗人的。</b>中心差分的误差有两段：截断误差约 <span class="eq"><i>O</i>(<i>h</i><sup>2</sup>)</span>，随 <span class="eq"><i>h</i></span> 变小而减小；舍入误差约 <span class="eq"><i>O</i>(<i>ε</i>/<i>h</i>)</span>，随 <span class="eq"><i>h</i></span> 变小反而增大。<span class="eq"><i>h</i></span> 取得太大或太小，一个<b>正确</b>的梯度都会看起来像是错的。这正是点积测试更可靠的原因——它是精确恒等式，根本不含步长。上面几何方向那条测试就是明证：它落在 <span class="eq">10<sup>−16</sup></span>，而同一个算子拿差分去比只能到 <span class="eq">10<sup>−9</sup></span>。</p><p class="note" lang="en"><b>Finite-difference checking is itself capable of lying.</b> A central difference has two error contributions: truncation, about <span class="eq"><i>O</i>(<i>h</i><sup>2</sup>)</span>, which shrinks with <span class="eq"><i>h</i></span>; and round-off, about <span class="eq"><i>O</i>(<i>ε</i>/<i>h</i>)</span>, which grows as <span class="eq"><i>h</i></span> shrinks. Too large or too small a step makes a <b>correct</b> gradient look wrong. That is exactly why the dot-product test is the more reliable instrument &mdash; it is an exact identity with no step size in it. The geometric test above proves the point: it lands at <span class="eq">10<sup>−16</sup></span>, while comparing the same operator against differences can only reach <span class="eq">10<sup>−9</sup></span>.</p>
+  </div>
+</section>
+
+<!-- ============================================================ 12 -->
+<section class="sec" id="s12">
+  <div class="prose">
+    <div class="secnum" lang="zh">第 12 节</div><div class="secnum" lang="en">Section 12</div>
+    <h2 lang="zh">总结</h2><h2 lang="en">Summary</h2>
+    <ul lang="zh">
+      <li><b>边循环是核心</b>：残差就是「每条对偶面收集两侧状态、算一次一维通量、按 <span class="eq">+,−</span> 分发」，加上两个边界通量、一趟源项。</li>
+      <li><b>边界节点就在边界上</b>，所以边界条件可以<b>强</b>加：不需要 ghost 状态，直接换掉方程。</li>
+      <li><b>换的是部分行</b>：入口 3 行换 2 行、出口换 1 行，条数等于进入区域的特征条数。</li>
+      <li><b>被替换的行是约束的梯度</b>，一般不是单位行；二维格点页是它退化成 <span class="eq"><i>e</i><sub>i</sub><sup>T</sup></span> 的特例。</li>
+      <li><b>伴随里对应两步</b>：进循环前在副本上清零，出循环后加回 <span class="eq"><i>w</i><sub>i</sub><span class="op">·</span>(<i>∂</i><i>c</i>/<i>∂</i><i>u</i>)</span>，顺序不能反。</li>
+      <li><b>几何方向还要再清零一次</b>：被替换的行不含面积，忘了清零梯度会错 100% 量级。</li>
+    </ul>
+    <ul lang="en">
+      <li><b>The edge loop is the whole story</b>: the residual is "gather both states on each dual face, call the flux once, scatter with <span class="eq">+</span> and <span class="eq">−</span>", plus two boundary fluxes and one source pass.</li>
+      <li><b>A boundary node sits on the boundary</b>, so the conditions can be imposed <b>strongly</b>: no ghost state, just replace the equations.</li>
+      <li><b>The replacement is partial</b>: 2 of 3 rows at the inflow, 1 of 3 at the outflow &mdash; as many as there are characteristics entering.</li>
+      <li><b>The replaced rows are constraint gradients</b>, general rows rather than unit rows; the two-dimensional node page is the case where they degenerate to <span class="eq"><i>e</i><sub>i</sub><sup>T</sup></span>.</li>
+      <li><b>The adjoint answers with two steps</b>: zero on a copy before the loop, add back <span class="eq"><i>w</i><sub>i</sub><span class="op">·</span>(<i>∂</i><i>c</i>/<i>∂</i><i>u</i>)</span> after it, and the order cannot be swapped.</li>
+      <li><b>The geometric direction needs the zeroing too</b>: the replaced rows contain no areas, and forgetting it puts the gradient out by order 100%.</li>
+    </ul>
+
+    <h3 lang="zh">四个页面放在一起</h3><h3 lang="en">The four pages side by side</h3>
+    <div class="tablewrap">
+      <table class="summary">
+        <thead><tr>
+          <th lang="zh" scope="col"></th><th scope="col" lang="en"></th>
+          <th lang="zh" scope="col">二维标量</th><th scope="col" lang="en">2-D scalar</th>
+          <th lang="zh" scope="col">拟一维 Euler</th><th scope="col" lang="en">quasi-1-D Euler</th>
+        </tr></thead>
+        <tbody>
+          <tr><th lang="zh" scope="row">格心：边界条件</th><th scope="row" lang="en">Cell-centred: BCs</th>
+              <td lang="zh">弱加，常数右状态</td><td lang="en">weak, a constant right state</td>
+              <td lang="zh">弱加，特征重构出的 ghost 状态</td><td lang="en">weak, a ghost state from characteristics</td></tr>
+          <tr><th lang="zh" scope="row">格点：边界条件</th><th scope="row" lang="en">Node-centred: BCs</th>
+              <td lang="zh">强加，<b>整行</b>替换为 <span class="eq"><i>e</i><sub>i</sub><sup>T</sup></span></td><td lang="en">strong, the <b>whole</b> row becomes <span class="eq"><i>e</i><sub>i</sub><sup>T</sup></span></td>
+              <td lang="zh">强加，<b>部分行</b>替换为约束梯度</td><td lang="en">strong, <b>partial</b> rows become constraint gradients</td></tr>
+          <tr><th lang="zh" scope="row">伴随里的对应步骤</th><th scope="row" lang="en">The adjoint's answer</th>
+              <td lang="zh">清零 → 循环 → 加回 <span class="eq"><i>w</i><sub>i</sub></span></td><td lang="en">zero → loop → add back <span class="eq"><i>w</i><sub>i</sub></span></td>
+              <td lang="zh">清零 → 循环 → 加回 <span class="eq"><i>w</i><sub>i</sub>(<i>∂</i><i>c</i>/<i>∂</i><i>u</i>)</span></td><td lang="en">zero → loop → add back <span class="eq"><i>w</i><sub>i</sub>(<i>∂</i><i>c</i>/<i>∂</i><i>u</i>)</span></td></tr>
+          <tr><th lang="zh" scope="row">漏掉清零的代价</th><th scope="row" lang="en">Cost of a missing zeroing</th>
+              <td lang="zh">约 1%</td><td lang="en">about 1%</td>
+              <td lang="zh">约 100%</td><td lang="en">about 100%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p lang="zh">四个页面讲的其实是同一件事：<b>离散伴随就是把 primal 的那个循环逐句转置</b>。换方程、换格式、换边界条件，变的只是每一步里那个局部导数长什么样，以及循环之外要不要补一步。</p><p lang="en">All four pages tell one story: <b>a discrete adjoint is the primal's own loop, transposed statement by statement</b>. Change the equations, the scheme or the boundary conditions, and all that changes is what the local derivative looks like at each step, and whether anything has to be done outside the loop.</p>
+  </div>
+</section>
+
+</div>
+
+
+<script>
+/* small compatibility shims for older mobile browsers */
+if (!Element.prototype.replaceChildren) {
+  Element.prototype.replaceChildren = function () {
+    while (this.firstChild) this.removeChild(this.firstChild);
+    for (var i = 0; i < arguments.length; i++) this.append(arguments[i]);
+  };
+}
+/* Language switch.
+
+   Chinese is the canonical text; English is carried ALONGSIDE it in sibling
+   elements marked lang="en", and the page simply shows one set and hides the
+   other. Nothing is translated at runtime.
+
+   Why siblings rather than swapping strings: figure labels are placed by a
+   box-measuring pass at build time (figlabels.js moves a label off a stroke
+   using its measured width). English boxes are a different size, so a single
+   SVG cannot be laid out correctly for both languages -- each language needs
+   its own rendering, which sibling elements give for free.               */
+(function () {
+  "use strict";
+  var KEY = "adjlang";
+  var root = document.documentElement;
+
+  /* every host the demos append into: they build once, so a language switch
+     has to clear them before re-running boot, or content would double up */
+  var HOSTS = ["explorer-mesh", "explorer-info", "flux-plot", "flux-table",
+    "flux-code", "fluxd-code", "fluxb-code", "bc-code", "dual-code",
+    /* dual-mesh and dual-ctl are appended into, not overwritten: the node
+       page builds a MeshView into dual-mesh and a Player control bar into
+       dual-ctl. Leaving them out meant bootDemos() added a SECOND mesh and a
+       second control bar to the median-dual demo on every language switch. */
+    "dual-mesh", "dual-ctl",
+    "newton-mesh", "newton-code", "newton-status", "newton-plot",
+    "newton-lanes", "newton-stage-ctl", "newton-ctl", "newton-info",
+    "loop-primal", "loop-tangent", "loop-adjoint", "dot-out",
+    "jacobi-mesh", "jacobi-lanes", "jacobi-plot", "jacobi-status",
+    "jacobi-info", "jacobi-code", "jacobi-face-ctl", "jacobi-ctl",
+    "grad-mesh", "grad-out",
+    /* the merged step-size sweep: both are appended into, so a
+       language switch would otherwise stack a second plot and a
+       second control row on top of the first. */
+    "hsweep-ctl", "hsweep-plot"];
+
+  function current() {
+    return root.getAttribute("data-lang") === "en" ? "en" : "zh";
+  }
+
+  function paintButton(lang) {
+    var btn = document.getElementById("langtoggle");
+    if (!btn) return;
+    btn.textContent = lang === "en" ? "中文" : "English";
+    btn.setAttribute("aria-label",
+      lang === "en" ? "切换到中文" : "Switch to English");
+  }
+
+  /* Two things the sibling/CSS trick cannot reach, so they are set here:
+
+       - attribute values (aria-label), which CSS cannot select on;
+       - the text of <option>, because display:none on an option is not
+         honoured consistently across browsers, so a hidden sibling option
+         would still appear in the dropdown.
+
+     Both are declared on the element itself and swapped at switch time:
+       <option data-zh="中心差分" data-en="Central difference">
+       <select data-zh-aria="差分格式" data-en-aria="Difference scheme">
+     paintButton() already does exactly this for the toggle's own label. */
+  function paintDeclared(lang) {
+    var k = lang === "en" ? "en" : "zh";
+    Array.prototype.forEach.call(
+      document.querySelectorAll("[data-zh][data-en]"), function (el) {
+        var v = el.getAttribute("data-" + k);
+        if (v !== null) el.textContent = v;
+      });
+    Array.prototype.forEach.call(
+      document.querySelectorAll("[data-zh-aria][data-en-aria]"), function (el) {
+        var v = el.getAttribute("data-" + k + "-aria");
+        if (v !== null) el.setAttribute("aria-label", v);
+      });
+  }
+
+  /* Text built once by an inline page script (the u* summary) lives in no
+     demo host, so clearing HOSTS would never refresh it. Such a script
+     registers its own repainter here and it is re-run on every switch. */
+  window.REPAINT = window.REPAINT || [];
+  function repaint() {
+    window.REPAINT.forEach(function (fn) {
+      try { fn(); }
+      catch (e) { if (window.console) console.error("[i18n] repaint", e); }
+    });
+  }
+
+  function apply(lang, rebuild) {
+    root.setAttribute("data-lang", lang);
+    root.setAttribute("lang", lang === "en" ? "en" : "zh-CN");
+    try { localStorage.setItem(KEY, lang); } catch (e) { /* private mode */ }
+    paintButton(lang);
+    /* these run on the initial apply() too: a page restored as lang=en would
+       otherwise open with Chinese option text and Chinese aria-labels */
+    paintDeclared(lang);
+    repaint();
+    if (!rebuild) return;
+    /* figure numbers are stamped into captions once and guarded against
+       re-stamping, so drop them before renumbering in the new language */
+    Array.prototype.forEach.call(document.querySelectorAll(".figno"),
+      function (b) { b.parentNode.removeChild(b); });
+    if (window.bootDemos) {
+      HOSTS.forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.replaceChildren();
+      });
+      try { window.bootDemos(); }
+      catch (e) { if (window.console) console.error("[i18n] rebuild", e); }
+    }
+  }
+
+  window.LANG = current;
+  window.t = function (zh, en) { return current() === "en" ? en : zh; };
+
+  function init() {
+    var saved = null;
+    try { saved = localStorage.getItem(KEY); } catch (e) { /* ignore */ }
+    apply(saved === "en" ? "en" : "zh", false);
+    var btn = document.getElementById("langtoggle");
+    if (btn) {
+      btn.addEventListener("click", function () {
+        apply(current() === "en" ? "zh" : "en", true);
+      });
+    }
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else { init(); }
+})();
+
+/* Quasi-one-dimensional Euler in a variable-area duct -- the NODE-CENTRED
+   core, on the same grid and the same duct as core_q1d.js.
+
+   Unknowns sit on the NN = N+1 nodes; the dual faces are the midpoints
+   between them, and the two boundary nodes lie ON the domain boundary with
+   half control volumes.
+
+   That last fact is the whole point of this page. Because node 0 IS the
+   inflow boundary:
+
+     * its boundary flux is simply F(U_0) A_0 -- no ghost state, none of the
+       characteristic reconstruction the cell-centred page needs;
+     * the boundary conditions can be imposed STRONGLY, by replacing rows.
+
+   And here the replacement is only PARTIAL, which is the structure the
+   2-D pages could not show. A subsonic inflow fixes two of the three
+   equations at that node; a subsonic outflow fixes one of three. The rows
+   that are replaced are not unit rows either: they are the gradients of
+   the constraints themselves, d(p0)/dU and d(T0)/dU. The 2-D node page is
+   the special case where that gradient happens to be e_i.                */
+(function () {
+  "use strict";
+
+  const GAMMA = 1.4;
+  const RGAS = 1.0;
+  const NC = 12;                       /* intervals; NN = 13 nodes        */
+  const NN = NC + 1;
+  const XL = 0.0, XR = 1.0;
+  const DX = (XR - XL) / NC;
+  const PT0 = 1.0, TT0 = 1.0, PB = 0.9;
+
+  const XN = Array.from({ length: NN }, (_, k) => XL + k * DX);   /* nodes  */
+  const AREA0 = XN.map(x => 1 - 0.3 * Math.pow(Math.sin(Math.PI * x), 2));
+
+  const zeros = n => new Array(n).fill(0);
+  const mat3 = () => [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+
+  /* ---------------- thermodynamics (same as the cell core) ------------- */
+  function prim(U) {
+    const rho = U[0], u = U[1] / U[0];
+    const p = (GAMMA - 1) * (U[2] - 0.5 * rho * u * u);
+    return { rho: rho, u: u, p: p, a: Math.sqrt(GAMMA * p / rho),
+             H: (U[2] + p) / rho, T: p / (rho * RGAS) };
+  }
+  const cons = (rho, u, p) => [rho, rho * u, p / (GAMMA - 1) + 0.5 * rho * u * u];
+  function fluxPhys(U) {
+    const q = prim(U);
+    return [q.rho * q.u, q.rho * q.u * q.u + q.p, q.rho * q.u * q.H];
+  }
+  function dudU(U) { const rho = U[0], u = U[1] / rho; return [-u / rho, 1 / rho, 0]; }
+  function dpdU(U) {
+    const rho = U[0], u = U[1] / rho;
+    return [(GAMMA - 1) * 0.5 * u * u, -(GAMMA - 1) * u, GAMMA - 1];
+  }
+  function dadU(U) {
+    const rho = U[0], u = U[1] / rho, E = U[2] / rho, a = prim(U).a;
+    const c = GAMMA * (GAMMA - 1) / (2 * a * rho);
+    return [c * (u * u - E), -c * u, c];
+  }
+  function fluxJac(U) {
+    const rho = U[0], u = U[1] / rho, E = U[2] / rho, g = GAMMA;
+    return [[0, 1, 0],
+            [(g - 3) * 0.5 * u * u, (3 - g) * u, g - 1],
+            [(g - 1) * u * u * u - g * u * E, g * E - 1.5 * (g - 1) * u * u, g * u]];
+  }
+  const lambdaFace = (UL, UR) => {
+    const a = prim(UL), b = prim(UR);
+    return 0.5 * ((Math.abs(a.u) + a.a) + (Math.abs(b.u) + b.a));
+  };
+  function dLambdaSide(U) {
+    const du = dudU(U), da = dadU(U), s = U[1] >= 0 ? 1 : -1;
+    return [0.5 * (s * du[0] + da[0]), 0.5 * (s * du[1] + da[1]), 0.5 * (s * du[2] + da[2])];
+  }
+  function fluxNum(UL, UR, Af) {
+    const FL = fluxPhys(UL), FR = fluxPhys(UR), lam = lambdaFace(UL, UR);
+    return [0, 1, 2].map(k => Af * (0.5 * (FL[k] + FR[k]) - 0.5 * lam * (UR[k] - UL[k])));
+  }
+  function fluxNumJac(UL, UR, Af) {
+    const AL = fluxJac(UL), AR = fluxJac(UR), lam = lambdaFace(UL, UR);
+    const dlL = dLambdaSide(UL), dlR = dLambdaSide(UR);
+    const jump = [UR[0] - UL[0], UR[1] - UL[1], UR[2] - UL[2]];
+    const JL = mat3(), JR = mat3();
+    for (let k = 0; k < 3; k++) for (let j = 0; j < 3; j++) {
+      JL[k][j] = Af * (0.5 * AL[k][j] + 0.5 * lam * (k === j ? 1 : 0) - 0.5 * jump[k] * dlL[j]);
+      JR[k][j] = Af * (0.5 * AR[k][j] - 0.5 * lam * (k === j ? 1 : 0) - 0.5 * jump[k] * dlR[j]);
+    }
+    return { L: JL, R: JR };
+  }
+
+  /* ---------------- the constraints imposed strongly -------------------
+     Total pressure, total temperature and static pressure as functions of
+     the conserved state, with their gradients. These gradients ARE the
+     replaced rows of the Jacobian.                                       */
+  function totals(U) {
+    const q = prim(U);
+    const M = q.u / q.a, th = 1 + 0.5 * (GAMMA - 1) * M * M;
+    return { p0: q.p * Math.pow(th, GAMMA / (GAMMA - 1)), T0: q.T * th, th: th, M: M };
+  }
+  function dTotalsdU(U) {
+    const q = prim(U), gm1 = GAMMA - 1;
+    const du = dudU(U), da = dadU(U), dp = dpdU(U);
+    const M = q.u / q.a;
+    const dM = [0, 1, 2].map(j => (du[j] * q.a - q.u * da[j]) / (q.a * q.a));
+    const th = 1 + 0.5 * gm1 * M * M;
+    const dth = [0, 1, 2].map(j => gm1 * M * dM[j]);
+    const pw = Math.pow(th, GAMMA / gm1);
+    const dp0 = [0, 1, 2].map(j =>
+      pw * dp[j] + q.p * (GAMMA / gm1) * Math.pow(th, 1 / gm1) * dth[j]);
+    /* T = p/(rho R); drho/dU = (1,0,0) */
+    const dT = [dp[0] / (q.rho * RGAS) - q.p / (q.rho * q.rho * RGAS),
+                dp[1] / (q.rho * RGAS),
+                dp[2] / (q.rho * RGAS)];
+    const dT0 = [0, 1, 2].map(j => th * dT[j] + q.T * dth[j]);
+    return { dp0: dp0, dT0: dT0, dp: dp };
+  }
+
+  /* which rows are replaced: two at the inflow node, one at the outflow.
+     The count is not a choice -- it is the number of characteristics
+     entering the domain there.                                           */
+  const WROWS = [
+    { node: 0, row: 0, kind: "p0" },
+    { node: 0, row: 1, kind: "T0" },
+    { node: NN - 1, row: 0, kind: "pb" }
+  ];
+  const isConstrained = (i, k) => WROWS.some(c => c.node === i && c.row === k);
+
+  /* dual-face area between nodes i and i+1, and the control volumes */
+  const faceArea = (A, i) => 0.5 * (A[i] + A[i + 1]);
+  function volumes(A) {
+    return Array.from({ length: NN }, (_, i) => {
+      if (i === 0) return 0.5 * 0.5 * (A[0] + faceArea(A, 0)) * DX;
+      if (i === NN - 1) return 0.5 * 0.5 * (faceArea(A, NN - 2) + A[NN - 1]) * DX;
+      return 0.5 * (faceArea(A, i - 1) + faceArea(A, i)) * DX;
+    });
+  }
+
+  /* ---------------- residual ----------------
+     Edge loop over the NC interior dual faces, then the two boundary
+     fluxes (taken straight from the boundary nodes' own states), then the
+     source, and finally the row replacement -- which happens AFTER the
+     loop, exactly as the 2-D node page's does.                           */
+  function residual(U, A) {
+    const r = zeros(3 * NN);
+    const node = i => U.slice(3 * i, 3 * i + 3);
+
+    for (let f = 0; f < NC; f++) {                  /* interior dual faces */
+      const h = fluxNum(node(f), node(f + 1), faceArea(A, f));
+      for (let k = 0; k < 3; k++) {
+        r[3 * f + k] += h[k];
+        r[3 * (f + 1) + k] -= h[k];
+      }
+    }
+    /* boundary fluxes: the node IS the boundary, so no ghost state */
+    const hL = fluxPhys(node(0)).map(x => x * A[0]);
+    const hR = fluxPhys(node(NN - 1)).map(x => x * A[NN - 1]);
+    for (let k = 0; k < 3; k++) {
+      r[k] -= hL[k];
+      r[3 * (NN - 1) + k] += hR[k];
+    }
+    /* source: p dA over each control volume */
+    for (let i = 0; i < NN; i++) {
+      const p = prim(node(i)).p;
+      const aR = i === NN - 1 ? A[NN - 1] : faceArea(A, i);
+      const aL = i === 0 ? A[0] : faceArea(A, i - 1);
+      r[3 * i + 1] -= p * (aR - aL);
+    }
+    /* STRONG boundary conditions: replace rows, after the loop */
+    const t0 = totals(node(0)), tN = totals(node(NN - 1));
+    r[0] = t0.p0 - PT0;
+    r[1] = t0.T0 - TT0;
+    r[3 * (NN - 1)] = prim(node(NN - 1)).p - PB;
+    return r;
+  }
+
+  /* ---------------- Jacobian ---------------- */
+  function jacobian(U, A) {
+    const n = 3 * NN;
+    const J = Array.from({ length: n }, () => zeros(n));
+    const node = i => U.slice(3 * i, 3 * i + 3);
+    const add = (ri, ci, B, s) => {
+      for (let k = 0; k < 3; k++) for (let j = 0; j < 3; j++) J[3 * ri + k][3 * ci + j] += s * B[k][j];
+    };
+    for (let f = 0; f < NC; f++) {
+      const d = fluxNumJac(node(f), node(f + 1), faceArea(A, f));
+      add(f, f, d.L, +1); add(f, f + 1, d.R, +1);
+      add(f + 1, f, d.L, -1); add(f + 1, f + 1, d.R, -1);
+    }
+    const bL = fluxJac(node(0)), bR = fluxJac(node(NN - 1));
+    for (let k = 0; k < 3; k++) for (let j = 0; j < 3; j++) {
+      J[k][j] -= A[0] * bL[k][j];
+      J[3 * (NN - 1) + k][3 * (NN - 1) + j] += A[NN - 1] * bR[k][j];
+    }
+    for (let i = 0; i < NN; i++) {
+      const dp = dpdU(node(i));
+      const aR = i === NN - 1 ? A[NN - 1] : faceArea(A, i);
+      const aL = i === 0 ? A[0] : faceArea(A, i - 1);
+      for (let j = 0; j < 3; j++) J[3 * i + 1][3 * i + j] -= (aR - aL) * dp[j];
+    }
+    /* replaced rows: wipe, then write the constraint gradient */
+    const d0 = dTotalsdU(node(0)), dN = dTotalsdU(node(NN - 1));
+    for (let j = 0; j < n; j++) { J[0][j] = 0; J[1][j] = 0; J[3 * (NN - 1)][j] = 0; }
+    for (let j = 0; j < 3; j++) {
+      J[0][j] = d0.dp0[j];
+      J[1][j] = d0.dT0[j];
+      J[3 * (NN - 1)][3 * (NN - 1) + j] = dN.dp[j];
+    }
+    return J;
+  }
+
+  /* the constraint gradient of a replaced row, as a 3-vector on its node */
+  function constraintRow(U, c) {
+    const d = dTotalsdU(U.slice(3 * c.node, 3 * c.node + 3));
+    return c.kind === "p0" ? d.dp0 : c.kind === "T0" ? d.dT0 : d.dp;
+  }
+
+  /* ---------------- matrix-free pair ----------------
+     tangent : run the loop, then OVERWRITE the constrained rows.
+     adjoint : zero the constrained entries of a COPY of w BEFORE the loop,
+               then after the loop add back w_i times the constraint
+               gradient. With a unit constraint that last step is "add w_i
+               back", which is exactly the 2-D node page's recipe.        */
+  function residualD(U, A, V) {
+    const rd = zeros(3 * NN);
+    const node = i => U.slice(3 * i, 3 * i + 3);
+    const vn = i => V.slice(3 * i, 3 * i + 3);
+    const mv = (M, v) => [0, 1, 2].map(k => M[k][0] * v[0] + M[k][1] * v[1] + M[k][2] * v[2]);
+    for (let f = 0; f < NC; f++) {
+      const d = fluxNumJac(node(f), node(f + 1), faceArea(A, f));
+      const a = mv(d.L, vn(f)), b = mv(d.R, vn(f + 1));
+      for (let k = 0; k < 3; k++) {
+        rd[3 * f + k] += a[k] + b[k];
+        rd[3 * (f + 1) + k] -= a[k] + b[k];
+      }
+    }
+    const a0 = mv(fluxJac(node(0)), vn(0)), aN = mv(fluxJac(node(NN - 1)), vn(NN - 1));
+    for (let k = 0; k < 3; k++) {
+      rd[k] -= A[0] * a0[k];
+      rd[3 * (NN - 1) + k] += A[NN - 1] * aN[k];
+    }
+    for (let i = 0; i < NN; i++) {
+      const dp = dpdU(node(i)), v = vn(i);
+      const aR = i === NN - 1 ? A[NN - 1] : faceArea(A, i);
+      const aL = i === 0 ? A[0] : faceArea(A, i - 1);
+      rd[3 * i + 1] -= (aR - aL) * (dp[0] * v[0] + dp[1] * v[1] + dp[2] * v[2]);
+    }
+    /* overwrite the constrained rows */
+    WROWS.forEach(c => {
+      const g = constraintRow(U, c), v = vn(c.node);
+      rd[3 * c.node + c.row] = g[0] * v[0] + g[1] * v[1] + g[2] * v[2];
+    });
+    return rd;
+  }
+
+  function residualB(U, A, W) {
+    const node = i => U.slice(3 * i, 3 * i + 3);
+    const mtv = (M, v) => [0, 1, 2].map(j => M[0][j] * v[0] + M[1][j] * v[1] + M[2][j] * v[2]);
+    /* 1. zero the constrained rows on a COPY, before the loop */
+    const wt = W.slice();
+    WROWS.forEach(c => { wt[3 * c.node + c.row] = 0; });
+    const y = zeros(3 * NN);
+    const wn = i => wt.slice(3 * i, 3 * i + 3);
+    for (let f = 0; f < NC; f++) {
+      const d = fluxNumJac(node(f), node(f + 1), faceArea(A, f));
+      const wl = wn(f), wr = wn(f + 1);
+      const hb = [wl[0] - wr[0], wl[1] - wr[1], wl[2] - wr[2]];
+      const yl = mtv(d.L, hb), yr = mtv(d.R, hb);
+      for (let k = 0; k < 3; k++) { y[3 * f + k] += yl[k]; y[3 * (f + 1) + k] += yr[k]; }
+    }
+    const b0 = mtv(fluxJac(node(0)), wn(0).map(x => -x * A[0]));
+    const bN = mtv(fluxJac(node(NN - 1)), wn(NN - 1).map(x => x * A[NN - 1]));
+    for (let k = 0; k < 3; k++) { y[k] += b0[k]; y[3 * (NN - 1) + k] += bN[k]; }
+    for (let i = 0; i < NN; i++) {
+      const dp = dpdU(node(i)), wm = wt[3 * i + 1];
+      const aR = i === NN - 1 ? A[NN - 1] : faceArea(A, i);
+      const aL = i === 0 ? A[0] : faceArea(A, i - 1);
+      for (let j = 0; j < 3; j++) y[3 * i + j] -= (aR - aL) * dp[j] * wm;
+    }
+    /* 2. after the loop, add back the ORIGINAL weight times the
+          constraint gradient -- the general form of "add w_i back" */
+    WROWS.forEach(c => {
+      const g = constraintRow(U, c), wi = W[3 * c.node + c.row];
+      for (let j = 0; j < 3; j++) y[3 * c.node + j] += wi * g[j];
+    });
+    return y;
+  }
+
+  /* ---------------- solve ---------------- */
+  function solveDense(M, b) {
+    const n = b.length;
+    const a = M.map((row, i) => row.slice().concat([b[i]]));
+    for (let c = 0; c < n; c++) {
+      let piv = c;
+      for (let r = c + 1; r < n; r++) if (Math.abs(a[r][c]) > Math.abs(a[piv][c])) piv = r;
+      const t = a[c]; a[c] = a[piv]; a[piv] = t;
+      if (Math.abs(a[c][c]) < 1e-300) throw new Error("singular at column " + c);
+      for (let r = c + 1; r < n; r++) {
+        const m = a[r][c] / a[c][c];
+        if (m === 0) continue;
+        for (let k = c; k <= n; k++) a[r][k] -= m * a[c][k];
+      }
+    }
+    const x = zeros(n);
+    for (let r = n - 1; r >= 0; r--) {
+      let s = a[r][n];
+      for (let k = r + 1; k < n; k++) s -= a[r][k] * x[k];
+      x[r] = s / a[r][r];
+    }
+    return x;
+  }
+
+  const NEWTON_SWEEPS = 40, NEWTON_TOL = 1e-13, NEWTON_INFO = {};
+  function initialState() {
+    const gm1 = GAMMA - 1, M = 0.3;
+    const p = PT0 * Math.pow(1 + 0.5 * gm1 * M * M, -GAMMA / gm1);
+    const T = TT0 / (1 + 0.5 * gm1 * M * M);
+    const rho = p / (RGAS * T), u = M * Math.sqrt(GAMMA * p / rho);
+    const U = zeros(3 * NN);
+    for (let i = 0; i < NN; i++) {
+      const c = cons(rho, u, p);
+      U[3 * i] = c[0]; U[3 * i + 1] = c[1]; U[3 * i + 2] = c[2];
+    }
+    return U;
+  }
+  function newton(A, U0) {
+    let U = U0 ? U0.slice() : initialState();
+    let met = -1;
+    for (let it = 0; it < NEWTON_SWEEPS; it++) {
+      const r = residual(U, A);
+      const nr = Math.max.apply(null, r.map(Math.abs));
+      if (nr < NEWTON_TOL && met < 0) met = it;
+      const du = solveDense(jacobian(U, A), r);
+      const relax = it < 6 ? 0.5 : 1.0;
+      for (let k = 0; k < U.length; k++) U[k] -= relax * du[k];
+    }
+    NEWTON_INFO.res = Math.max.apply(null, residual(U, A).map(Math.abs));
+    NEWTON_INFO.iters = met;
+    if (!(NEWTON_INFO.res < 1e-10)) throw new Error("newton: max|R| = " + NEWTON_INFO.res);
+    return U;
+  }
+
+  /* ================= objectives and the geometric chain =================
+     One thing has to be got right here and has no counterpart in the
+     cell-centred page: the REPLACED rows do not contain the areas at all
+     (p0 - PT0 knows nothing about A). Their rows of dR/dA are therefore
+     identically zero, which means psi must be zeroed on those rows before
+     the geometric loop runs. Forget it and the gradient is wrong -- by a
+     lot, which check_node_geom.js measures.                              */
+
+  function dVdA(A) {                       /* dV_i/dA_k, accumulated */
+    const D = Array.from({ length: NN }, () => zeros(NN));
+    for (let i = 0; i < NN; i++) {
+      if (i === 0) { D[0][0] += 0.375 * DX; D[0][1] += 0.125 * DX; }
+      else if (i === NN - 1) { D[i][NN - 2] += 0.125 * DX; D[i][NN - 1] += 0.375 * DX; }
+      else { D[i][i - 1] += 0.25 * DX; D[i][i] += 0.5 * DX; D[i][i + 1] += 0.25 * DX; }
+    }
+    return D;
+  }
+  /* d(aR_i - aL_i)/dA_k, the area difference the source term uses */
+  function dDiffA(A) {
+    const D = Array.from({ length: NN }, () => zeros(NN));
+    for (let i = 0; i < NN; i++) {
+      if (i === NN - 1) D[i][NN - 1] += 1; else { D[i][i] += 0.5; D[i][i + 1] += 0.5; }
+      if (i === 0) D[i][0] -= 1; else { D[i][i - 1] -= 0.5; D[i][i] -= 0.5; }
+    }
+    return D;
+  }
+
+  function objective(U, A, kind, ptgt) {
+    const node = i => U.slice(3 * i, 3 * i + 3);
+    let L = 0;
+    if (kind === "thrust") {
+      for (let i = 0; i < NN; i++) {
+        const aR = i === NN - 1 ? A[NN - 1] : faceArea(A, i);
+        const aL = i === 0 ? A[0] : faceArea(A, i - 1);
+        L += prim(node(i)).p * (aR - aL);
+      }
+      return L;
+    }
+    const V = volumes(A);
+    for (let i = 0; i < NN; i++) {
+      const d = prim(node(i)).p - ptgt[i];
+      L += 0.5 * d * d * V[i];
+    }
+    return L;
+  }
+
+  function dJdU(U, A, kind, ptgt) {
+    const g = zeros(3 * NN);
+    const node = i => U.slice(3 * i, 3 * i + 3);
+    if (kind === "thrust") {
+      for (let i = 0; i < NN; i++) {
+        const dp = dpdU(node(i));
+        const aR = i === NN - 1 ? A[NN - 1] : faceArea(A, i);
+        const aL = i === 0 ? A[0] : faceArea(A, i - 1);
+        for (let j = 0; j < 3; j++) g[3 * i + j] = (aR - aL) * dp[j];
+      }
+      return g;
+    }
+    const V = volumes(A);
+    for (let i = 0; i < NN; i++) {
+      const dp = dpdU(node(i)), d = prim(node(i)).p - ptgt[i];
+      for (let j = 0; j < 3; j++) g[3 * i + j] = d * V[i] * dp[j];
+    }
+    return g;
+  }
+
+  function dJdA(U, A, kind, ptgt) {
+    const out = zeros(NN);
+    const node = i => U.slice(3 * i, 3 * i + 3);
+    if (kind === "thrust") {
+      const D = dDiffA(A);
+      for (let i = 0; i < NN; i++) {
+        const p = prim(node(i)).p;
+        for (let k = 0; k < NN; k++) out[k] += p * D[i][k];
+      }
+      return out;
+    }
+    const D = dVdA(A);
+    for (let i = 0; i < NN; i++) {
+      const e = prim(node(i)).p - ptgt[i];
+      for (let k = 0; k < NN; k++) out[k] += 0.5 * e * e * D[i][k];
+    }
+    return out;
+  }
+
+  /* forward geometric operator; the constrained rows stay exactly zero */
+  function residualDA(U, A, dA) {
+    const rd = zeros(3 * NN);
+    const node = i => U.slice(3 * i, 3 * i + 3);
+    for (let f = 0; f < NC; f++) {
+      const hhat = fluxNum(node(f), node(f + 1), 1);
+      const dAf = 0.5 * (dA[f] + dA[f + 1]);
+      for (let k = 0; k < 3; k++) {
+        rd[3 * f + k] += hhat[k] * dAf;
+        rd[3 * (f + 1) + k] -= hhat[k] * dAf;
+      }
+    }
+    const FL = fluxPhys(node(0)), FR = fluxPhys(node(NN - 1));
+    for (let k = 0; k < 3; k++) {
+      rd[k] -= FL[k] * dA[0];
+      rd[3 * (NN - 1) + k] += FR[k] * dA[NN - 1];
+    }
+    const D = dDiffA(A);
+    for (let i = 0; i < NN; i++) {
+      const p = prim(node(i)).p;
+      let s = 0;
+      for (let k = 0; k < NN; k++) s += D[i][k] * dA[k];
+      rd[3 * i + 1] -= p * s;
+    }
+    WROWS.forEach(c => { rd[3 * c.node + c.row] = 0; });   /* no A in there */
+    return rd;
+  }
+
+  /* reverse geometric operator: zero psi on the constrained rows FIRST */
+  function residualBA(U, A, psi) {
+    const w = psi.slice();
+    WROWS.forEach(c => { w[3 * c.node + c.row] = 0; });
+    const y = zeros(NN);
+    const node = i => U.slice(3 * i, 3 * i + 3);
+    for (let f = 0; f < NC; f++) {
+      const hhat = fluxNum(node(f), node(f + 1), 1);
+      let s = 0;
+      for (let k = 0; k < 3; k++) s += hhat[k] * (w[3 * f + k] - w[3 * (f + 1) + k]);
+      y[f] += 0.5 * s;
+      y[f + 1] += 0.5 * s;
+    }
+    const FL = fluxPhys(node(0)), FR = fluxPhys(node(NN - 1));
+    for (let k = 0; k < 3; k++) {
+      y[0] -= FL[k] * w[k];
+      y[NN - 1] += FR[k] * w[3 * (NN - 1) + k];
+    }
+    const D = dDiffA(A);
+    for (let i = 0; i < NN; i++) {
+      const p = prim(node(i)).p, wm = w[3 * i + 1];
+      for (let k = 0; k < NN; k++) y[k] -= p * D[i][k] * wm;
+    }
+    return y;
+  }
+
+  function adjointSolve(U, A, kind, ptgt) {
+    const J = jacobian(U, A), n = 3 * NN;
+    const JT = Array.from({ length: n }, (_, i) => Array.from({ length: n }, (_, j) => J[j][i]));
+    return solveDense(JT, dJdU(U, A, kind, ptgt).map(x => -x));
+  }
+  function gradient(U, A, psi, kind, ptgt) {
+    const ex = dJdA(U, A, kind, ptgt), im = residualBA(U, A, psi);
+    return ex.map((x, k) => x + im[k]);
+  }
+  function targetAreas() {
+    return XN.map((x, k) => AREA0[k] * (1 - 0.04 * Math.sin(Math.PI * x)));
+  }
+  function targetPressures() {
+    const Ut = newton(targetAreas());
+    return Array.from({ length: NN }, (_, i) => prim(Ut.slice(3 * i, 3 * i + 3)).p);
+  }
+
+  /* ================= step-by-step trace =================
+     The shape that matters on this page:
+
+       primal / tangent : edge loop -> boundary fluxes -> source
+                          -> REPLACE the constrained rows (after the loop)
+       adjoint          : ZERO the constrained rows of a copy (before the
+                          loop) -> edge loop -> boundary -> source
+                          -> ADD BACK w_i times the constraint gradient
+
+     The zeroing is step one of the adjoint for a reason, and playing it
+     makes that visible.                                                  */
+  function trace(kind, U, A, seed) {
+    const steps = [];
+    const node = i => U.slice(3 * i, 3 * i + 3);
+    const v3 = v => "(" + v.map(x => fmt(x, 3)).join(", ") + ")";
+    const mv = (M, v) => [0, 1, 2].map(k => M[k][0] * v[0] + M[k][1] * v[1] + M[k][2] * v[2]);
+    const mtv = (M, v) => [0, 1, 2].map(j => M[0][j] * v[0] + M[1][j] * v[1] + M[2][j] * v[2]);
+    const push = o => { steps.push(o); return o; };
+
+    /* the adjoint zeroes first -- one step, before anything else */
+    let wt = seed;
+    if (kind === "adjoint") {
+      wt = seed.slice();
+      WROWS.forEach(c => { wt[3 * c.node + c.row] = 0; });
+      push({ line: 2, phase: "zero", f: -1, rows: WROWS.slice(),
+             text: "zero the " + WROWS.length + " constrained rows of a COPY of w, before the loop" });
+    }
+
+    for (let f = 0; f < NC; f++) {
+      push({ line: 4, phase: "select", f: f, L: f, R: f + 1, text: "dual face between nodes " + (f + 1) + " and " + (f + 2) });
+      if (kind === "primal") {
+        const h = fluxNum(node(f), node(f + 1), faceArea(A, f));
+        push({ line: 5, phase: "compute", f: f, h: h, text: "h = " + v3(h) });
+        push({ line: 6, phase: "scatter", f: f, to: f, inc: h, text: "r[" + (f + 1) + "] += h" });
+        push({ line: 7, phase: "scatter", f: f, to: f + 1, inc: h.map(x => -x), text: "r[" + (f + 2) + "] -= h" });
+      } else if (kind === "tangent") {
+        const d = fluxNumJac(node(f), node(f + 1), faceArea(A, f));
+        const a = mv(d.L, seed.slice(3 * f, 3 * f + 3));
+        const b = mv(d.R, seed.slice(3 * (f + 1), 3 * (f + 1) + 3));
+        const hd = [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+        push({ line: 5, phase: "compute", f: f, h: hd, text: "h_d = " + v3(hd) });
+        push({ line: 6, phase: "scatter", f: f, to: f, inc: hd, text: "r_d[" + (f + 1) + "] += h_d" });
+        push({ line: 7, phase: "scatter", f: f, to: f + 1, inc: hd.map(x => -x), text: "r_d[" + (f + 2) + "] -= h_d" });
+      } else {
+        const d = fluxNumJac(node(f), node(f + 1), faceArea(A, f));
+        const wl = wt.slice(3 * f, 3 * f + 3), wr = wt.slice(3 * (f + 1), 3 * (f + 1) + 3);
+        const hb = [wl[0] - wr[0], wl[1] - wr[1], wl[2] - wr[2]];
+        push({ line: 5, phase: "compute", f: f, h: hb, text: "h_b = w[i] - w[j] = " + v3(hb) });
+        push({ line: 6, phase: "scatter", f: f, to: f, inc: mtv(d.L, hb), text: "y[" + (f + 1) + "] += c_Lᵀ h_b" });
+        push({ line: 7, phase: "scatter", f: f, to: f + 1, inc: mtv(d.R, hb), text: "y[" + (f + 2) + "] += c_Rᵀ h_b" });
+      }
+    }
+
+    /* the two boundary fluxes: the node IS the boundary, no ghost state */
+    [[0, -1], [NN - 1, +1]].forEach(([i, sgn]) => {
+      const Ai = i === 0 ? A[0] : A[NN - 1];
+      let inc;
+      if (kind === "primal") inc = fluxPhys(node(i)).map(x => sgn * x * Ai);
+      else if (kind === "tangent") inc = mv(fluxJac(node(i)), seed.slice(3 * i, 3 * i + 3)).map(x => sgn * x * Ai);
+      else inc = mtv(fluxJac(node(i)), wt.slice(3 * i, 3 * i + 3).map(x => sgn * x * Ai));
+      push({ line: 8, phase: "scatter", f: -1, to: i, inc: inc,
+             text: "boundary flux at node " + (i + 1) + ": the node's own state, no ghost" });
+    });
+
+    /* the source */
+    for (let i = 0; i < NN; i++) {
+      const aR = i === NN - 1 ? A[NN - 1] : faceArea(A, i);
+      const aL = i === 0 ? A[0] : faceArea(A, i - 1);
+      const dA = aR - aL, dp = dpdU(node(i));
+      let inc;
+      if (kind === "primal") inc = [0, -prim(node(i)).p * dA, 0];
+      else if (kind === "tangent") {
+        const v = seed.slice(3 * i, 3 * i + 3);
+        inc = [0, -dA * (dp[0] * v[0] + dp[1] * v[1] + dp[2] * v[2]), 0];
+      } else inc = dp.map(x => -dA * x * wt[3 * i + 1]);
+      push({ line: 9, phase: "source", f: -1, to: i, inc: inc, text: "node " + (i + 1) + ": source" });
+    }
+
+    /* and then the row handling, AFTER the loop */
+    if (kind === "primal") {
+      const t0 = totals(node(0)), pe = prim(node(NN - 1)).p;
+      const vals = { p0: t0.p0 - PT0, T0: t0.T0 - TT0, pb: pe - PB };
+      WROWS.forEach(c => push({ line: 11, phase: "replace", f: -1, to: c.node, row: c.row,
+        set: vals[c.kind],
+        text: "replace row " + c.row + " of node " + (c.node + 1) + " by the constraint " + c.kind }));
+    } else if (kind === "tangent") {
+      WROWS.forEach(c => {
+        const g = constraintRow(U, c), v = seed.slice(3 * c.node, 3 * c.node + 3);
+        push({ line: 11, phase: "replace", f: -1, to: c.node, row: c.row,
+          set: g[0] * v[0] + g[1] * v[1] + g[2] * v[2],
+          text: "overwrite row " + c.row + " of node " + (c.node + 1) + " by (dc/du)·v" });
+      });
+    } else {
+      WROWS.forEach(c => {
+        const g = constraintRow(U, c), wi = seed[3 * c.node + c.row];
+        push({ line: 11, phase: "addback", f: -1, to: c.node, inc: g.map(x => wi * x),
+          text: "add back w_i times the constraint gradient of node " + (c.node + 1) });
+      });
+    }
+    push({ line: 12, phase: "done", f: -1, text: "" });
+    return steps;
+  }
+
+  function accumulate(steps, k) {
+    const acc = zeros(3 * NN);
+    for (let i = 0; i <= k && i < steps.length; i++) {
+      const s = steps[i];
+      if ((s.phase === "scatter" || s.phase === "source" || s.phase === "addback") &&
+          s.to !== undefined && s.inc) {
+        for (let j = 0; j < 3; j++) acc[3 * s.to + j] += s.inc[j];
+      } else if (s.phase === "replace") {
+        acc[3 * s.to + s.row] = s.set;          /* a replacement, not a sum */
+      }
+    }
+    return acc;
+  }
+
+  const fmt = (x, n) => {
+    if (x === 0) return "0";
+    const a = Math.abs(x);
+    if (a >= 1e4 || a < 1e-3) return x.toExponential(n === undefined ? 2 : n - 1);
+    return x.toFixed(n === undefined ? 4 : n);
+  };
+
+  const dot = (a, b) => a.reduce((s, x, i) => s + x * b[i], 0);
+
+  window.FVQN = {
+    trace: trace, accumulate: accumulate, fmt: fmt,
+    objective: objective, dJdU: dJdU, dJdA: dJdA,
+    residualDA: residualDA, residualBA: residualBA,
+    adjointSolve: adjointSolve, gradient: gradient,
+    targetAreas: targetAreas, targetPressures: targetPressures,
+    dVdA: dVdA, dDiffA: dDiffA,
+    GAMMA: GAMMA, RGAS: RGAS, NC: NC, NN: NN, DX: DX, XN: XN, AREA0: AREA0,
+    PT0: PT0, TT0: TT0, PB: PB, WROWS: WROWS, isConstrained: isConstrained,
+    prim: prim, cons: cons, fluxPhys: fluxPhys, fluxNum: fluxNum,
+    fluxJac: fluxJac, fluxNumJac: fluxNumJac, dpdU: dpdU, dudU: dudU, dadU: dadU,
+    totals: totals, dTotalsdU: dTotalsdU, constraintRow: constraintRow,
+    faceArea: faceArea, volumes: volumes,
+    residual: residual, jacobian: jacobian, residualD: residualD, residualB: residualB,
+    solveDense: solveDense, newton: newton, initialState: initialState, dot: dot,
+    NEWTON_INFO: NEWTON_INFO, NEWTON_TOL: NEWTON_TOL
+  };
+})();
+
+/* Drawing helpers: mesh view, value lanes, pseudocode view, step player. */
+(function () {
+  "use strict";
+  /* `t` is taken in this file (destructured in the speed list), so the
+     translator is aliased TR. window.t comes from i18n.js, which both
+     builders list first in SCRIPTS; the guard keeps this harmless if the
+     file is ever loaded on its own. */
+  const TR = (zh, en) => (window.t ? window.t(zh, en) : zh);
+  const NS = "http://www.w3.org/2000/svg";
+  let uid = 0;
+
+  /* Live-panel labels (c13, f35, e17, n9, h_d, u_L) carry real subscripts so
+     the interactive figures match the body text and the static figures.
+     Function names (residual_b, flux_d) keep their underscore: they are code,
+     not math. A digit before the letter protects log ticks like 1e-12.
+     Offsets are in em so they scale with whatever size each label uses. */
+  const CODEID = /(residual|flux|jacobi|newton|gradient|objective|solve)$/;
+  function mathParts(str) {
+    const parts = [];
+    const push = function (t, s) { if (t) parts.push([t, s]); };
+    let i = 0, cur = "";
+    while (i < str.length) {
+      const ch = str[i];
+      if ((ch === "_" || ch === "^") && i + 1 < str.length && !CODEID.test(cur)) {
+        const mode = ch === "_" ? 1 : -1;
+        let j = i + 1, tok = "";
+        if (str[j] === "{") {
+          j++;
+          while (j < str.length && str[j] !== "}") tok += str[j++];
+          j++;
+        } else {
+          while (j < str.length && /[A-Za-z0-9]/.test(str[j])) tok += str[j++];
+        }
+        if (tok) { push(cur, 0); cur = ""; push(tok, mode); i = j; continue; }
+      }
+      cur += ch;
+      i++;
+    }
+    push(cur, 0);
+    const out = [];
+    parts.forEach(function (p) {
+      if (p[1] !== 0) { out.push(p); return; }
+      let rest = p[0], m;
+      const re = /(^|[^A-Za-z0-9])([cfenhRVd])(\d+)(?![A-Za-z0-9])/;
+      while ((m = re.exec(rest))) {
+        const head = rest.slice(0, m.index) + m[1] + m[2];
+        if (head) out.push([head, 0]);
+        out.push([m[3], 1]);
+        rest = rest.slice(m.index + m[0].length);
+      }
+      if (rest) out.push([rest, 0]);
+    });
+    return out;
+  }
+  function setMathText(el, str) {
+    const parts = mathParts(String(str));
+    let any = false;
+    parts.forEach(function (p) { if (p[1] !== 0) any = true; });
+    if (!any) { el.textContent = str; return; }
+    let prev = 0;
+    parts.forEach(function (p) {
+      const ts = document.createElementNS(NS, "tspan");
+      if (p[1] === 1) {
+        ts.setAttribute("font-size", "74%");
+        if (prev !== 1) ts.setAttribute("dy", "0.42em");
+      } else if (p[1] === -1) {
+        ts.setAttribute("font-size", "74%");
+        if (prev !== -1) ts.setAttribute("dy", "-0.45em");
+      } else if (prev === 1) {
+        ts.setAttribute("dy", "-0.31em");
+      } else if (prev === -1) {
+        ts.setAttribute("dy", "0.333em");
+      }
+      ts.textContent = p[0];
+      el.appendChild(ts);
+      prev = p[1];
+    });
+  }
+
+  function S(tag, attrs, parent) {
+    const el = document.createElementNS(NS, tag);
+    if (attrs) {
+      for (const k in attrs) {
+        if (k === "style") Object.assign(el.style, attrs.style);
+        else if (k === "text") {
+          if (tag === "text") setMathText(el, attrs.text);
+          else el.textContent = attrs.text;
+        } else el.setAttribute(k, attrs[k]);
+      }
+    }
+    if (parent) parent.appendChild(el);
+    return el;
+  }
+
+  function H(tag, attrs, parent) {
+    const el = document.createElement(tag);
+    if (attrs) {
+      for (const k in attrs) {
+        if (k === "html") el.innerHTML = attrs.html;
+        else if (k === "text") el.textContent = attrs.text;
+        else el.setAttribute(k, attrs[k]);
+      }
+    }
+    if (parent) parent.appendChild(el);
+    return el;
+  }
+
+  const ROLES = ["primal", "tangent", "adjoint", "amber", "violet", "ink", "muted"];
+
+  function markers(svg) {
+    const id = "m" + (++uid);
+    const defs = S("defs", null, svg);
+    for (const r of ROLES) {
+      const m = S("marker", {
+        id: id + "-" + r, viewBox: "0 0 10 10", refX: "8.5", refY: "5",
+        markerWidth: "7", markerHeight: "7", orient: "auto-start-reverse"
+      }, defs);
+      S("path", { d: "M1 1L9 5L1 9z", style: { fill: "var(--" + r + ")" } }, m);
+    }
+    return id;
+  }
+
+  function arrow(g, mid, p, q, role, width, shrinkA, shrinkB, dash) {
+    const dx = q[0] - p[0];
+    const dy = q[1] - p[1];
+    const d = Math.hypot(dx, dy) || 1;
+    const a = [p[0] + dx / d * (shrinkA || 0), p[1] + dy / d * (shrinkA || 0)];
+    const b = [q[0] - dx / d * (shrinkB || 0), q[1] - dy / d * (shrinkB || 0)];
+    const ln = S("line", {
+      x1: a[0], y1: a[1], x2: b[0], y2: b[1], "marker-end": "url(#" + mid + "-" + role + ")",
+      style: { stroke: "var(--" + role + ")", strokeWidth: width || 2 }
+    }, g);
+    if (dash) ln.setAttribute("stroke-dasharray", dash);
+    return ln;
+  }
+
+  function chip(g, x, y, text, role, opts) {
+    const o = opts || {};
+    const size = o.size || 12;
+    const w = o.w || Math.max(28, text.length * size * 0.62 + 12);
+    const hgt = size + 8;
+    S("rect", {
+      x: x - w / 2, y: y - hgt / 2, width: w, height: hgt, rx: 4,
+      style: { fill: "var(--surface)", stroke: "var(--" + role + ")", strokeWidth: 1.2 }
+    }, g);
+    S("text", {
+      x: x, y: y + size * 0.36, "text-anchor": "middle", text: text,
+      style: { fill: "var(--" + role + ")", fontFamily: "var(--font-mono)", fontSize: size + "px" }
+    }, g);
+  }
+
+  /* ---------------------------------------------------------------- mesh */
+  class MeshView {
+    constructor(host, opt) {
+      const o = opt || {};
+      const FV = window.FV;
+      this.s = o.scale || 150;
+      this.pad = o.pad || 36;
+      /* the drawing box follows the mesh bounding box, so the same view
+         works for a flat patch and for the annular O-mesh */
+      this.bb = FV.bbox || [0, 0, 3, 2 * FV.H];
+      this.W = (this.bb[2] - this.bb[0]) * this.s + 2 * this.pad;
+      this.Hh = (this.bb[3] - this.bb[1]) * this.s + 2 * this.pad;
+      this.svg = S("svg", {
+        viewBox: "0 0 " + this.W + " " + this.Hh, role: "img",
+        "aria-label": o.label || TR("网格", "mesh")
+      }, host);
+      this.mid = markers(this.svg);
+      this.gCells = S("g", null, this.svg);
+      this.gFaces = S("g", null, this.svg);
+      this.gNormals = S("g", null, this.svg);
+      this.gBase = S("g", null, this.svg);
+      this.gOver = S("g", null, this.svg);
+      this.gHit = S("g", null, this.svg);
+      this.cells = FV.C2N.map((v, c) => {
+        const pts = v.map(n => this.P(FV.X[n - 1]).join(",")).join(" ");
+        const poly = S("polygon", { points: pts, style: { fill: "var(--surface)", stroke: "none" } }, this.gCells);
+        if (o.onCell) {
+          poly.style.cursor = "pointer";
+          poly.addEventListener("click", () => o.onCell(c + 1));
+        }
+        return poly;
+      });
+      this.faces = FV.faces.map(f => {
+        const a = this.P(FV.X[f.a - 1]);
+        const b = this.P(FV.X[f.b - 1]);
+        return S("line", {
+          x1: a[0], y1: a[1], x2: b[0], y2: b[1],
+          style: { stroke: "var(--grid)", strokeWidth: 1.3 }
+        }, this.gFaces);
+      });
+      if (o.onFace) {
+        FV.faces.forEach((f, fi) => {
+          const a = this.P(FV.X[f.a - 1]);
+          const b = this.P(FV.X[f.b - 1]);
+          const hit = S("line", {
+            x1: a[0], y1: a[1], x2: b[0], y2: b[1], tabindex: "0",
+            "aria-label": TR("面 f", "face f") + f.id,
+            style: { stroke: "transparent", strokeWidth: 14, cursor: "pointer" }
+          }, this.gHit);
+          hit.addEventListener("mouseenter", () => o.onFace(fi));
+          hit.addEventListener("focus", () => o.onFace(fi));
+          hit.addEventListener("click", () => o.onFace(fi));
+        });
+      }
+      this.dots = FV.cent.map(c => {
+        const p = this.P(c);
+        return S("circle", { cx: p[0], cy: p[1], r: 2.6, style: { fill: "var(--muted)" } }, this.gBase);
+      });
+      if (o.cellLabels !== false) {
+        FV.cent.forEach((c, i) => {
+          const p = this.P(c);
+          S("text", {
+            x: p[0], y: p[1] - 9, "text-anchor": "middle", text: "c" + (i + 1),
+            style: { fill: "var(--muted)", fontFamily: "var(--font-mono)", fontSize: "11px" }
+          }, this.gBase);
+        });
+      }
+      if (o.faceLabels) this.drawFaceLabels();
+      if (o.nodeLabels) this.drawNodeLabels();
+    }
+
+    P(x) {
+      return [this.pad + (x[0] - this.bb[0]) * this.s,
+        this.pad + (this.bb[3] - x[1]) * this.s];
+    }
+
+    cellCenter(c) { return this.P(window.FV.cent[c - 1]); }
+
+    faceMid(fi) { return this.P(window.FV.faces[fi].mid); }
+
+    nhat(fi) {
+      const f = window.FV.faces[fi];
+      return [f.n[0] / f.len, -f.n[1] / f.len];
+    }
+
+    drawFaceLabels() {
+      const FV = window.FV;
+      FV.faces.forEach((f, fi) => {
+        const m = this.faceMid(fi);
+        const nh = this.nhat(fi);
+        const role = f.R ? "ink" : (f.wall ? "amber" : (f.inflow ? "primal" : "adjoint"));
+        arrow(this.gNormals, this.mid, m, [m[0] + nh[0] * 22, m[1] + nh[1] * 22], role, 1.4);
+        S("text", {
+          x: m[0] - nh[0] * 13, y: m[1] - nh[1] * 13 + 4, "text-anchor": "middle", text: "f" + f.id,
+          style: { fill: "var(--" + role + ")", fontFamily: "var(--font-mono)", fontSize: "11px" }
+        }, this.gNormals);
+      });
+    }
+
+    drawNodeLabels() {
+      window.FV.X.forEach((x, i) => {
+        const p = this.P(x);
+        S("circle", { cx: p[0], cy: p[1], r: 8, style: { fill: "var(--surface)", stroke: "var(--grid)" } }, this.gBase);
+        S("text", {
+          x: p[0], y: p[1] + 3.5, "text-anchor": "middle", text: String(i + 1),
+          style: { fill: "var(--muted)", fontFamily: "var(--font-mono)", fontSize: "9.5px" }
+        }, this.gBase);
+      });
+    }
+
+    resetCells() {
+      this.cells.forEach(p => { p.style.fill = "var(--surface)"; p.style.fillOpacity = 1; });
+    }
+
+    fillCell(c, role, opacity) {
+      const p = this.cells[c - 1];
+      p.style.fill = "var(--" + role + ")";
+      p.style.fillOpacity = opacity;
+    }
+
+    resetFaces() {
+      this.faces.forEach(l => { l.style.stroke = "var(--grid)"; l.style.strokeWidth = 1.3; });
+    }
+
+    markFace(fi, role, width) {
+      const l = this.faces[fi];
+      l.style.stroke = "var(--" + role + ")";
+      l.style.strokeWidth = width || 4;
+    }
+
+    clear() { this.gOver.replaceChildren(); }
+
+    arrow(p, q, role, w, sa, sb, dash) { return arrow(this.gOver, this.mid, p, q, role, w, sa, sb, dash); }
+
+    chip(x, y, text, role, opts) { chip(this.gOver, x, y, text, role, opts); }
+
+    text(x, y, t, role, size, anchor) {
+      return S("text", {
+        x: x, y: y, "text-anchor": anchor || "middle", text: t,
+        style: { fill: "var(--" + (role || "ink") + ")", fontFamily: "var(--font-mono)", fontSize: (size || 12) + "px" }
+      }, this.gOver);
+    }
+  }
+
+  /* --------------------------------------------------------------- lanes */
+  class Lanes {
+    constructor(host) {
+      /* lane width follows the number of unknowns, so the same view works
+         for a small patch and for the larger annulus mesh */
+      this.NC = (window.FV && window.FV.NC) || 10;
+      this.bw = this.NC > 20 ? 54 : (this.NC > 12 ? 66 : 82);
+      this.gap = this.NC > 20 ? 8 : 12;
+      this.x0 = 44;
+      this.vs = this.NC > 20 ? 11.5 : 13;
+      this.W = this.x0 + this.NC * (this.bw + this.gap) + 24;
+      this.Hh = 262;
+      this.svg = S("svg", { viewBox: "0 0 " + this.W + " " + this.Hh, role: "img", "aria-label": TR("未知量数组之间的数据流", "data flow between the unknown arrays") }, host);
+      this.mid = markers(this.svg);
+      this.g = S("g", null, this.svg);
+      this.topY = 36;
+      this.botY = 190;
+      this.bh = 44;
+      this.faceY = 114;
+      this.faceH = 40;
+    }
+
+    bx(c) { return this.x0 + (c - 1) * (this.bw + this.gap); }
+
+    render(st) {
+      const g = this.g;
+      g.replaceChildren();
+      /* titleBelow: the inter-lane gap carries the flow arrows and their
+         chips (a bottom-lane chip sits at (botY + faceEdge)/2 = 172), so the
+         bottom lane labels itself UNDER its bars instead of colliding there */
+      const lane = (y, title, vals, role, active, nd, titleBelow) => {
+        S("text", {
+          x: this.x0, y: titleBelow ? y + this.bh + 18 : y - 10, text: title,
+          style: { fill: "var(--muted)", fontSize: "12.5px", fontFamily: "var(--font-body)" }
+        }, g);
+        for (let c = 1; c <= this.NC; c++) {
+          const on = active && active.indexOf(c) >= 0;
+          const v = vals ? vals[c - 1] : null;
+          const nz = v !== null && Math.abs(v) > 1e-12;
+          S("rect", {
+            x: this.bx(c), y: y, width: this.bw, height: this.bh, rx: 6,
+            style: {
+              fill: on ? "var(--" + role + "-soft)" : (nz && st.tint ? "var(--" + role + "-soft)" : "var(--surface)"),
+              stroke: on ? "var(--" + role + ")" : "var(--rule)", strokeWidth: on ? 2 : 1
+            }
+          }, g);
+          S("text", {
+            x: this.bx(c) + 6, y: y + 14, text: String(c),
+            style: { fill: "var(--muted)", fontSize: "10px", fontFamily: "var(--font-mono)" }
+          }, g);
+          S("text", {
+            x: this.bx(c) + this.bw / 2, y: y + 32, "text-anchor": "middle",
+            text: v === null ? "" : window.FV.fmt(v, nd === undefined ? 3 : nd),
+            style: { fill: nz ? "var(--ink)" : "var(--muted)", fontSize: this.vs + "px", fontFamily: "var(--font-mono)" }
+          }, g);
+        }
+      };
+      lane(this.topY, st.topTitle, st.topVals, st.topRole, st.topActive, st.topNd);
+      lane(this.botY, st.botTitle, st.botVals, st.botRole, st.botActive, st.botNd, true);
+
+      if (st.faceCells) {
+        const [L, R] = st.faceCells;
+        const cx = R ? (this.bx(L) + this.bx(R)) / 2 + this.bw / 2 : this.bx(L) + this.bw / 2;
+        const fw = 250;
+        const fx = Math.min(Math.max(cx - fw / 2, 8), this.W - fw - 8);
+        const fcx = fx + fw / 2;
+        S("rect", {
+          x: fx, y: this.faceY, width: fw, height: this.faceH, rx: 8,
+          style: { fill: "var(--violet-soft)", stroke: "var(--violet)", strokeWidth: 1.5 }
+        }, g);
+        S("text", {
+          x: fcx, y: this.faceY + 25, "text-anchor": "middle", text: st.faceText || "",
+          style: { fill: "var(--ink)", fontSize: "13px", fontFamily: "var(--font-mono)" }
+        }, g);
+        const topB = this.topY + this.bh;
+        const botT = this.botY;
+        for (const fl of st.flows || []) {
+          let p, q;
+          const toFace = fl.dir === "in";
+          if (fl.ghost) {
+            const gx = fx + fw + 70 > this.W ? fx - 70 : fx + fw + 70;
+            chip(g, gx, this.faceY + this.faceH / 2, fl.ghost, "muted", { size: 12 });
+            p = [gx + (gx > fcx ? -34 : 34), this.faceY + this.faceH / 2];
+            q = [gx > fcx ? fx + fw : fx, this.faceY + this.faceH / 2];
+            arrow(g, this.mid, p, q, "muted", 1.6, 2, 3, "4 3");
+            continue;
+          }
+          const bxc = this.bx(fl.cell) + this.bw / 2;
+          const laneY = fl.lane === "top" ? topB : botT;
+          const faceEdge = fl.lane === "top" ? this.faceY : this.faceY + this.faceH;
+          const fxc = Math.min(Math.max(bxc, fx + 20), fx + fw - 20);
+          if (toFace) { p = [bxc, laneY]; q = [fxc, faceEdge]; }
+          else { p = [fxc, faceEdge]; q = [bxc, laneY]; }
+          arrow(g, this.mid, p, q, fl.role, 2.2, 2, 4);
+          if (fl.label) {
+            const lx = (p[0] + q[0]) / 2;
+            const ly = (p[1] + q[1]) / 2;
+            chip(g, lx + (lx >= fcx ? 34 : -34), ly, fl.label, fl.role, { size: 11 });
+          }
+        }
+      }
+    }
+  }
+
+  /* ---------------------------------------------------------------- code */
+  function esc(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  class Code {
+    constructor(host, lines, extraClass) {
+      this.root = H("div", { class: "code" + (extraClass ? " " + extraClass : "") }, host);
+      this.rows = lines.map((ln, i) => {
+        const row = H("div", { class: "ln" }, this.root);
+        H("span", { class: "no", text: String(i + 1) }, row);
+        const src = esc(ln[0]).replace(/\b(function|for each|if|then|else|return|repeat|until)\b/g,
+          "<span class=\"kw\">$1</span>");
+        H("span", { class: "src", html: src }, row);
+        H("span", { class: "cm", text: ln[1] || "" }, row);
+        return row;
+      });
+    }
+
+    setActive(n) {
+      this.rows.forEach((r, i) => r.classList.toggle("active", i + 1 === n));
+    }
+  }
+
+  /* -------------------------------------------------------------- player */
+  const ICON = {
+    first: "M2 2h2v12H2zM14 2L5.5 8 14 14z",
+    back: "M13 2L4.5 8 13 14z",
+    play: "M4 2l10 6-10 6z",
+    pause: "M3 2h3.5v12H3zM9.5 2H13v12H9.5z",
+    fwd: "M3 2l8.5 6L3 14z",
+    last: "M2 2l8.5 6L2 14zM12 2h2v12h-2z"
+  };
+
+  function iconBtn(parent, name, label, cls) {
+    const b = H("button", { class: "btn" + (cls ? " " + cls : ""), type: "button", "aria-label": label }, parent);
+    const svg = S("svg", { viewBox: "0 0 16 16", "aria-hidden": "true" }, b);
+    const path = S("path", { d: ICON[name] }, svg);
+    const span = H("span", { text: label }, b);
+    return { b, path, span };
+  }
+
+  class Player {
+    constructor(host, opt) {
+      this.count = opt.count;
+      this.renderFn = opt.render;
+      this.k = 0;
+      this.timer = null;
+      this.speed = opt.speed || 420;
+      const bar = H("div", { class: "controls" }, host);
+      const first = iconBtn(bar, "first", TR("开头", "first"));
+      const back = iconBtn(bar, "back", TR("上一步", "previous"));
+      this.playBtn = iconBtn(bar, "play", TR("播放", "play"), "primary");
+      const fwd = iconBtn(bar, "fwd", TR("下一步", "next"));
+      const last = iconBtn(bar, "last", TR("结尾", "last"));
+      this.range = H("input", {
+        type: "range", min: "0", max: String(this.count - 1), value: "0", class: "range",
+        id: opt.id + "-pos", "aria-label": TR("进度", "progress")
+      }, bar);
+      this.sel = H("select", { id: opt.id + "-speed", "aria-label": TR("速度", "speed") }, bar);
+      [[TR("慢", "slow"), 900], [TR("中", "medium"), 420], [TR("快", "fast"), 140], [TR("很快", "very fast"), 45]].forEach(([t, v]) => {
+        const op = H("option", { value: String(v), text: t }, this.sel);
+        if (v === this.speed) op.selected = true;
+      });
+      this.counter = H("span", { class: "counter" }, bar);
+      first.b.addEventListener("click", () => { this.pause(); this.set(0); });
+      back.b.addEventListener("click", () => { this.pause(); this.set(this.k - 1); });
+      fwd.b.addEventListener("click", () => { this.pause(); this.set(this.k + 1); });
+      last.b.addEventListener("click", () => { this.pause(); this.set(this.count - 1); });
+      this.playBtn.b.addEventListener("click", () => (this.timer ? this.pause() : this.play()));
+      this.range.addEventListener("input", () => { this.pause(); this.set(Number(this.range.value)); });
+      this.sel.addEventListener("change", () => {
+        this.speed = Number(this.sel.value);
+        if (this.timer) { this.pause(); this.play(); }
+      });
+      if (opt.keyTarget) {
+        opt.keyTarget.addEventListener("keydown", e => {
+          if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
+          if (e.key === "ArrowRight") { e.preventDefault(); this.pause(); this.set(this.k + 1); }
+          if (e.key === "ArrowLeft") { e.preventDefault(); this.pause(); this.set(this.k - 1); }
+        });
+      }
+    }
+
+    set(k) {
+      this.k = Math.max(0, Math.min(this.count - 1, k));
+      this.range.value = String(this.k);
+      this.counter.textContent = (this.k + 1) + " / " + this.count;
+      this.renderFn(this.k);
+    }
+
+    /* the step count changes when a lab switches wall treatment. Re-using
+       the player (rather than building a second one) matters: the keydown
+       handler registered in the constructor has no removal path, so a second
+       instance would leave two players reacting to the arrow keys. */
+    setCount(n) {
+      this.count = n;
+      this.range.max = String(n - 1);
+      this.set(Math.min(this.k, n - 1));
+    }
+
+    play() {
+      if (this.k >= this.count - 1) this.set(0);
+      this.playBtn.path.setAttribute("d", ICON.pause);
+      this.playBtn.span.textContent = TR("暂停", "pause");
+      this.playBtn.b.setAttribute("aria-label", TR("暂停", "pause"));
+      this.timer = setInterval(() => {
+        if (this.k >= this.count - 1) this.pause();
+        else this.set(this.k + 1);
+      }, this.speed);
+    }
+
+    pause() {
+      if (this.timer) clearInterval(this.timer);
+      this.timer = null;
+      this.playBtn.path.setAttribute("d", ICON.play);
+      this.playBtn.span.textContent = TR("播放", "play");
+      this.playBtn.b.setAttribute("aria-label", TR("播放", "play"));
+    }
+  }
+
+  window.VIZ = { S, H, MeshView, Lanes, Code, Player, arrow, chip, markers };
+})();
+
+/* Drawing for the quasi-one-dimensional pages.
+
+   VIZ (shared with the 2-D pages) already supplies the generic machinery:
+   S/H element builders, Lanes, the pseudocode Code player and the step
+   Player. What the duct needs on top is a view of its own:
+
+     DuctView  -- the duct drawn as the region between +-A(x)/2, split into
+                  cells or dual volumes, clickable, with a value strip.
+     Plot      -- a small x-y plot for p, M, rho along the duct.
+
+   Colour rule, inherited from the 2-D pages: violet marks the current or
+   selected item, blue is the inflow side, red the outflow side, green is
+   tangent material, amber is reserved -- on these pages it marks the DUCT
+   WALL, the surface the areas actually describe.                          */
+(function () {
+  "use strict";
+  const S = window.VIZ.S, H = window.VIZ.H;
+  const TR = (zh, en) => (window.t ? window.t(zh, en) : zh);
+
+  const ROLES = ["primal", "tangent", "adjoint", "amber", "violet", "muted", "ink", "grid",
+                 "rule", "sunken", "ink2"];
+  const col = r => "var(--" + (ROLES.indexOf(r) >= 0 ? r : "ink") + ")";
+
+  /* ---------------------------------------------------------------- DuctView
+     opts: { areas, nodes (x of each face/node), kind: "cell"|"node",
+             height, label, onPick }                                        */
+  class DuctView {
+    constructor(host, opts) {
+      const o = this.o = Object.assign({
+        W: 680, H: 250, padX: 46, padTop: 26, padBot: 46, kind: "cell",
+        scale: 150, onPick: null, label: ""
+      }, opts || {});
+      this.host = host;
+      this.sel = -1;
+      this.svg = S("svg", {
+        viewBox: "0 0 " + o.W + " " + o.H, role: "img",
+        "aria-label": o.label || TR("变截面流道", "the variable-area duct"),
+        style: { width: "100%", height: "auto", display: "block" }
+      });
+      host.innerHTML = "";
+      host.appendChild(this.svg);
+    }
+
+    /* map x in [0,1] and area to screen */
+    px(x) {
+      const o = this.o;
+      return o.padX + x * (o.W - 2 * o.padX);
+    }
+    axis() { return (this.o.padTop + (this.o.H - this.o.padBot)) / 2; }
+    py(a) { return this.axis() - a * this.o.scale / 2; }
+
+    /* values: one number per cell (kind "cell") or per node (kind "node") */
+    draw(state) {
+      const o = this.o, xs = o.nodes, A = o.areas;
+      const s = [];
+      const yc = this.axis();
+      const vals = (state && state.values) || null;
+      const lo = vals ? Math.min.apply(null, vals) : 0;
+      const hi = vals ? Math.max.apply(null, vals) : 1;
+      const tint = v => {
+        if (!vals) return "var(--sunken)";
+        const t = hi > lo ? (v - lo) / (hi - lo) : 0.5;
+        /* one hue, light to saturated: readable in both themes */
+        return "color-mix(in srgb, var(--primal) " + (8 + 34 * t).toFixed(0) + "%, transparent)";
+      };
+
+      /* the duct wall: amber, because the wall IS the design surface */
+      const top = xs.map((x, k) => this.px(x) + "," + this.py(A[k])).join(" ");
+      const bot = xs.map((x, k) => this.px(x) + "," + this.py(-A[k])).join(" ");
+      s.push(S("polyline", { points: top, fill: "none", stroke: col("amber"), "stroke-width": 2.6 }));
+      s.push(S("polyline", { points: bot, fill: "none", stroke: col("amber"), "stroke-width": 2.6 }));
+
+      /* the cells (or dual volumes) as filled bands */
+      const nCell = o.kind === "cell" ? xs.length - 1 : xs.length;
+      for (let i = 0; i < nCell; i++) {
+        let xa, xb;
+        if (o.kind === "cell") { xa = xs[i]; xb = xs[i + 1]; }
+        else {
+          xa = i === 0 ? xs[0] : 0.5 * (xs[i - 1] + xs[i]);
+          xb = i === xs.length - 1 ? xs[i] : 0.5 * (xs[i] + xs[i + 1]);
+        }
+        const aA = this.areaAt(xa), aB = this.areaAt(xb);
+        const pts = [
+          this.px(xa) + "," + this.py(aA), this.px(xb) + "," + this.py(aB),
+          this.px(xb) + "," + this.py(-aB), this.px(xa) + "," + this.py(-aA)
+        ].join(" ");
+        const isSel = i === this.sel;
+        const g = S("polygon", {
+          points: pts,
+          fill: isSel ? "color-mix(in srgb, var(--violet) 26%, transparent)" : tint(vals ? vals[i] : 0),
+          stroke: isSel ? col("violet") : col("grid"),
+          "stroke-width": isSel ? 2.2 : 0.9,
+          style: o.onPick ? { cursor: "pointer" } : {},
+          role: o.onPick ? "button" : null,
+          tabindex: o.onPick ? "0" : null,
+          "aria-label": (o.kind === "cell" ? TR("单元 ", "cell ") : TR("节点 ", "node ")) + (i + 1)
+        });
+        if (o.onPick) {
+          const pick = () => { this.sel = i; this.draw(state); o.onPick(i); };
+          g.addEventListener("click", pick);
+          g.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } });
+        }
+        s.push(g);
+      }
+
+      /* the axis, and the face / node ticks */
+      s.push(S("line", { x1: this.px(0), y1: yc, x2: this.px(1), y2: yc,
+        stroke: col("grid"), "stroke-width": 1, "stroke-dasharray": "4 4" }));
+      xs.forEach((x, k) => {
+        const a = A[k];
+        s.push(S("line", { x1: this.px(x), y1: this.py(a), x2: this.px(x), y2: this.py(-a),
+          stroke: col("grid"), "stroke-width": 0.8 }));
+      });
+
+      /* boundary markers: inflow blue on the left, outflow red on the right */
+      const mark = (x, c, txt) => {
+        const X = this.px(x);
+        s.push(S("line", { x1: X, y1: this.py(this.areaAt(x)) - 10, x2: X, y2: this.py(-this.areaAt(x)) + 10,
+          stroke: col(c), "stroke-width": 3 }));
+        s.push(S("text", { x: X, y: o.H - 16, "text-anchor": "middle",
+          style: { fontSize: "11.5px", fill: col(c) }, text: txt }));
+      };
+      mark(0, "primal", TR("入口  p₀, T₀", "inflow  p₀, T₀"));
+      mark(1, "adjoint", TR("出口  p_b", "outflow  p_b"));
+
+      /* numbering, every other one when the grid is fine */
+      const step = nCell > 16 ? 2 : 1;
+      for (let i = 0; i < nCell; i += step) {
+        let xm;
+        if (o.kind === "cell") xm = 0.5 * (xs[i] + xs[i + 1]);
+        else xm = xs[i];
+        s.push(S("text", { x: this.px(xm), y: yc + 4.5, "text-anchor": "middle",
+          style: { fontSize: "10.5px", fill: "var(--ink2)", fontWeight: "500" },
+          text: String(i + 1) }));
+      }
+      this.svg.replaceChildren.apply(this.svg, s);
+      return this;
+    }
+
+    areaAt(x) {
+      const xs = this.o.nodes, A = this.o.areas;
+      if (x <= xs[0]) return A[0];
+      if (x >= xs[xs.length - 1]) return A[A.length - 1];
+      for (let k = 0; k + 1 < xs.length; k++) {
+        if (x >= xs[k] && x <= xs[k + 1]) {
+          const t = (x - xs[k]) / (xs[k + 1] - xs[k]);
+          return A[k] * (1 - t) + A[k + 1] * t;
+        }
+      }
+      return A[A.length - 1];
+    }
+
+    select(i, state) { this.sel = i; this.draw(state); return this; }
+  }
+
+  /* ------------------------------------------------------------------- Plot
+     a small line plot of one quantity along the duct                      */
+  class Plot {
+    constructor(host, opts) {
+      const o = this.o = Object.assign({ W: 680, H: 200, padL: 52, padR: 16, padT: 18, padB: 34 }, opts || {});
+      this.svg = S("svg", { viewBox: "0 0 " + o.W + " " + o.H, role: "img",
+        "aria-label": o.label || "", style: { width: "100%", height: "auto", display: "block" } });
+      host.innerHTML = "";
+      host.appendChild(this.svg);
+    }
+    draw(series, opts) {
+      const o = this.o, cfg = opts || {};
+      const all = series.reduce((a, s) => a.concat(s.y), []);
+      let lo = cfg.lo !== undefined ? cfg.lo : Math.min.apply(null, all);
+      let hi = cfg.hi !== undefined ? cfg.hi : Math.max.apply(null, all);
+      if (hi - lo < 1e-12) { hi = lo + 1; }
+      const pad = 0.08 * (hi - lo); lo -= pad; hi += pad;
+      const X = x => o.padL + x * (o.W - o.padL - o.padR);
+      const Y = v => o.H - o.padB - (v - lo) / (hi - lo) * (o.H - o.padT - o.padB);
+      const s = [];
+      /* frame and two gridlines */
+      s.push(S("line", { x1: o.padL, y1: o.H - o.padB, x2: o.W - o.padR, y2: o.H - o.padB,
+        stroke: col("rule"), "stroke-width": 1 }));
+      s.push(S("line", { x1: o.padL, y1: o.padT, x2: o.padL, y2: o.H - o.padB,
+        stroke: col("rule"), "stroke-width": 1 }));
+      [lo + (hi - lo) * 0.5, hi - pad].forEach(v => {
+        s.push(S("text", { x: o.padL - 8, y: Y(v) + 4, "text-anchor": "end",
+          style: { fontSize: "10.5px", fill: "var(--muted)" }, text: v.toPrecision(3) }));
+      });
+      s.push(S("text", { x: (o.padL + o.W - o.padR) / 2, y: o.H - 8, "text-anchor": "middle",
+        style: { fontSize: "11px", fill: "var(--muted)" }, text: "x" }));
+      series.forEach(ser => {
+        const pts = ser.x.map((x, k) => X(x) + "," + Y(ser.y[k])).join(" ");
+        s.push(S("polyline", { points: pts, fill: "none", stroke: col(ser.role || "primal"),
+          "stroke-width": ser.width || 2.2,
+          "stroke-dasharray": ser.dash || null }));
+        if (ser.dots !== false) {
+          ser.x.forEach((x, k) => s.push(S("circle", { cx: X(x), cy: Y(ser.y[k]), r: 2.6,
+            fill: col(ser.role || "primal") })));
+        }
+        if (ser.name) {
+          s.push(S("text", { x: o.W - o.padR, y: Y(ser.y[ser.y.length - 1]) - 8, "text-anchor": "end",
+            style: { fontSize: "11px", fill: col(ser.role || "primal") }, text: ser.name }));
+        }
+      });
+      this.svg.replaceChildren.apply(this.svg, s);
+      return this;
+    }
+  }
+
+  /* --------------------------------------------------------------- LoopView
+     The duct doubles as the lane diagram: the current face is marked, the
+     cells it writes into are tinted, and one component of the accumulating
+     array is drawn as a bar under each cell. Which component is on show is
+     the reader's choice -- the point being that every cell carries three.  */
+  class LoopView {
+    constructor(host, opts) {
+      const o = this.o = Object.assign({
+        W: 680, H: 300, padX: 46, padTop: 20, ductH: 120, barTop: 168, barH: 74,
+        nodes: null, areas: null, comp: 1
+      }, opts || {});
+      this.svg = S("svg", { viewBox: "0 0 " + o.W + " " + o.H, role: "img",
+        "aria-label": TR("面循环的数据流", "the data flow of the face loop"),
+        style: { width: "100%", height: "auto", display: "block" } });
+      host.innerHTML = "";
+      host.appendChild(this.svg);
+    }
+    px(x) { const o = this.o; return o.padX + x * (o.W - 2 * o.padX); }
+
+    /* st: { face, cells:[..], acc:[3N], comp, role, note } */
+    render(st) {
+      const o = this.o, xs = o.nodes, A = o.areas, N = xs.length - 1;
+      const s = [];
+      const yc = o.padTop + o.ductH / 2;
+      const py = a => yc - a * 52;
+      const role = st.role || "primal";
+
+      /* duct walls */
+      s.push(S("polyline", { points: xs.map((x, k) => this.px(x) + "," + py(A[k])).join(" "),
+        fill: "none", stroke: col("amber"), "stroke-width": 2.2 }));
+      s.push(S("polyline", { points: xs.map((x, k) => this.px(x) + "," + py(-A[k])).join(" "),
+        fill: "none", stroke: col("amber"), "stroke-width": 2.2 }));
+
+      /* cells */
+      for (let i = 0; i < N; i++) {
+        const hot = st.cells && st.cells.indexOf(i) >= 0;
+        s.push(S("polygon", {
+          points: [this.px(xs[i]) + "," + py(A[i]), this.px(xs[i + 1]) + "," + py(A[i + 1]),
+                   this.px(xs[i + 1]) + "," + py(-A[i + 1]), this.px(xs[i]) + "," + py(-A[i])].join(" "),
+          fill: hot ? "color-mix(in srgb, var(--" + role + ") 22%, transparent)" : "var(--surface)",
+          stroke: hot ? col(role) : col("grid"), "stroke-width": hot ? 2 : 0.8 }));
+        s.push(S("text", { x: this.px(0.5 * (xs[i] + xs[i + 1])), y: yc + 4, "text-anchor": "middle",
+          style: { fontSize: "10px", fill: "var(--ink2)" }, text: String(i + 1) }));
+      }
+      /* the current face */
+      if (st.face !== undefined && st.face >= 0) {
+        const X = this.px(xs[st.face]), a = A[st.face];
+        s.push(S("line", { x1: X, y1: py(a) - 8, x2: X, y2: py(-a) + 8,
+          stroke: col("violet"), "stroke-width": 3.4 }));
+        s.push(S("text", { x: X, y: py(a) - 14, "text-anchor": "middle",
+          style: { fontSize: "11px", fill: col("violet"), fontWeight: "600" },
+          text: "f" + st.face }));
+      }
+
+      /* the accumulating array, one bar per cell, for the chosen component */
+      const comp = st.comp === undefined ? o.comp : st.comp;
+      const vals = [];
+      for (let i = 0; i < N; i++) vals.push(st.acc ? st.acc[3 * i + comp] : 0);
+      const mx = Math.max(1e-30, Math.max.apply(null, vals.map(Math.abs)));
+      const base = o.barTop + o.barH / 2;
+      s.push(S("line", { x1: this.px(0), y1: base, x2: this.px(1), y2: base,
+        stroke: col("rule"), "stroke-width": 1 }));
+      for (let i = 0; i < N; i++) {
+        const xa = this.px(xs[i]) + 2, xb = this.px(xs[i + 1]) - 2;
+        const h = (vals[i] / mx) * (o.barH / 2 - 4);
+        const hot = st.cells && st.cells.indexOf(i) >= 0;
+        s.push(S("rect", { x: xa, y: h >= 0 ? base - h : base, width: Math.max(2, xb - xa),
+          height: Math.abs(h), rx: 2,
+          fill: hot ? col(role) : "color-mix(in srgb, var(--" + role + ") 38%, transparent)" }));
+      }
+      const names = [TR("质量", "mass"), TR("动量", "momentum"), TR("能量", "energy")];
+      s.push(S("text", { x: this.px(0), y: o.barTop - 8,
+        style: { fontSize: "11.5px", fill: "var(--muted)" },
+        text: (st.arrayName || "r") + "  ·  " + names[comp] +
+              TR("分量（另两个分量同时在累加）", " component (the other two accumulate alongside)") }));
+      if (st.note) {
+        s.push(S("text", { x: this.px(0), y: o.H - 10,
+          style: { fontSize: "12px", fill: "var(--ink2)" }, text: st.note }));
+      }
+      this.svg.replaceChildren.apply(this.svg, s);
+      return this;
+    }
+  }
+
+  window.VIZQ = { DuctView: DuctView, Plot: Plot, LoopView: LoopView, col: col };
+})();
+
+/* Interactive panels for the node-centred quasi-1-D page.
+
+   Same panels as the cell page wherever the two schemes agree, plus the
+   ones that only make sense here: the constrained rows, their gradients,
+   and what happens to the gradient if psi is not zeroed on them.         */
+(function () {
+  "use strict";
+  const F = window.FVQN, Q = window.VIZQ, V = window.VIZ;
+  const TR = (zh, en) => (window.t ? window.t(zh, en) : zh);
+
+  const A0 = F.AREA0.slice();
+  const U0 = F.newton(A0);
+  const node = i => U0.slice(3 * i, 3 * i + 3);
+  const FIELD = Array.from({ length: F.NN }, (_, i) => {
+    const q = F.prim(node(i));
+    return { rho: q.rho, u: q.u, p: q.p, a: q.a, M: q.u / q.a, T: q.T };
+  });
+  const PTGT = F.targetPressures();
+  const rw = (k, v) => "<tr><th>" + k + "</th><td class=\"num\">" + v + "</td></tr>";
+
+  /* ------------------------------------------------ the duct explorer */
+  function explorer() {
+    const host = document.getElementById("duct-explorer");
+    if (!host) return;
+    const box = host.querySelector(".svgbox");
+    const info = host.querySelector(".lab-info");
+    const sel = host.querySelector("select.q1d-quantity");
+    let picked = 6;
+    const qs = { p: i => FIELD[i].p, M: i => FIELD[i].M, rho: i => FIELD[i].rho, u: i => FIELD[i].u };
+    const duct = new Q.DuctView(box, {
+      nodes: F.XN, areas: A0, kind: "node",
+      label: TR("流道与对偶控制体", "the duct and its dual volumes"),
+      onPick: i => { picked = i; paint(); }
+    });
+    function paint() {
+      const vals = Array.from({ length: F.NN }, (_, i) => qs[(sel && sel.value) || "p"](i));
+      duct.select(picked, { values: vals });
+      const i = picked, q = FIELD[i], r = F.residual(U0, A0);
+      const cons = [0, 1, 2].filter(k => F.isConstrained(i, k));
+      info.innerHTML = "<table class=\"kv\">" +
+        rw(TR("节点", "node"), "n<sub>" + (i + 1) + "</sub>  ·  x = " + F.XN[i].toFixed(4) +
+           TR("，面积 A = ", ", area A = ") + A0[i].toFixed(4)) +
+        rw(TR("控制体", "control volume"), F.volumes(A0)[i].toExponential(4) +
+           (i === 0 || i === F.NN - 1 ? TR("（边界节点：半个控制体）", " (boundary node: a half volume)") : "")) +
+        rw(TR("守恒量 U", "conserved U"), "(" + node(i).map(x => x.toFixed(5)).join(", ") + ")") +
+        rw(TR("原始量", "primitive"), "ρ = " + q.rho.toFixed(5) + "，u = " + q.u.toFixed(5) +
+           "，p = " + q.p.toFixed(5) + "，M = " + q.M.toFixed(4)) +
+        rw(TR("残差", "residual"), "(" + r.slice(3 * i, 3 * i + 3).map(x => x.toExponential(1)).join(", ") + ")") +
+        rw(TR("受约束的行", "constrained rows"), cons.length
+            ? "<b>" + cons.map(k => ["mass", "momentum", "energy"][k]).join(", ") + "</b>" +
+              TR("（强加，循环后替换）", " (imposed strongly, replaced after the loop)")
+            : TR("无——普通的通量平衡", "none &mdash; an ordinary flux balance")) +
+        "</table>";
+    }
+    if (sel) sel.addEventListener("change", paint);
+    (window.REPAINT = window.REPAINT || []).push(paint);
+    paint();
+  }
+
+  function fields() {
+    const host = document.getElementById("field-plots");
+    if (!host) return;
+    const boxes = host.querySelectorAll(".svgbox");
+    if (boxes.length < 2) return;
+    const draw = () => {
+      new Q.Plot(boxes[0], { label: TR("压力", "pressure") })
+        .draw([{ x: F.XN, y: FIELD.map(f => f.p), role: "primal", name: "p" }]);
+      new Q.Plot(boxes[1], { label: TR("马赫数", "Mach number") })
+        .draw([{ x: F.XN, y: FIELD.map(f => f.M), role: "adjoint", name: "M" }]);
+    };
+    (window.REPAINT = window.REPAINT || []).push(draw);
+    draw();
+  }
+
+  /* --------------------------------- the constrained rows and their rows */
+  function bclab() {
+    const host = document.getElementById("bc-lab");
+    if (!host) return;
+    const out = host.querySelector(".lab-info");
+    const draw = () => {
+      const t0 = F.totals(node(0)), pe = F.prim(node(F.NN - 1)).p;
+      const rows = F.WROWS.map(c => {
+        const g = F.constraintRow(U0, c);
+        const unit = g.filter(x => Math.abs(x) > 1e-12).length === 1;
+        return rw(TR("节点 ", "node ") + (c.node + 1) + TR("，第 ", ", row ") + c.row +
+                  TR(" 行 → ", " → ") + c.kind,
+                  "<span class=\"mono\">[" + g.map(x => (x >= 0 ? " " : "") + x.toFixed(4)).join(", ") + "]</span>" +
+                  (unit ? TR("（单位行）", " (a unit row)")
+                        : TR("　← <b>一般行向量</b>", "　← <b>a general row</b>")));
+      }).join("");
+      out.innerHTML = "<table class=\"kv\">" +
+        rw(TR("受约束的行数", "constrained rows"), "<b>" + F.WROWS.length + "</b>" +
+           TR("（入口 3 行中的 2 行，出口 3 行中的 1 行）",
+              " (2 of 3 at the inflow, 1 of 3 at the outflow)")) +
+        rw(TR("实测 p₀ / T₀", "measured p₀ / T₀"), t0.p0.toFixed(12) + " / " + t0.T0.toFixed(12)) +
+        rw(TR("实测出口 p", "measured exit p"), pe.toFixed(12)) +
+        rows +
+        "</table>";
+    };
+    (window.REPAINT = window.REPAINT || []).push(draw);
+    draw();
+  }
+
+  /* ------------------------------------------------ the three loop players */
+  const CODES = {
+    primal: () => [
+      ["function residual(u, A)", ""],
+      ["    r ← 0", ""],
+      ["", ""],
+      ["    for each dual face e", TR("边循环，12 条内部对偶面", "edge loop, 12 interior dual faces")],
+      ["        h ← flux(u[i], u[j], A_e)", TR("3 分量", "3 components")],
+      ["        r[i] += h", ""],
+      ["        r[j] -= h", ""],
+      ["    边界通量：用节点自己的状态", TR("边界节点就在边界上，无需 ghost", "the node IS the boundary: no ghost state")],
+      ["    每个节点：源项 p·ΔA", ""],
+      ["", ""],
+      ["    强加：替换受约束的行", TR("循环之后，2 + 1 行", "after the loop: 2 + 1 rows")],
+      ["    return r", ""]
+    ],
+    tangent: () => [
+      ["function residual_d(u, A, v)", TR("返回 A_bc·v", "returns A_bc·v")],
+      ["    r_d ← 0", ""],
+      ["", ""],
+      ["    for each dual face e", ""],
+      ["        h_d ← c_L·v[i] + c_R·v[j]", TR("两个 3×3 块", "two 3×3 blocks")],
+      ["        r_d[i] += h_d", ""],
+      ["        r_d[j] -= h_d", ""],
+      ["    边界通量的线性化", ""],
+      ["    源项的线性化", ""],
+      ["", ""],
+      ["    覆盖受约束的行：(∂c/∂u)·v", TR("循环之后", "after the loop")],
+      ["    return r_d", ""]
+    ],
+    adjoint: () => [
+      ["function residual_b(u, A, w)", TR("返回 A_bcᵀ·w", "returns A_bcᵀ·w")],
+      ["    w̃ ← w，把受约束行清零", TR("进循环之前，且用副本", "BEFORE the loop, and on a copy")],
+      ["    y ← 0", ""],
+      ["    for each dual face e", ""],
+      ["        h_b ← w̃[i] - w̃[j]", ""],
+      ["        y[i] += c_Lᵀ h_b", ""],
+      ["        y[j] += c_Rᵀ h_b", ""],
+      ["    边界通量的转置", ""],
+      ["    源项的转置", ""],
+      ["", ""],
+      ["    y[i] += w[i] · (∂c/∂u)", TR("出循环之后加回：原来的 w，乘约束梯度", "after the loop: the ORIGINAL w times the constraint gradient")],
+      ["    return y", ""]
+    ]
+  };
+
+  const rnd = (s => () => (s = (s * 1103515245 + 12345) % 2147483648) / 2147483648 - 0.5)(20260920);
+  const SEED_V = Array.from({ length: 3 * F.NN }, rnd);
+  const SEED_W = Array.from({ length: 3 * F.NN }, rnd);
+
+  function loopPlayer(kind, id) {
+    const host = document.getElementById(id);
+    if (!host) return;
+    const codeBox = host.querySelector(".code-host");
+    const viewBox = host.querySelector(".svgbox");
+    const ctl = host.querySelector(".player-host");
+    const note = host.querySelector(".lab-note");
+    const compSel = host.querySelector("select.q1d-comp");
+    if (!codeBox || !viewBox || !ctl) return;
+    const seed = kind === "tangent" ? SEED_V : (kind === "adjoint" ? SEED_W : null);
+    const role = kind === "primal" ? "primal" : (kind === "tangent" ? "tangent" : "adjoint");
+    const arrayName = kind === "primal" ? "r" : (kind === "tangent" ? "r_d" : "y");
+    let code, view, player, steps;
+    function build() {
+      codeBox.innerHTML = ""; ctl.innerHTML = "";
+      code = new V.Code(codeBox, CODES[kind]());
+      view = new Q.LoopView(viewBox, { nodes: F.XN, areas: A0 });
+      steps = F.trace(kind, U0, A0, seed);
+      player = new V.Player(ctl, { id: id, count: steps.length, render: paint });
+      paint(0);
+    }
+    function paint(k) {
+      const s = steps[k];
+      code.setActive(s.line);
+      const cells = [];
+      if (s.to !== undefined) cells.push(s.to);
+      if (s.L !== undefined) cells.push(s.L);
+      if (s.R !== undefined) cells.push(s.R);
+      view.render({
+        face: s.f !== undefined && s.f >= 0 ? s.f : -1,
+        cells: cells, acc: F.accumulate(steps, k), role: role,
+        comp: compSel ? Number(compSel.value) : 1,
+        arrayName: arrayName, note: s.text || ""
+      });
+      if (note) note.textContent = s.text || TR("循环结束", "the loop is finished");
+    }
+    if (compSel) compSel.addEventListener("change", () => paint(player ? player.k : 0));
+    (window.REPAINT = window.REPAINT || []).push(build);
+    build();
+  }
+
+  /* ------------------------------------------------ dot test */
+  function dotlab() {
+    const host = document.getElementById("dot-lab");
+    if (!host) return;
+    const out = host.querySelector(".lab-info");
+    const btn = host.querySelector("button.q1d-roll");
+    let seedN = 1;
+    const draw = () => {
+      const r = (s => () => (s = (s * 1103515245 + 12345) % 2147483648) / 2147483648 - 0.5)(seedN * 6151);
+      const n = 3 * F.NN;
+      let worst = 0, scale = 0;
+      const rows = [];
+      for (let t = 0; t < 5; t++) {
+        const v = Array.from({ length: n }, r), w = Array.from({ length: n }, r);
+        const lhs = F.dot(w, F.residualD(U0, A0, v));
+        const rhs = F.dot(F.residualB(U0, A0, w), v);
+        worst = Math.max(worst, Math.abs(lhs - rhs)); scale = Math.max(scale, Math.abs(lhs));
+        rows.push("<tr><td class=\"num\">" + lhs.toFixed(12) + "</td><td class=\"num\">" +
+          rhs.toFixed(12) + "</td><td class=\"num\">" +
+          Math.abs(lhs - rhs).toExponential(1).replace("e-", "e−") + "</td></tr>");
+      }
+      out.innerHTML = "<table class=\"kv\"><thead><tr><th>⟨w, A_bc v⟩</th><th>⟨A_bcᵀw, v⟩</th><th>" +
+        TR("差", "difference") + "</th></tr></thead><tbody>" + rows.join("") + "</tbody></table>" +
+        "<p class=\"num\" style=\"margin-top:8px\">" + TR("最大相对偏差 ", "largest relative deviation ") +
+        (worst / scale).toExponential(2).replace("e-", "e−") + "</p>";
+    };
+    if (btn) btn.addEventListener("click", () => { seedN++; draw(); });
+    (window.REPAINT = window.REPAINT || []).push(draw);
+    draw();
+  }
+
+  /* ------------------------------------------------ adjoint + gradient */
+  function adjointPanel() {
+    const host = document.getElementById("adj-lab");
+    if (!host) return;
+    const box = host.querySelector(".svgbox");
+    const info = host.querySelector(".lab-info");
+    const sel = host.querySelector("select.q1d-obj");
+    const draw = () => {
+      const kind = sel ? sel.value : "inverse";
+      const psi = F.adjointSolve(U0, A0, kind, PTGT);
+      const comp = k => Array.from({ length: F.NN }, (_, i) => psi[3 * i + k]);
+      new Q.Plot(box, { label: TR("伴随解", "the adjoint solution") })
+        .draw([{ x: F.XN, y: comp(0), role: "primal", name: "ψ₁" },
+               { x: F.XN, y: comp(1), role: "tangent", name: "ψ₂" },
+               { x: F.XN, y: comp(2), role: "adjoint", name: "ψ₃" }]);
+      const onW = F.WROWS.map(c => psi[3 * c.node + c.row]);
+      info.innerHTML = "<table class=\"kv\">" +
+        rw(TR("伴随方程", "adjoint equation"), "A_bcᵀΨ = −g") +
+        rw("max |Ψ|", Math.max.apply(null, psi.map(Math.abs)).toExponential(3)) +
+        rw(TR("约束行上的 Ψ", "Ψ on the constrained rows"),
+           onW.map(x => x.toExponential(2)).join(", ") +
+           TR("　← 不为零，所以第 10 节必须把它清零", "　← not zero, which is why Section 10 must zero it")) +
+        "</table>";
+    };
+    if (sel) sel.addEventListener("change", draw);
+    (window.REPAINT = window.REPAINT || []).push(draw);
+    draw();
+  }
+
+  function gradPanel() {
+    const host = document.getElementById("grad-lab");
+    if (!host) return;
+    const box = host.querySelector(".svgbox");
+    const info = host.querySelector(".lab-info");
+    const sel = host.querySelector("select.q1d-obj");
+    const draw = () => {
+      const kind = sel ? sel.value : "inverse";
+      const psi = F.adjointSolve(U0, A0, kind, PTGT);
+      const ex = F.dJdA(U0, A0, kind, PTGT);
+      const im = F.residualBA(U0, A0, psi);
+      const tot = ex.map((x, k) => x + im[k]);
+      /* the same thing WITHOUT zeroing psi on the constrained rows */
+      const only = psi.map(() => 0);
+      F.WROWS.forEach(c => { only[3 * c.node + c.row] = psi[3 * c.node + c.row]; });
+      const extra = rawGeom(only);
+      const wrong = tot.map((x, k) => x + extra[k]);
+      const relerr = Math.max.apply(null, wrong.map((x, k) => Math.abs(x - tot[k]))) /
+                     Math.max.apply(null, tot.map(Math.abs));
+      new Q.Plot(box, { label: TR("形状梯度", "the shape gradient") })
+        .draw([{ x: F.XN, y: tot, role: "violet", name: TR("正确的 dL/dA", "correct dL/dA") },
+               { x: F.XN, y: wrong, role: "adjoint", name: TR("忘记清零", "without the zeroing"), dash: "5 4" }]);
+      info.innerHTML = "<table class=\"kv\">" +
+        rw("max |dL/dA|", Math.max.apply(null, tot.map(Math.abs)).toExponential(3)) +
+        rw(TR("忘记清零 Ψ 的后果", "cost of forgetting to zero Ψ"),
+           "<b>" + (relerr * 100).toFixed(0) + "%</b>" +
+           TR("　相对误差——不是小偏差，是完全错了", "　relative error &mdash; not a small bias, simply wrong")) +
+        "</table>";
+    };
+    /* the reverse geometric loop WITHOUT the zeroing, for the contrast */
+    function rawGeom(w) {
+      const y = new Array(F.NN).fill(0);
+      for (let f = 0; f < F.NC; f++) {
+        const hhat = F.fluxNum(node(f), node(f + 1), 1);
+        let s = 0;
+        for (let k = 0; k < 3; k++) s += hhat[k] * (w[3 * f + k] - w[3 * (f + 1) + k]);
+        y[f] += 0.5 * s; y[f + 1] += 0.5 * s;
+      }
+      const FL = F.fluxPhys(node(0)), FR = F.fluxPhys(node(F.NN - 1));
+      for (let k = 0; k < 3; k++) {
+        y[0] -= FL[k] * w[k];
+        y[F.NN - 1] += FR[k] * w[3 * (F.NN - 1) + k];
+      }
+      const D = F.dDiffA(A0);
+      for (let i = 0; i < F.NN; i++) {
+        const p = F.prim(node(i)).p, wm = w[3 * i + 1];
+        for (let k = 0; k < F.NN; k++) y[k] -= p * D[i][k] * wm;
+      }
+      return y;
+    }
+    if (sel) sel.addEventListener("change", draw);
+    (window.REPAINT = window.REPAINT || []).push(draw);
+    draw();
+  }
+
+  function verify() {
+    const el = document.getElementById("verify-readout");
+    if (!el) return;
+    const draw = () => {
+      const rows = [];
+      for (const kind of ["inverse", "thrust"]) {
+        const psi = F.adjointSolve(U0, A0, kind, PTGT);
+        const grad = F.gradient(U0, A0, psi, kind, PTGT);
+        let e = 0, sc = 0;
+        for (let k = 0; k < F.NN; k++) {
+          const ap = A0.slice(), am = A0.slice();
+          ap[k] += 1e-6; am[k] -= 1e-6;
+          const Lp = F.objective(F.newton(ap, U0), ap, kind, PTGT);
+          const Lm = F.objective(F.newton(am, U0), am, kind, PTGT);
+          const fd = (Lp - Lm) / 2e-6;
+          sc = Math.max(sc, Math.abs(fd)); e = Math.max(e, Math.abs(grad[k] - fd));
+        }
+        rows.push("<tr><th>" + (kind === "inverse" ? TR("反设计", "inverse design") : TR("推力", "thrust")) +
+          "</th><td class=\"num\">" + (e / sc).toExponential(2).replace("e-", "e−") +
+          "</td><td class=\"num\">" + sc.toExponential(3) + "</td></tr>");
+      }
+      const At = F.targetAreas(), Ut = F.newton(At);
+      const L = F.objective(Ut, At, "inverse", PTGT);
+      const gt = F.gradient(Ut, At, F.adjointSolve(Ut, At, "inverse", PTGT), "inverse", PTGT);
+      const gm = Math.max.apply(null, gt.map(Math.abs));
+      el.innerHTML = "<table class=\"kv\"><thead><tr><th>" + TR("目标", "objective") + "</th><th>" +
+        TR("dL/dA 对全链路差分（相对）", "dL/dA vs full-chain differences (relative)") + "</th><th>" +
+        TR("量级", "magnitude") + "</th></tr></thead><tbody>" + rows.join("") + "</tbody></table>" +
+        "<table class=\"kv\" style=\"margin-top:10px\">" +
+        rw(TR("已知最优流道上：L", "at the known optimal duct: L"), L === 0 ? "0" : L.toExponential(2)) +
+        rw(TR("已知最优流道上：max |dL/dA|", "at the known optimal duct: max |dL/dA|"),
+           gm === 0 ? "0" : gm.toExponential(2)) + "</table>";
+    };
+    (window.REPAINT = window.REPAINT || []).push(draw);
+    draw();
+  }
+
+  function boot() {
+    explorer(); fields(); bclab(); dotlab();
+    loopPlayer("primal", "loop-primal");
+    loopPlayer("tangent", "loop-tangent");
+    loopPlayer("adjoint", "loop-adjoint");
+    adjointPanel(); gradPanel(); verify();
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+  else boot();
+})();
+
+/* ---- side-nav collapse + current-section highlight ---- */
+(function () {
+  /* window.t comes from i18n.js, which both builders list first in
+     SCRIPTS; the guard keeps this harmless if loaded standalone. */
+  const TR = (zh, en) => (window.t ? window.t(zh, en) : zh);
+  var nav = document.querySelector("nav.toc");
+  if (!nav) return;
+  var btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "navtoggle";
+  btn.setAttribute("aria-controls", "toc-list");
+  var list = nav.querySelector("ul");
+  if (list) list.id = "toc-list";
+  function paint() {
+    var hid = document.body.classList.contains("navhid");
+    btn.textContent = hid ? "\u00bb" : TR("\u00ab \u6536\u8d77\u76ee\u5f55", "\u00ab hide contents");
+    btn.setAttribute("aria-expanded", hid ? "false" : "true");
+    btn.title = hid ? TR("\u5c55\u5f00\u76ee\u5f55", "show contents") : TR("\u6536\u8d77\u76ee\u5f55", "hide contents");
+  }
+  btn.addEventListener("click", function () {
+    document.body.classList.toggle("navhid");
+    try { localStorage.setItem("navhid", document.body.classList.contains("navhid") ? "1" : "0"); } catch (e) {}
+    paint();
+  });
+  try { if (localStorage.getItem("navhid") === "1") document.body.classList.add("navhid"); } catch (e) {}
+  nav.insertBefore(btn, nav.firstChild);
+  paint();
+  /* A language switch never touches this button: it owns no demo host, so
+     it is not in i18n.js's HOSTS, and paint() otherwise runs only on load
+     and on click. REPAINT is the hook i18n.js provides for precisely this
+     -- text built once by a script with no host of its own. */
+  window.REPAINT = window.REPAINT || [];
+  window.REPAINT.push(paint);
+
+  var links = [].slice.call(nav.querySelectorAll('a[href^="#"]'));
+  var secs = links.map(function (a) { return document.getElementById(a.getAttribute("href").slice(1)); });
+  function spy() {
+    var best = -1, bestTop = -1e9;
+    for (var i = 0; i < secs.length; i++) {
+      if (!secs[i]) continue;
+      var t = secs[i].getBoundingClientRect().top - 90;
+      if (t <= 0 && t > bestTop) { bestTop = t; best = i; }
+    }
+    links.forEach(function (a, i) {
+      if (i === best) a.setAttribute("aria-current", "true");
+      else a.removeAttribute("aria-current");
+    });
+  }
+  addEventListener("scroll", spy, { passive: true });
+  spy();
+})();
+
+
+</script>
+</body>
+</html>
