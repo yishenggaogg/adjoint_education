@@ -120,6 +120,53 @@ an exact identity with no step size in it, is the more reliable check.
 
 ---
 
+## 维护：两个仓库的同步 / Keeping the two repositories in sync
+
+本项目同时放在 GitHub 与 Gitee，**内容完全相同**：GitHub 是主仓库（网页由 GitHub Pages
+从这里发布，每次推送自动重新部署），Gitee 是镜像（Gitee 已不再提供 Pages 服务）。
+
+The project lives on both GitHub and Gitee with **identical content**. GitHub is primary — the
+site is served by GitHub Pages from that repository and redeploys on every push — and Gitee is
+a mirror (Gitee no longer offers a Pages service).
+
+本地把 `origin` 配成**同时推送到两个仓库**，所以一条 `git push` 就能更新两边：
+
+The local clone has `origin` configured to **push to both**, so a single `git push` updates
+both repositories:
+
+```bash
+git clone https://github.com/yishenggaogg/adjoint_education.git
+cd adjoint_education
+# 第一条会替换默认的 push 地址，第二条再追加，所以两条都要执行
+# the first line replaces the default push URL, the second appends — both are needed
+git remote set-url --add --push origin https://github.com/yishenggaogg/adjoint_education.git
+git remote set-url --add --push origin git@gitee.com:gaoyishenggg/adjoint_education.git
+```
+
+配置完成后 `git remote -v` 里 `origin` 会有一个 fetch 地址、两个 push 地址；
+`git push` 的输出会出现**两段**，每个仓库一段。Gitee 用 SSH，GitHub 用 HTTPS（`gh auth`）。
+
+Afterwards `git remote -v` shows one fetch URL and two push URLs for `origin`, and `git push`
+prints **two** result blocks, one per repository.
+
+检查两边是否一致 / Check that the two are in step:
+
+```bash
+git ls-remote https://github.com/yishenggaogg/adjoint_education.git refs/heads/main
+git ls-remote git@gitee.com:gaoyishenggg/adjoint_education.git refs/heads/main
+```
+
+两个 SHA 相同即同步。若在某个平台的网页端直接改过文件，推送会被拒绝（该仓库多出你本地没有的提交）；
+此时先 `git pull gitee main --rebase`（或 `github`）把对方的提交取回来再推，**不要用 `--force`**，
+那会抹掉网页端的改动。
+
+If the two SHAs differ — typically because a file was edited in one platform's web UI — the
+push is rejected for that remote. Rebase the other side's commits in first with
+`git pull gitee main --rebase` (or `github`) and push again. **Do not use `--force`**: it would
+discard whatever was committed through the web UI.
+
+---
+
 ## 许可 / License
 
 © 2026 Yisheng Gao
