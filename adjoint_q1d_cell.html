@@ -283,6 +283,12 @@ select { font: inherit; font-size: 14px; color: var(--ink); background: var(--su
 table.kv { border-collapse: collapse; font-size: 13.5px; width: 100%; font-variant-numeric: tabular-nums; }
 table.kv th, table.kv td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--rule); vertical-align: top; }
 table.kv th { color: var(--muted); font-weight: 500; white-space: nowrap; width: 1%; }
+/* column headers may wrap: a long one (the section-11 table in English) otherwise
+   holds the whole table wider than a phone screen */
+table.kv thead th { white-space: normal; width: auto; }
+/* on a phone the row labels may wrap too (long English labels, e.g. the
+   conservation readouts), so no table is held wider than the screen */
+@media (max-width: 600px) { table.kv th { white-space: normal; } }
 table.kv td.num { font-family: var(--font-mono); font-size: 13px; }
 
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -331,6 +337,13 @@ a.fref:hover { color: var(--ink); border-bottom-color: var(--ink); }
 html[data-lang="zh"] [lang="en"] { display: none; }
 html[data-lang="en"] [lang="zh"] { display: none; }
 .langtoggle { float: right; margin-left: 16px; font-size: 13px; padding: 3px 10px; }
+/* back to the index of all pages: beside the language button (a float after
+   it lands to its left), and first in the contents, which stay in view */
+.homebtn { float: right; margin-left: 10px; font-size: 13px; padding: 3px 10px; text-decoration: none; }
+nav.toc li.tochome .num { color: var(--muted); }
+@media (min-width: 1000px) {
+  nav.toc li.tochome { border-bottom: 1px solid var(--rule); padding-bottom: 6px; margin-bottom: 8px; }
+}
 
 /* ---- plain HTML math (no external renderer) ---- */
 .eq, .eqd { font-family: var(--font-display); white-space: nowrap;
@@ -429,6 +442,7 @@ html[data-lang="en"] [lang="zh"] { display: none; }
 
 <header class="masthead">
   <button class="btn langtoggle" type="button" id="langtoggle">English</button>
+  <a class="btn homebtn" href="index.html"><span lang="zh">← 返回首页</span><span lang="en">← Home</span></a>
   <h1 lang="zh">变截面流道拟一维 Euler 方程的格心格式离散伴随</h1><h1 lang="en">The discrete adjoint of the quasi-one-dimensional Euler equations in a variable-area duct, cell-centred</h1>
   <p class="lede"><span lang="zh">算例是一段<b>收缩—扩张流道</b>：截面积 <span class="eq"><i>A</i>(<i>x</i>)</span> 从 1 收到喉部的 0.7 再张回 1，左端给<b>总压 <span class="eq"><i>p</i><sub><span class="dg">0</span></sub></span> 与总温 <span class="eq"><i>T</i><sub><span class="dg">0</span></sub></span></b>，右端给<b>背压 <span class="eq"><i>p</i><sub>b</sub></span></b>，全场亚声速。未知量是 12 个单元上的守恒量 <span class="eq">(<i>ρ</i>,<i>ρ</i><i>u</i>,<i>ρ</i><i>E</i>)</span>，一共 36 个。与<b>二维标量</b>那一对页面相比，这里多出三样东西：局部导数从一个数变成 <b>3×3 块</b>、残差里多了一个不经过任何面的<b>源项</b> <span class="eq"><i>p</i><span class="spt"></span>d<i>A</i>/d<i>x</i></span>、边界条件是内点状态的<b>非线性函数</b>。设计变量就是 13 个截面积，因此 <span class="eq">d<i>L</i>/d<i>A</i></span> 有直接的物理含义：把流道这里放宽一点，目标会怎么变。</span><span lang="en">The test case is a <b>converging&ndash;diverging duct</b>: the area <span class="eq"><i>A</i>(<i>x</i>)</span> falls from 1 to 0.7 at the throat and opens back to 1, with <b>total pressure <span class="eq"><i>p</i><sub><span class="dg">0</span></sub></span> and total temperature <span class="eq"><i>T</i><sub><span class="dg">0</span></sub></span></b> prescribed at the left, a <b>back pressure <span class="eq"><i>p</i><sub>b</sub></span></b> at the right, and subsonic flow throughout. The unknowns are the conserved variables <span class="eq">(<i>ρ</i>,<i>ρ</i><i>u</i>,<i>ρ</i><i>E</i>)</span> on 12 cells, 36 in all. Against the <b>two-dimensional scalar</b> pair of pages, three things are new here: the local derivatives become <b>3&times;3 blocks</b>, the residual gains a <b>source term</b> <span class="eq"><i>p</i><span class="spt"></span>d<i>A</i>/d<i>x</i></span> that passes through no face at all, and the boundary conditions are <b>nonlinear functions</b> of the interior state. The design variables are the 13 areas, so <span class="eq">d<i>L</i>/d<i>A</i></span> means something you can point at: widen the duct here, and the objective moves by this much.</span></p>
   <ol class="route">
@@ -449,6 +463,7 @@ html[data-lang="en"] [lang="zh"] { display: none; }
 
 <nav class="toc" aria-label="章节">
   <ul>
+    <li class="tochome"><a href="index.html"><span class="num">⌂</span><span lang="zh">首页：全部页面</span><span lang="en">Home: all pages</span></a></li>
     <li><a href="#s1"><span class="num">1</span><span lang="zh">流道与网格</span><span lang="en">Duct &amp; grid</span></a></li>
     <li><a href="#s2"><span class="num">2</span><span lang="zh">方程与通量</span><span lang="en">Equations &amp; flux</span></a></li>
     <li><a href="#s3"><span class="num">3</span><span lang="zh">边界条件</span><span lang="en">Boundary conditions</span></a></li>
