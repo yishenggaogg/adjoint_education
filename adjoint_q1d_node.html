@@ -485,7 +485,7 @@ nav.toc li.tochome .num { color: var(--muted); }
     <div class="secnum" lang="zh">第 1 节</div><div class="secnum" lang="en">Section 1</div>
     <h2 lang="zh">流道与网格</h2><h2 lang="en">The duct and the grid</h2>
     <p lang="zh"><b>拟一维</b>的意思是：流道沿 <span class="eq"><i>x</i></span> 的截面积 <span class="eq"><i>A</i>(<i>x</i>)</span> 在变，但每个截面上的流动当成均匀的。三维的管内流动于是塌缩成一条线上的三个守恒量，而<b>几何完全由 <span class="eq"><i>A</i>(<i>x</i>)</span> 承担</b>。本页与<a href="adjoint_q1d_cell.html">格心格式那一页</a>用的是<b>同一段流道、同一张网格</b>：<span class="eq"><i>x</i><span class="op">∈</span>[<span class="dg">0</span>,<span class="dg">1</span>]</span>，<span class="eq"><i>A</i>(<i>x</i>)=<span class="dg">1</span>−<span class="dg">0.3</span><span class="up">sin</span><sup><span class="dg">2</span></sup>(<i>π</i><i>x</i>)</span>，两端为 1、喉部 0.7。</p><p lang="en"><b>Quasi-one-dimensional</b> means the duct's area <span class="eq"><i>A</i>(<i>x</i>)</span> varies along <span class="eq"><i>x</i></span> while the flow across each section is treated as uniform. A three-dimensional duct flow collapses onto a line carrying three conserved quantities, with <b>the geometry carried entirely by <span class="eq"><i>A</i>(<i>x</i>)</span></b>. This page uses <b>the same duct and the same grid</b> as <a href="adjoint_q1d_cell.html">the cell-centred page</a>: <span class="eq"><i>x</i><span class="op">∈</span>[<span class="dg">0</span>,<span class="dg">1</span>]</span> with <span class="eq"><i>A</i>(<i>x</i>)=<span class="dg">1</span>−<span class="dg">0.3</span><span class="up">sin</span><sup><span class="dg">2</span></sup>(<i>π</i><i>x</i>)</span>, unity at both ends and 0.7 at the throat.</p>
-    <p lang="zh">不同的是未知量放在哪里。<b>格点格式</b>把守恒量放在 <b>13 个节点</b>上，控制体是相邻节点之间的<b>中点</b>围出来的——所以内部节点的控制体长 <span class="eq"><i>Δ</i><i>x</i></span>，而<b>两端的节点只有半个控制体</b>。未知量共 <b>39 个</b>。</p><p lang="en">What differs is where the unknowns live. A <b>node-centred</b> scheme puts the conserved variables on the <b>13 nodes</b>, with control volumes bounded by the <b>midpoints</b> between neighbouring nodes &mdash; so an interior node's volume is <span class="eq"><i>Δ</i><i>x</i></span> long while <b>the two end nodes get half a volume each</b>. There are <b>39 unknowns</b>.</p>
+    <p lang="zh">不同的是未知量放在哪里。<b>格点格式</b>把守恒量放在 <b>13 个节点</b>上，控制体是相邻节点之间的<b>中点</b>围出来的——所以内部节点的控制体长 <span class="eq"><i>Δ</i><i>x</i></span>，而<b>两端的节点只有半个控制体</b>。未知量共 <b>39 个</b>（<a class="fref" href="#duct-explorer"></a>）。</p><p lang="en">What differs is where the unknowns live. A <b>node-centred</b> scheme puts the conserved variables on the <b>13 nodes</b>, with control volumes bounded by the <b>midpoints</b> between neighbouring nodes &mdash; so an interior node's volume is <span class="eq"><i>Δ</i><i>x</i></span> long while <b>the two end nodes get half a volume each</b>. There are <b>39 unknowns</b> (<a class="fref" href="#duct-explorer"></a>).</p>
     <p lang="zh" class="note"><b>这一点差别决定了整页的走向：边界节点<u>就在边界上</u>。</b>格心格式的未知量是单元平均值，物理边界落在两个面上，没有任何未知量住在那里，所以边界条件只能<b>弱</b>加——先用特征关系算出一个外侧状态，再喂给通量。格点格式不同：<span class="eq"><i>n</i><sub><span class="dg">1</span></sub></span> 与 <span class="eq"><i>n</i><sub><span class="dg">13</span></sub></span> 本身就是边界点，它们的状态就是边界状态。于是可以<b>强</b>加——直接把它们那几条方程<b>换掉</b>。第 3 节展开。</p><p class="note" lang="en"><b>That one difference sets the course of this page: a boundary node <u>sits on</u> the boundary.</b> A cell-centred scheme's unknowns are cell averages, the physical boundary falls on two faces, and no unknown lives there &mdash; so the conditions can only be imposed <b>weakly</b>, by building an outer state from the characteristic relations and feeding it to the flux. Here <span class="eq"><i>n</i><sub><span class="dg">1</span></sub></span> and <span class="eq"><i>n</i><sub><span class="dg">13</span></sub></span> <i>are</i> boundary points and their states <i>are</i> the boundary states. So the conditions can be imposed <b>strongly</b>, by <b>replacing</b> those equations outright. Section 3 does it.</p>
   </div>
 
@@ -517,12 +517,15 @@ nav.toc li.tochome .num { color: var(--muted); }
   </div>
 
   <div class="prose">
-    <p lang="zh">收敛解与格心页相近而不相同：马赫数峰值这里是 0.434，格心页是 0.470——同一段物理、两种离散，在这么粗的网格上离散误差看得见。</p><p lang="en">The converged solution is close to the cell-centred page&rsquo;s but not the same: the peak Mach number is 0.434 here and 0.470 there &mdash; the same physics discretised two ways, and on a grid this coarse the discretisation error shows.</p>
+    <p lang="zh">收敛解（<a class="fref" href="#fig-fields"></a>）与格心页相近而不相同：马赫数峰值这里是 0.434，格心页是 0.470——同一段物理、两种离散，在这么粗的网格上离散误差看得见。</p><p lang="en">The converged solution (<a class="fref" href="#fig-fields"></a>) is close to the cell-centred page&rsquo;s but not the same: the peak Mach number is 0.434 here and 0.470 there &mdash; the same physics discretised two ways, and on a grid this coarse the discretisation error shows.</p>
   </div>
-  <div id="field-plots">
-    <div class="svgbox"></div>
-    <div class="svgbox" style="margin-top:10px"></div>
-  </div>
+  <figure id="fig-fields">
+    <div id="field-plots">
+      <div class="svgbox"></div>
+      <div class="svgbox" style="margin-top:10px"></div>
+    </div>
+    <figcaption lang="zh">收敛解沿程的压力 <span class="eq"><i>p</i></span>（上）与马赫数 <span class="eq"><i>M</i></span>（下），每个节点一个点。</figcaption><figcaption lang="en">Pressure <span class="eq"><i>p</i></span> (top) and Mach number <span class="eq"><i>M</i></span> (bottom) of the converged solution along the duct, one point per node.</figcaption>
+  </figure>
 </section>
 
 <section class="sec" id="s2">
@@ -541,12 +544,78 @@ S=<span class="pmat"><span class="pstrut">&#8203;</span><span class="lp"></span>
     <p lang="zh">面上取 Rusanov 通量：中心平均减一个正比于状态跳跃的耗散项，</p><p lang="en">Each face takes the Rusanov flux: a central average minus a dissipation proportional to the jump in state,</p>
     <div class="eqwrap"><span class="eqd">h<sub>f</sub>=<i>A</i><sub>f</sub>[<span class="frac"><span class="fcol"><span class="num"><span class="dg">1</span></span><span class="den"><span class="dg">2</span></span></span></span>(F<sub>L</sub>+F<sub>R</sub>)−<span class="frac"><span class="fcol"><span class="num"><span class="dg">1</span></span><span class="den"><span class="dg">2</span></span></span></span><i>λ</i><sub>f</sub>(U<sub>R</sub>−U<sub>L</sub>)],<span class="sp2"></span>
 <i>λ</i><sub>f</sub>=<span class="frac"><span class="fcol"><span class="num"><span class="dg">1</span></span><span class="den"><span class="dg">2</span></span></span></span>[(|<i>u</i>|+<i>a</i>)<sub>L</sub>+(|<i>u</i>|+<i>a</i>)<sub>R</sub>]</span></div>
-    <p lang="zh" class="note"><b>为什么 <span class="eq"><i>λ</i></span> 取两侧平均而不是取大者。</b>教科书里的 Rusanov 用 <span class="eq"><span class="up">max</span></span>。<span class="eq"><span class="up">max</span></span> 在两侧相等处<b>不可微</b>，而本页的立身之本是点积测试能打到 <span class="eq"><span class="dg">10</span><sup>−<span class="dg">16</span></sup></span>——一个不可微的地方就会把它毁掉。取平均则处处光滑，而且在本算例的亚声速流场里耗散量级几乎相同。真实代码里要用 <span class="eq"><span class="up">max</span></span> 时的做法是把它<b>冻结</b>在 <span class="eq"><i>u</i><sup>*</sup></span> 处，与二维页冻结远场入流/出流开关完全一样。</p><p class="note" lang="en"><b>Why <span class="eq"><i>λ</i></span> is the average of the two sides rather than the larger.</b> Textbook Rusanov uses <span class="eq"><span class="up">max</span></span>. But <span class="eq"><span class="up">max</span></span> is <b>not differentiable</b> where the two sides cross, and these pages live or die by a dot-product test at the <span class="eq"><span class="dg">10</span><sup>−<span class="dg">16</span></sup></span> level &mdash; one non-differentiable point would wreck it. The average is smooth everywhere and, in this subsonic duct, dissipates by almost the same amount. When a real code does use <span class="eq"><span class="up">max</span></span>, the remedy is to <b>freeze</b> it at <span class="eq"><i>u</i><sup>*</sup></span>, exactly as the two-dimensional pages freeze the far-field inflow/outflow switch.</p>
+    <p lang="zh" class="note"><b>为什么 <span class="eq"><i>λ</i></span> 取两侧平均而不是取大者。</b>教科书里的 Rusanov 用 <span class="eq"><span class="up">max</span></span>。<span class="eq"><span class="up">max</span></span> 在两侧相等处<b>不可微</b>：哪一侧更大随状态切换，切换处导数跳变——那一点没有唯一的梯度，差分步长一旦跨过它，有限差分就与线性化对不上。取平均则只要 <span class="eq"><i>u</i><span class="op">≠</span><span class="dg">0</span></span> 就处处光滑（本算例 <span class="eq"><i>u</i></span> 处处为正），而且在本算例的亚声速流场里耗散量级几乎相同：实测 <span class="eq"><span class="up">max</span></span> 最多只比平均值大 1.4%。真实代码里要用 <span class="eq"><span class="up">max</span></span> 时的做法是把它<b>冻结</b>在 <span class="eq"><i>u</i><sup>*</sup></span> 处，与二维页冻结远场入流/出流开关完全一样。</p><p class="note" lang="en"><b>Why <span class="eq"><i>λ</i></span> is the average of the two sides rather than the larger.</b> Textbook Rusanov uses <span class="eq"><span class="up">max</span></span>. But <span class="eq"><span class="up">max</span></span> is <b>not differentiable</b> where the two sides cross: which side is larger switches with the state, and the derivative jumps there &mdash; that point has no single gradient, and a finite difference whose step straddles it disagrees with the linearisation. The average is smooth wherever <span class="eq"><i>u</i><span class="op">≠</span><span class="dg">0</span></span> (and <span class="eq"><i>u</i>&gt;<span class="dg">0</span></span> throughout this duct) and, in this subsonic flow, dissipates by almost the same amount: measured, the <span class="eq"><span class="up">max</span></span> is at most 1.4% larger than the average. When a real code does use <span class="eq"><span class="up">max</span></span>, the remedy is to <b>freeze</b> it at <span class="eq"><i>u</i><sup>*</sup></span>, exactly as the two-dimensional pages freeze the far-field inflow/outflow switch.</p>
     <p lang="zh">本页同样采用<b>一阶</b>空间离散：对偶面上的左右状态直接取两侧节点的当前值，不做重构。代价只在精度上，不在这套代数上。</p><p lang="en">The discretisation here is likewise <b>first order</b>: the left and right states on a dual face are the current values of the two adjacent nodes, with no reconstruction. The cost is accuracy only, not the algebra this page is about.</p>
+    <p lang="zh">在<a class="fref" href="#flux-lab"></a>里点流道中的任意一条对偶面，看收敛解在它两侧的状态怎样组成通量：中心项、耗散项各是多少，<span class="eq"><i>λ</i><sub>f</sub></span> 取平均与取 <span class="eq"><span class="up">max</span></span> 差多少。也可以拖动滑块，自己设定两侧状态。</p><p lang="en">In <a class="fref" href="#flux-lab"></a>, click any dual face of the duct to see how the converged states on either side of it make up the flux: how large the central and dissipation terms are, and how far the average <span class="eq"><i>λ</i><sub>f</sub></span> is from the <span class="eq"><span class="up">max</span></span>. The sliders set the two states to anything you like.</p>
+  </div>
 
+  <div class="lab" id="flux-lab">
+    <div class="lab-head">
+      <div>
+        <div class="lab-title" lang="zh">交互：一条对偶面上的 Rusanov 通量</div><div class="lab-title" lang="en">Interactive: the Rusanov flux on one dual face</div>
+        <div class="lab-sub" lang="zh">点流道里的任意一条对偶面（或用选择框），载入收敛解在它两侧的状态；拖动滑块则换成自己设定的状态，<span class="eq"><i>A</i><sub>f</sub></span> 仍取所选对偶面的面积</div><div class="lab-sub" lang="en">Click any dual face in the duct (or use the selector) to load the converged states on either side of it; drag a slider to set states of your own, with <span class="eq"><i>A</i><sub>f</sub></span> still the chosen dual face&rsquo;s area</div>
+      </div>
+      <label class="q1d-pick"><span lang="zh">对偶面：</span><span lang="en">dual face:</span>
+        <select class="q1d-face"></select>
+      </label>
+    </div>
+    <div class="lab-body" style="grid-template-columns:minmax(0,1fr)">
+      <div class="lab-pane">
+        <div class="svgbox" id="flux-plot" style="max-width:640px;margin:0 auto"></div>
+        <div class="legend" style="justify-content:center">
+          <span><i style="background:var(--violet)"></i><span lang="zh">所选的对偶面</span><span lang="en">the chosen dual face</span></span>
+          <span><i style="background:var(--primal-soft);border:1px solid var(--primal)"></i><span lang="zh">它两侧的节点</span><span lang="en">the nodes on either side</span></span>
+          <span><i style="background:var(--primal)"></i><span lang="zh">中心项</span><span lang="en">central term</span></span>
+          <span><i style="background:var(--muted)"></i><span lang="zh">耗散项</span><span lang="en">dissipation</span></span>
+          <span><i style="background:var(--ink);width:3px"></i><span lang="zh">通量 h</span><span lang="en">the flux h</span></span>
+        </div>
+      </div>
+      <div class="lab-pane" style="border-left:0;border-top:1px solid var(--rule)">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px 28px;align-items:start">
+          <div>
+            <div class="sliders">
+              <div style="grid-column:1/-1;font-weight:600;color:var(--ink2)"><span lang="zh">左侧状态 U<sub>L</sub></span><span lang="en">left state U<sub>L</sub></span></div>
+              <label for="fx-rL" lang="zh">密度 ρ<sub>L</sub></label><label for="fx-rL" lang="en">density ρ<sub>L</sub></label>
+              <input type="range" id="fx-rL" min="0.4" max="1.6" step="0.005" value="0.9">
+              <output id="fx-rL-out" for="fx-rL"></output>
+              <label for="fx-uL" lang="zh">速度 u<sub>L</sub></label><label for="fx-uL" lang="en">velocity u<sub>L</sub></label>
+              <input type="range" id="fx-uL" min="-0.6" max="1.2" step="0.005" value="0.5">
+              <output id="fx-uL-out" for="fx-uL"></output>
+              <label for="fx-pL" lang="zh">压力 p<sub>L</sub></label><label for="fx-pL" lang="en">pressure p<sub>L</sub></label>
+              <input type="range" id="fx-pL" min="0.4" max="1.6" step="0.005" value="0.9">
+              <output id="fx-pL-out" for="fx-pL"></output>
+              <div style="grid-column:1/-1;font-weight:600;color:var(--ink2)"><span lang="zh">右侧状态 U<sub>R</sub></span><span lang="en">right state U<sub>R</sub></span></div>
+              <label for="fx-rR" lang="zh">密度 ρ<sub>R</sub></label><label for="fx-rR" lang="en">density ρ<sub>R</sub></label>
+              <input type="range" id="fx-rR" min="0.4" max="1.6" step="0.005" value="0.9">
+              <output id="fx-rR-out" for="fx-rR"></output>
+              <label for="fx-uR" lang="zh">速度 u<sub>R</sub></label><label for="fx-uR" lang="en">velocity u<sub>R</sub></label>
+              <input type="range" id="fx-uR" min="-0.6" max="1.2" step="0.005" value="0.5">
+              <output id="fx-uR-out" for="fx-uR"></output>
+              <label for="fx-pR" lang="zh">压力 p<sub>R</sub></label><label for="fx-pR" lang="en">pressure p<sub>R</sub></label>
+              <input type="range" id="fx-pR" min="0.4" max="1.6" step="0.005" value="0.9">
+              <output id="fx-pR-out" for="fx-pR"></output>
+            </div>
+            <div class="controls" style="margin-top:10px">
+              <button class="btn" type="button" id="fx-load"><span lang="zh">恢复收敛解</span><span lang="en">Back to the converged states</span></button>
+              <button class="btn" type="button" id="fx-same"><span lang="zh">令 U<sub>R</sub> = U<sub>L</sub></span><span lang="en">Set U<sub>R</sub> = U<sub>L</sub></span></button>
+            </div>
+          </div>
+          <div>
+            <div class="status" id="flux-status" aria-live="polite" style="margin-top:0"></div>
+            <div id="flux-lam" style="margin-top:10px"></div>
+          </div>
+        </div>
+        <div id="flux-table" style="margin-top:14px"></div>
+        <div id="flux-code" style="margin-top:12px"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="prose">
     <h3 lang="zh">守恒守的是通量，不是节点值</h3><h3 lang="en">What is conserved is the flux, not the nodal value</h3>
     <p lang="zh">稳态下质量方程没有源项，所以在内部节点上，<b>数值质量通量在各条内部对偶面上必须完全相同</b>——下面实测到机器精度。节点上的 <span class="eq"><i>ρ</i><i>u</i><i>A</i></span> 则沿程变化约 15%：两者的差是耗散项 <span class="eq">−<span class="frac"><span class="fcol"><span class="num"><span class="dg">1</span></span><span class="den"><span class="dg">2</span></span></span></span><i>λ</i>(U<sub>R</sub>−U<sub>L</sub>)<i>A</i><sub>f</sub></span>，节点值和通量本来就不是同一个东西。<b>两端却不一样。</b>两个边界节点的质量方程（入口还有动量方程）被边界条件替换掉了，它们的通量平衡并没有被满足：出口节点上的 <span class="eq"><i>ρ</i><i>u</i><i>A</i></span> 比内部通量高出约 11%，被丢掉的质量平衡是 <span class="eq"><span class="dg">3.6</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">2</span></sup></span>。这是强加边界、整行替换的代价，下面的面板把它量了出来。</p><p lang="en">At steady state the mass equation has no source, so at the interior nodes <b>the numerical mass flux must be identical on every interior dual face</b> &mdash; measured below, to machine precision. The nodal value of <span class="eq"><i>ρ</i><i>u</i><i>A</i></span>, meanwhile, varies by about 15% along the duct: the difference is the dissipation term <span class="eq">−<span class="frac"><span class="fcol"><span class="num"><span class="dg">1</span></span><span class="den"><span class="dg">2</span></span></span></span><i>λ</i>(U<sub>R</sub>−U<sub>L</sub>)<i>A</i><sub>f</sub></span>, and a nodal value and a flux are simply different objects. <b>The two ends are another matter.</b> The mass equations of the two boundary nodes (and the momentum equation at the inlet) have been replaced by the boundary conditions, so their flux balances are not satisfied: <span class="eq"><i>ρ</i><i>u</i><i>A</i></span> at the outlet node is about 11% above the interior flux, and the discarded mass balance is <span class="eq"><span class="dg">3.6</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">2</span></sup></span>. That is the price of imposing the boundary conditions strongly, by replacing whole rows, and the panel below measures it.</p>
     <div id="cons-readout"></div>
+    <p lang="zh">在<a class="fref" href="#flux-lab"></a>里逐条对偶面切换，能看到同一件事的另一面：质量和能量的 <span class="eq"><i>h</i></span> 在全部 12 条对偶面上相同到舍入误差（能量方程同样没有源项），中心项和耗散项却各自在变；动量的 <span class="eq"><i>h</i></span> 逐条对偶面不同，相邻两条对偶面之间的差额正好由源项 <span class="eq"><i>p</i><span class="spt"></span><i>Δ</i><i>A</i></span> 补上。</p><p lang="en">Stepping from dual face to dual face in <a class="fref" href="#flux-lab"></a> shows the other side of the same fact: the mass and energy components of <span class="eq"><i>h</i></span> agree on all 12 dual faces to round-off (the energy equation has no source either), while the central and dissipation terms each change; the momentum component does change from one dual face to the next, and between two neighbouring dual faces the source <span class="eq"><i>p</i><span class="spt"></span><i>Δ</i><i>A</i></span> makes up exactly the difference.</p>
   </div>
 </section>
 
@@ -555,7 +624,7 @@ S=<span class="pmat"><span class="pstrut">&#8203;</span><span class="lp"></span>
   <div class="prose">
     <div class="secnum" lang="zh">第 3 节</div><div class="secnum" lang="en">Section 3</div>
     <h2 lang="zh">边界条件：强加与部分行替换</h2><h2 lang="en">Boundary conditions: strong imposition and partial row replacement</h2>
-    <p lang="zh">特征分析和格心页完全一样：亚声速时左端有 2 条特征进入区域、右端 1 条，所以<b>左端给 2 个条件（总压 <span class="eq"><i>p</i><sub><span class="dg">0</span></sub></span>、总温 <span class="eq"><i>T</i><sub><span class="dg">0</span></sub></span>）、右端给 1 个（背压 <span class="eq"><i>p</i><sub>b</sub></span>）</b>。变的是<b>怎么加</b>。</p><p lang="en">The characteristic analysis is the same as on the cell-centred page: subsonic flow lets 2 characteristics into the domain at the left and 1 at the right, so <b>two conditions are prescribed at the left (<span class="eq"><i>p</i><sub><span class="dg">0</span></sub></span> and <span class="eq"><i>T</i><sub><span class="dg">0</span></sub></span>) and one at the right (<span class="eq"><i>p</i><sub>b</sub></span>)</b>. What changes is <b>how they are imposed</b>.</p>
+    <p lang="zh">特征分析和格心页完全一样（<a class="fref" href="#bc-fig-wrap"></a>）：亚声速时左端有 2 条特征进入区域、右端 1 条，所以<b>左端给 2 个条件（总压 <span class="eq"><i>p</i><sub><span class="dg">0</span></sub></span>、总温 <span class="eq"><i>T</i><sub><span class="dg">0</span></sub></span>）、右端给 1 个（背压 <span class="eq"><i>p</i><sub>b</sub></span>）</b>。变的是<b>怎么加</b>。</p><p lang="en">The characteristic analysis is the same as on the cell-centred page (<a class="fref" href="#bc-fig-wrap"></a>): subsonic flow lets 2 characteristics into the domain at the left and 1 at the right, so <b>two conditions are prescribed at the left (<span class="eq"><i>p</i><sub><span class="dg">0</span></sub></span> and <span class="eq"><i>T</i><sub><span class="dg">0</span></sub></span>) and one at the right (<span class="eq"><i>p</i><sub>b</sub></span>)</b>. What changes is <b>how they are imposed</b>.</p>
   </div>
 
     <figure id="bc-fig-wrap">
@@ -571,7 +640,7 @@ S=<span class="pmat"><span class="pstrut">&#8203;</span><span class="lp"></span>
     <p lang="zh" class="note"><b>注意：这是<u>部分</u>行替换。</b>入口节点有 3 条方程，只换掉 <b>2 条</b>；出口节点只换掉 <b>1 条</b>。剩下的那些照常由通量平衡给出。换几条不是随便定的——<b>正好等于进入区域的特征条数</b>。二维那一对页面里的强加是把某个节点的<b>整行</b>换成 <span class="eq"><i>u</i><sub>i</sub>=<i>u</i><sub>w</sub></span>，那是「一个自由度、一个条件」的特例；这里一个节点携带三条方程，约束只落在其中一部分上。</p><p class="note" lang="en"><b>Note that this is a <u>partial</u> row replacement.</b> The inflow node carries three equations and only <b>two</b> are replaced; the outflow node has only <b>one</b> replaced. The rest come from the flux balance as usual. How many get replaced is not a choice &mdash; it is <b>exactly the number of characteristics entering the domain</b>. The strong imposition on the two-dimensional pair replaced a node's <b>whole</b> equation by <span class="eq"><i>u</i><sub>i</sub>=<i>u</i><sub>w</sub></span>, the special case of "one degree of freedom, one condition"; here a node carries three equations and the constraint lands on a subset.</p>
 
     <h3 lang="zh">被替换的行是约束的梯度，不是单位行</h3><h3 lang="en">The replaced rows are constraint gradients, not unit rows</h3>
-    <p lang="zh">把 <span class="eq"><i>R</i><span class="op">←</span><i>p</i><sub><span class="dg">0</span></sub>(u)−<i>p</i><sub><span class="dg">0</span></sub><sup>given</sup></span> 对 <span class="eq">u</span> 求导，得到的那一行是 <span class="eq"><i>∂</i><i>p</i><sub><span class="dg">0</span></sub>/<i>∂</i>u</span>——一个<b>一般的行向量</b>，三个分量都不为零。二维页里对应的行是 <span class="eq"><i>e</i><sub>i</sub><sup>T</sup></span>（只有一个 1）。所以<b>二维页是本页的特例</b>：当约束恰好是「某个自由度等于常数」时，它的梯度才退化成单位行。</p><p lang="en">Differentiating <span class="eq"><i>R</i><span class="op">←</span><i>p</i><sub><span class="dg">0</span></sub>(u)−<i>p</i><sub><span class="dg">0</span></sub><sup>given</sup></span> with respect to <span class="eq">u</span> gives the row <span class="eq"><i>∂</i><i>p</i><sub><span class="dg">0</span></sub>/<i>∂</i>u</span> &mdash; a <b>general row vector</b> with all three entries non-zero. The corresponding row on the two-dimensional page was <span class="eq"><i>e</i><sub>i</sub><sup>T</sup></span>, a single 1. So <b>the two-dimensional page is a special case of this one</b>: only when the constraint happens to be "this degree of freedom equals a constant" does its gradient degenerate into a unit row.</p>
+    <p lang="zh">把 <span class="eq"><i>R</i><span class="op">←</span><i>p</i><sub><span class="dg">0</span></sub>(u)−<i>p</i><sub><span class="dg">0</span></sub><sup>given</sup></span> 对 <span class="eq">u</span> 求导，得到的那一行是 <span class="eq"><i>∂</i><i>p</i><sub><span class="dg">0</span></sub>/<i>∂</i>u</span>——一个<b>一般的行向量</b>，三个分量都不为零（<a class="fref" href="#bc-lab"></a>）。二维页里对应的行是 <span class="eq"><i>e</i><sub>i</sub><sup>T</sup></span>（只有一个 1）。所以<b>二维页是本页的特例</b>：当约束恰好是「某个自由度等于常数」时，它的梯度才退化成单位行。</p><p lang="en">Differentiating <span class="eq"><i>R</i><span class="op">←</span><i>p</i><sub><span class="dg">0</span></sub>(u)−<i>p</i><sub><span class="dg">0</span></sub><sup>given</sup></span> with respect to <span class="eq">u</span> gives the row <span class="eq"><i>∂</i><i>p</i><sub><span class="dg">0</span></sub>/<i>∂</i>u</span> &mdash; a <b>general row vector</b> with all three entries non-zero (<a class="fref" href="#bc-lab"></a>). The corresponding row on the two-dimensional page was <span class="eq"><i>e</i><sub>i</sub><sup>T</sup></span>, a single 1. So <b>the two-dimensional page is a special case of this one</b>: only when the constraint happens to be "this degree of freedom equals a constant" does its gradient degenerate into a unit row.</p>
     <p lang="zh">这件事在第 8 节会有直接后果：伴随里那句「出循环后把 <span class="eq"><i>w</i><sub>i</sub></span> <b>加回</b>」要推广成「加回 <span class="eq"><i>w</i><sub>i</sub></span> <b>乘上约束梯度</b>」。</p><p lang="en">That has a direct consequence in Section 8: the adjoint's "after the loop, <b>add</b> <span class="eq"><i>w</i><sub>i</sub></span> back" generalises to "add back <span class="eq"><i>w</i><sub>i</sub></span> <b>times the constraint gradient</b>".</p>
     <p lang="zh" class="note"><b>还有一处简化：格点格式不需要 ghost 状态。</b>格心页为了给边界面一个外侧状态，必须解一个二次方程、再由等熵关系回到 <span class="eq"><i>p</i>,<i>ρ</i></span>，那整套特征重构在本页<b>完全不存在</b>。边界通量就是 <span class="eq">F(u<sub><span class="dg">1</span></sub>)<i>A</i><sub><span class="dg">1</span></sub></span>——用节点自己的状态。强加换来的是边界处理的简化，代价是循环之外多了一步。</p><p class="note" lang="en"><b>And a simplification: a node-centred scheme needs no ghost state.</b> To give its boundary face an outer state, the cell-centred page had to solve a quadratic and return through the isentropic relations; that whole characteristic reconstruction <b>does not exist here</b>. The boundary flux is just <span class="eq">F(u<sub><span class="dg">1</span></sub>)<i>A</i><sub><span class="dg">1</span></sub></span>, built from the node's own state. Strong imposition buys a simpler boundary treatment, at the price of one step outside the loop.</p>
   </div>
@@ -594,7 +663,7 @@ S=<span class="pmat"><span class="pstrut">&#8203;</span><span class="lp"></span>
     <div class="secnum" lang="zh">第 4 节</div><div class="secnum" lang="en">Section 4</div>
     <h2 lang="zh">残差 = 边循环 + 源项 + 行替换</h2><h2 lang="en">The residual = the edge loop, the source, and the row replacement</h2>
     <p lang="zh">残差分三段：<b>边循环</b>走 12 条内部对偶面，<b>两个边界通量</b>直接用端点自己的状态，然后每个节点上走一趟<b>源项</b>。到这里为止和格心页是同一套骨架。</p><p lang="en">The residual comes in three parts: the <b>edge loop</b> over the 12 interior dual faces, the <b>two boundary fluxes</b> built from the end nodes' own states, and one <b>source</b> pass per node. Up to here the skeleton is the same as the cell-centred page's.</p>
-    <p lang="zh">然后是第四段，本页独有：<b>循环结束之后</b>，把 3 条受约束的行替换掉。它必须在循环之后——循环里那些行照常参与累加，替换是把累加的结果<b>扔掉</b>，写上约束残差。</p><p lang="en">Then a fourth part, unique to this page: <b>after the loop has finished</b>, the 3 constrained rows are replaced. It has to come after &mdash; those rows take part in the accumulation like any other, and the replacement <b>discards</b> what accumulated and writes the constraint residual instead.</p>
+    <p lang="zh">然后是第四段，本页独有：<b>循环结束之后</b>，把 3 条受约束的行替换掉。它必须在循环之后——循环里那些行照常参与累加，替换是把累加的结果<b>扔掉</b>，写上约束残差（<a class="fref" href="#loop-primal"></a>逐句播放全部四段）。</p><p lang="en">Then a fourth part, unique to this page: <b>after the loop has finished</b>, the 3 constrained rows are replaced. It has to come after &mdash; those rows take part in the accumulation like any other, and the replacement <b>discards</b> what accumulated and writes the constraint residual instead (<a class="fref" href="#loop-primal"></a> plays all four parts, statement by statement).</p>
   </div>
 
   <div class="lab" id="loop-primal">
@@ -629,7 +698,7 @@ S=<span class="pmat"><span class="pstrut">&#8203;</span><span class="lp"></span>
 −<span class="frac"><span class="fcol"><span class="num"><span class="dg">1</span></span><span class="den"><span class="dg">2</span></span></span></span>(U<sub>R</sub>−U<sub>L</sub>)<span class="spt"></span><span class="frac"><span class="fcol"><span class="num"><i>∂</i><i>λ</i><sub>f</sub></span><span class="den"><i>∂</i>U<sub>L</sub></span></span></span>],
 <span class="sp2"></span>F'=<span class="frac"><span class="fcol"><span class="num"><i>∂</i>F</span><span class="den"><i>∂</i>U</span></span></span></span></div>
     <p lang="zh"><span class="eq">F'</span> 就是经典的 Euler 通量 Jacobian（记作 <span class="eq">F'</span>，免得与面积向量 <span class="eq">A</span> 混淆）。第三项常被忘记：耗散系数 <span class="eq"><i>λ</i><sub>f</sub></span> 自己也依赖两侧状态，漏掉它 Jacobian 就不精确，Newton 会退化成拟 Newton。</p><p lang="en"><span class="eq">F'</span> is the classical Euler flux Jacobian (written <span class="eq">F'</span> so as not to be confused with the vector of areas <span class="eq">A</span>). The third term is the one that gets forgotten: the dissipation coefficient <span class="eq"><i>λ</i><sub>f</sub></span> itself depends on both states, and dropping it makes the Jacobian inexact, degrading Newton to a quasi-Newton method.</p>
-    <p lang="zh" class="note"><b>这里没有 ghost 状态，也就没有 <span class="eq"><i>∂</i>B/<i>∂</i>u</span>。</b>边界节点本身就在边界上：入口、出口的通量直接用节点自己的状态算，它们的线性化 <span class="eq">−<i>A</i><sub><span class="dg">1</span></sub><i>F</i>'(u<sub><span class="dg">1</span></sub>)</span> 与 <span class="eq">+<i>A</i><sub><span class="dg">13</span></sub><i>F</i>'(u<sub><span class="dg">13</span></sub>)</span> 落在两个端节点自己的对角块上。然后第 3 节的部分行替换覆盖掉其中 3 行：入口的质量、动量行换成 <span class="eq"><i>∂</i><i>p</i><sub><span class="dg">0</span></sub>/<i>∂</i>u</span> 与 <span class="eq"><i>∂</i><i>T</i><sub><span class="dg">0</span></sub>/<i>∂</i>u</span>，出口的质量行换成 <span class="eq"><i>∂</i><i>p</i>/<i>∂</i>u</span>——都是只落在本节点块里的一般行向量。</p><p class="note" lang="en"><b>There is no ghost state here, and so no <span class="eq"><i>∂</i>B/<i>∂</i>u</span>.</b> A boundary node sits on the boundary itself: the inlet and outlet fluxes are computed from the node&rsquo;s own state, and their linearisations, <span class="eq">−<i>A</i><sub><span class="dg">1</span></sub><i>F</i>'(u<sub><span class="dg">1</span></sub>)</span> and <span class="eq">+<i>A</i><sub><span class="dg">13</span></sub><i>F</i>'(u<sub><span class="dg">13</span></sub>)</span>, land on the two end nodes&rsquo; own diagonal blocks. The partial row replacement of Section 3 then overwrites 3 of those rows: the inlet&rsquo;s mass and momentum rows become <span class="eq"><i>∂</i><i>p</i><sub><span class="dg">0</span></sub>/<i>∂</i>u</span> and <span class="eq"><i>∂</i><i>T</i><sub><span class="dg">0</span></sub>/<i>∂</i>u</span>, the outlet&rsquo;s mass row becomes <span class="eq"><i>∂</i><i>p</i>/<i>∂</i>u</span> &mdash; general row vectors, each confined to its own node&rsquo;s block.</p>
+    <p lang="zh" class="note"><b>这里没有 ghost 状态，也就没有 <span class="eq"><i>∂</i>B/<i>∂</i>u</span>。</b>边界节点本身就在边界上：入口、出口的通量直接用节点自己的状态算，它们的线性化 <span class="eq">−<i>A</i><sub><span class="dg">1</span></sub><i>F</i>'(u<sub><span class="dg">1</span></sub>)</span> 与 <span class="eq">+<i>A</i><sub><span class="dg">13</span></sub><i>F</i>'(u<sub><span class="dg">13</span></sub>)</span> 落在两个端节点自己的对角块上。然后第 3 节的部分行替换覆盖掉其中 3 行：入口的质量、动量行换成 <span class="eq"><i>∂</i><i>p</i><sub><span class="dg">0</span></sub>/<i>∂</i>u</span> 与 <span class="eq"><i>∂</i><i>T</i><sub><span class="dg">0</span></sub>/<i>∂</i>u</span>，出口的质量行换成 <span class="eq"><i>∂</i><i>p</i>/<i>∂</i>u</span>——都是只落在本节点块里的一般行向量（<a class="fref" href="#jac-view"></a>）。</p><p class="note" lang="en"><b>There is no ghost state here, and so no <span class="eq"><i>∂</i>B/<i>∂</i>u</span>.</b> A boundary node sits on the boundary itself: the inlet and outlet fluxes are computed from the node&rsquo;s own state, and their linearisations, <span class="eq">−<i>A</i><sub><span class="dg">1</span></sub><i>F</i>'(u<sub><span class="dg">1</span></sub>)</span> and <span class="eq">+<i>A</i><sub><span class="dg">13</span></sub><i>F</i>'(u<sub><span class="dg">13</span></sub>)</span>, land on the two end nodes&rsquo; own diagonal blocks. The partial row replacement of Section 3 then overwrites 3 of those rows: the inlet&rsquo;s mass and momentum rows become <span class="eq"><i>∂</i><i>p</i><sub><span class="dg">0</span></sub>/<i>∂</i>u</span> and <span class="eq"><i>∂</i><i>T</i><sub><span class="dg">0</span></sub>/<i>∂</i>u</span>, the outlet&rsquo;s mass row becomes <span class="eq"><i>∂</i><i>p</i>/<i>∂</i>u</span> &mdash; general row vectors, each confined to its own node&rsquo;s block (<a class="fref" href="#jac-view"></a>).</p>
   </div>
 
   <div class="lab" id="jac-view">
@@ -647,7 +716,7 @@ S=<span class="pmat"><span class="pstrut">&#8203;</span><span class="lp"></span>
 
   <div class="prose">
     <h3 lang="zh">怎么把 <span class="eq">R(u)=<span class="dg">0</span></span> 解出来</h3><h3 lang="en">How <span class="eq">R(u)=<span class="dg">0</span></span> is actually solved</h3>
-    <p lang="zh">Newton 迭代：在当前状态处线性化，解一个 <span class="eq"><span class="dg">39</span><span class="op">×</span><span class="dg">39</span></span> 的线性系统，更新状态。代码在前 6 轮用了欠松弛 <span class="eq"><i>ω</i>=<span class="dg">0.5</span></span>。<b>这个算例其实不需要它</b>：实测从同一个均匀初值直接走全步长，4 次更新就收敛，途中最低压力 0.850，离负压很远。保留它有两个原因：下面的演示正好能把 Newton 的两种收敛并排看清——欠松弛时是线性的，残差每轮约乘 <span class="eq"><span class="dg">1</span>−<i>ω</i></span>；全步长时是二次的；另外，页面上所有实测常数都是沿这条迭代路径得到的，<span class="eq">u<sup>*</sup></span> 的末位比特随路径而变。</p><p lang="en">Newton iteration: linearise at the current state, solve one <span class="eq"><span class="dg">39</span><span class="op">×</span><span class="dg">39</span></span> linear system, update. The code damps the first 6 sweeps with <span class="eq"><i>ω</i>=<span class="dg">0.5</span></span>. <b>This case does not actually need it</b>: measured, full steps from the same uniform guess converge after 4 updates, the lowest pressure along the way being 0.850, nowhere near negative. It is kept for two reasons. The demo below then shows both kinds of Newton convergence side by side &mdash; linear while damped, the residual shrinking by about <span class="eq"><span class="dg">1</span>−<i>ω</i></span> per sweep, and quadratic with full steps. And every constant measured on this page was produced along this iteration path; the last bits of <span class="eq">u<sup>*</sup></span> depend on the path.</p>
+    <p lang="zh">Newton 迭代：在当前状态处线性化，解一个 <span class="eq"><span class="dg">39</span><span class="op">×</span><span class="dg">39</span></span> 的线性系统，更新状态。代码在前 6 轮用了欠松弛 <span class="eq"><i>ω</i>=<span class="dg">0.5</span></span>。<b>这个算例其实不需要它</b>：实测从同一个均匀初值直接走全步长，4 次更新就收敛，途中最低压力 0.850，离负压很远。保留它有两个原因：下面的演示（<a class="fref" href="#newton-lab"></a>）正好能把 Newton 的两种收敛并排看清——欠松弛时是线性的，残差每轮约乘 <span class="eq"><span class="dg">1</span>−<i>ω</i></span>；全步长时是二次的；另外，页面上所有实测常数都是沿这条迭代路径得到的，<span class="eq">u<sup>*</sup></span> 的末位比特随路径而变。</p><p lang="en">Newton iteration: linearise at the current state, solve one <span class="eq"><span class="dg">39</span><span class="op">×</span><span class="dg">39</span></span> linear system, update. The code damps the first 6 sweeps with <span class="eq"><i>ω</i>=<span class="dg">0.5</span></span>. <b>This case does not actually need it</b>: measured, full steps from the same uniform guess converge after 4 updates, the lowest pressure along the way being 0.850, nowhere near negative. It is kept for two reasons. The demo below (<a class="fref" href="#newton-lab"></a>) then shows both kinds of Newton convergence side by side &mdash; linear while damped, the residual shrinking by about <span class="eq"><span class="dg">1</span>−<i>ω</i></span> per sweep, and quadratic with full steps. And every constant measured on this page was produced along this iteration path; the last bits of <span class="eq">u<sup>*</sup></span> depend on the path.</p>
   </div>
   <div class="lab" id="newton-lab">
     <div class="lab-head">
@@ -693,7 +762,7 @@ S=<span class="pmat"><span class="pstrut">&#8203;</span><span class="lp"></span>
   <div class="prose">
     <div class="secnum" lang="zh">第 6 节</div><div class="secnum" lang="en">Section 6</div>
     <h2 lang="zh">目标函数</h2><h2 lang="en">The objective function</h2>
-    <p lang="zh">本页准备了<b>两个</b>目标函数，可以随时切换。它们对整条链路的「加载方式」完全不同，放在一起看最能说明伴随的结构与目标无关。</p><p lang="en">This page carries <b>two</b> objectives, switchable at any time. They load the chain in quite different ways, and seeing them side by side is the clearest demonstration that the adjoint machinery does not care which one you pick.</p>
+    <p lang="zh">本页准备了<b>两个</b>目标函数，可以随时切换（<a class="fref" href="#obj-lab"></a>）。它们对整条链路的「加载方式」完全不同，放在一起看最能说明伴随的结构与目标无关。</p><p lang="en">This page carries <b>two</b> objectives, switchable at any time (<a class="fref" href="#obj-lab"></a>). They load the chain in quite different ways, and seeing them side by side is the clearest demonstration that the adjoint machinery does not care which one you pick.</p>
     <div class="tablewrap">
       <table class="summary">
         <thead><tr>
@@ -741,7 +810,7 @@ S=<span class="pmat"><span class="pstrut">&#8203;</span><span class="lp"></span>
     <div class="secnum" lang="zh">第 7 节</div><div class="secnum" lang="en">Section 7</div>
     <h2 lang="zh">matrix-free 前向：计算 <span class="eq"><i>A</i><i>v</i></span></h2><h2 lang="en">Matrix-free forward mode: computing <span class="eq"><i>A</i><i>v</i></span></h2>
     <p lang="zh">设计变量 <span class="eq">A<span class="op">∈</span>ℝ<sup><span class="dg">13</span></sup></span> 是各节点的截面积。对 <span class="eq">R(u(A),A)=<span class="dg">0</span></span> 用链式法则消去 <span class="eq">du/dA</span> 有两条路；两条路都要用到同一个乘积，先把它说清楚：给定一个状态扰动 <span class="eq">v</span>，怎样算出 <span class="eq"><i>A</i>v</span> 而<b>不形成</b> <span class="eq"><i>A</i></span>。</p><p lang="en">The design variables <span class="eq">A<span class="op">∈</span>ℝ<sup><span class="dg">13</span></sup></span> are the nodal areas. Applying the chain rule to <span class="eq">R(u(A),A)=<span class="dg">0</span></span> gives two routes to eliminating <span class="eq">du/dA</span>, and both need the same product. So first: given a state perturbation <span class="eq">v</span>, how to compute <span class="eq"><i>A</i>v</span> <b>without forming</b> <span class="eq"><i>A</i></span>.</p>
-    <p lang="zh">答案是把<b>同一条边循环</b>逐句求导。每条对偶面上 <span class="eq">h<sub>d</sub>=<i>c</i><sub>L</sub>v<sub>L</sub>+<i>c</i><sub>R</sub>v<sub>R</sub></span>，两个 <span class="eq"><span class="dg">3</span><span class="op">×</span><span class="dg">3</span></span> 块各乘一个 3 向量，再照原样 <span class="eq">+,−</span> 分发；源项那一趟同样线性化。整个函数从头到尾没有出现过矩阵。</p><p lang="en">The answer is to differentiate <b>the same edge loop</b> statement by statement. On each dual face <span class="eq">h<sub>d</sub>=<i>c</i><sub>L</sub>v<sub>L</sub>+<i>c</i><sub>R</sub>v<sub>R</sub></span> &mdash; two <span class="eq"><span class="dg">3</span><span class="op">×</span><span class="dg">3</span></span> blocks, each times a 3-vector &mdash; scattered with the same <span class="eq">+</span> and <span class="eq">−</span>; the source pass is linearised likewise. No matrix appears anywhere in the function.</p>
+    <p lang="zh">答案是把<b>同一条边循环</b>逐句求导。每条对偶面上 <span class="eq">h<sub>d</sub>=<i>c</i><sub>L</sub>v<sub>L</sub>+<i>c</i><sub>R</sub>v<sub>R</sub></span>，两个 <span class="eq"><span class="dg">3</span><span class="op">×</span><span class="dg">3</span></span> 块各乘一个 3 向量，再照原样 <span class="eq">+,−</span> 分发；源项那一趟同样线性化。整个函数从头到尾没有出现过矩阵（<a class="fref" href="#loop-tangent"></a>）。</p><p lang="en">The answer is to differentiate <b>the same edge loop</b> statement by statement. On each dual face <span class="eq">h<sub>d</sub>=<i>c</i><sub>L</sub>v<sub>L</sub>+<i>c</i><sub>R</sub>v<sub>R</sub></span> &mdash; two <span class="eq"><span class="dg">3</span><span class="op">×</span><span class="dg">3</span></span> blocks, each times a 3-vector &mdash; scattered with the same <span class="eq">+</span> and <span class="eq">−</span>; the source pass is linearised likewise. No matrix appears anywhere in the function (<a class="fref" href="#loop-tangent"></a>).</p>
   </div>
 
   <div class="lab" id="loop-tangent">
@@ -780,7 +849,7 @@ S=<span class="pmat"><span class="pstrut">&#8203;</span><span class="lp"></span>
   <div class="prose">
     <div class="secnum" lang="zh">第 8 节</div><div class="secnum" lang="en">Section 8</div>
     <h2 lang="zh">matrix-free 伴随：计算 <span class="eq"><i>A</i><sub>bc</sub><sup>T</sup><i>w</i></span></h2><h2 lang="en">Matrix-free adjoint mode: computing <span class="eq"><i>A</i><sub>bc</sub><sup>T</sup><i>w</i></span></h2>
-    <p lang="zh">伴随仍然是把前向逐句转置：原来<b>写</b>的地方现在<b>读</b>，原来<b>读</b>的地方现在<b>写</b>。面上的一维通量转置成两个 <span class="eq"><span class="dg">3</span><span class="op">×</span><span class="dg">3</span></span> 块的转置，源项转置回节点自己身上。这些和格心页一样。</p><p lang="en">The adjoint is still the tangent transposed statement by statement: what <b>wrote</b> now <b>reads</b>, what <b>read</b> now <b>writes</b>. The one-dimensional flux transposes into two transposed <span class="eq"><span class="dg">3</span><span class="op">×</span><span class="dg">3</span></span> blocks, and the source transposes back onto the node itself. All of that matches the cell-centred page.</p>
+    <p lang="zh">伴随仍然是把前向逐句转置：原来<b>写</b>的地方现在<b>读</b>，原来<b>读</b>的地方现在<b>写</b>。面上的一维通量转置成两个 <span class="eq"><span class="dg">3</span><span class="op">×</span><span class="dg">3</span></span> 块的转置，源项转置回节点自己身上。这些和格心页一样（<a class="fref" href="#loop-adjoint"></a>逐句播放）。</p><p lang="en">The adjoint is still the tangent transposed statement by statement: what <b>wrote</b> now <b>reads</b>, what <b>read</b> now <b>writes</b>. The one-dimensional flux transposes into two transposed <span class="eq"><span class="dg">3</span><span class="op">×</span><span class="dg">3</span></span> blocks, and the source transposes back onto the node itself. All of that matches the cell-centred page (<a class="fref" href="#loop-adjoint"></a> plays it statement by statement).</p>
     <p lang="zh">不一样的是那 3 条受约束的行。行替换在转置之后变成<b>列</b>替换，而实现上是两步，<b>顺序不能反</b>：</p><p lang="en">What differs is the 3 constrained rows. A row replacement transposes into a <b>column</b> replacement, and in code that is two steps whose <b>order cannot be reversed</b>:</p>
     <ul lang="zh">
       <li>进循环<b>之前</b>，在 <span class="eq"><i>w</i></span> 的一份<b>副本</b>上把受约束的行清零。否则那些行会把本不该存在的贡献分发出去；</li>
@@ -811,7 +880,7 @@ S=<span class="pmat"><span class="pstrut">&#8203;</span><span class="lp"></span>
 
   <div class="prose">
     <h3 lang="zh">点积测试</h3><h3 lang="en">The dot-product test</h3>
-    <p lang="zh"><span class="eq"><span class="op">⟨</span>w,<i>A</i><sub>bc</sub>v<span class="op">⟩</span>=<span class="op">⟨</span><i>A</i><sub>bc</sub><sup>T</sup>w,v<span class="op">⟩</span></span> 对<b>受约束</b>的算子同样成立，而且同样是精确恒等式。把清零挪到循环之后，或者忘记加回，这条测试立刻失效。</p><p lang="en"><span class="eq"><span class="op">⟨</span>w,<i>A</i><sub>bc</sub>v<span class="op">⟩</span>=<span class="op">⟨</span><i>A</i><sub>bc</sub><sup>T</sup>w,v<span class="op">⟩</span></span> holds for the <b>constrained</b> operator too, and is just as exact. Move the zeroing to after the loop, or forget the add-back, and the test fails at once.</p>
+    <p lang="zh"><span class="eq"><span class="op">⟨</span>w,<i>A</i><sub>bc</sub>v<span class="op">⟩</span>=<span class="op">⟨</span><i>A</i><sub>bc</sub><sup>T</sup>w,v<span class="op">⟩</span></span> 对<b>受约束</b>的算子同样成立（<a class="fref" href="#dot-lab"></a>），而且同样是精确恒等式。把清零挪到循环之后，或者忘记加回，这条测试立刻失效。</p><p lang="en"><span class="eq"><span class="op">⟨</span>w,<i>A</i><sub>bc</sub>v<span class="op">⟩</span>=<span class="op">⟨</span><i>A</i><sub>bc</sub><sup>T</sup>w,v<span class="op">⟩</span></span> holds for the <b>constrained</b> operator too (<a class="fref" href="#dot-lab"></a>), and is just as exact. Move the zeroing to after the loop, or forget the add-back, and the test fails at once.</p>
   </div>
 
   <div class="lab" id="dot-lab">
@@ -831,7 +900,7 @@ S=<span class="pmat"><span class="pstrut">&#8203;</span><span class="lp"></span>
     <div class="secnum" lang="zh">第 9 节</div><div class="secnum" lang="en">Section 9</div>
     <h2 lang="zh">求解伴随方程</h2><h2 lang="en">Solving the adjoint equation</h2>
     <p lang="zh">有了 <span class="eq"><i>A</i><sup>T</sup>w</span>，伴随方程 <span class="eq"><i>A</i><sup>T</sup><i>Ψ</i>=−g</span> 就可以解了，其中 <span class="eq">g=(<i>∂</i><i>L</i>/<i>∂</i>u)<sup>T</sup></span> 来自第 6 节的目标（本页各面板的目标选择是联动的）。<span class="eq"><i>Ψ</i></span> 有 39 个分量——每个节点三个，对应质量、动量、能量三条方程。</p><p lang="en">With <span class="eq"><i>A</i><sup>T</sup>w</span> in hand the adjoint equation <span class="eq"><i>A</i><sup>T</sup><i>Ψ</i>=−g</span> can be solved, where <span class="eq">g=(<i>∂</i><i>L</i>/<i>∂</i>u)<sup>T</sup></span> comes from the objective of Section 6 (the objective selectors on this page are linked). <span class="eq"><i>Ψ</i></span> has 39 components &mdash; three per node, one for each of the mass, momentum and energy equations.</p>
-    <p lang="zh"><span class="eq">−<i>Ψ</i><sub>i</sub></span> 的含义是：<b>在第 <span class="eq"><i>i</i></span> 个节点的那条方程里加一个单位源项，目标 <span class="eq"><i>L</i></span> 会变多少</b>。所以伴随场读起来是一张「敏感度地图」。</p><p lang="en">The meaning of <span class="eq">−<i>Ψ</i><sub>i</sub></span> is: <b>how much the objective <span class="eq"><i>L</i></span> would move if a unit source were added to that equation in that cell</b>. The adjoint field therefore reads as a map of sensitivity.</p>
+    <p lang="zh"><span class="eq">−<i>Ψ</i><sub>i</sub></span> 的含义是：<b>在第 <span class="eq"><i>i</i></span> 个节点的那条方程里加一个单位源项，目标 <span class="eq"><i>L</i></span> 会变多少</b>。所以伴随场读起来是一张「敏感度地图」（<a class="fref" href="#adj-lab"></a>）。</p><p lang="en">The meaning of <span class="eq">−<i>Ψ</i><sub>i</sub></span> is: <b>how much the objective <span class="eq"><i>L</i></span> would move if a unit source were added to that equation at that node</b>. The adjoint field therefore reads as a map of sensitivity (<a class="fref" href="#adj-lab"></a>).</p>
     <p lang="zh" class="note"><b>亚声速带来一件二维标量页看不到的事：信息双向传播。</b>那两个页面上的模型方程是纯对流的，特征只朝一个方向走，伴随因此只向上游铺开。这里三条特征是 <span class="eq"><i>u</i>−<i>a</i>&lt;<span class="dg">0</span>&lt;<i>u</i>&lt;<i>u</i>+<i>a</i></span>：<b>一条朝上游、两条朝下游</b>。于是扰动会同时向两边传，伴随也就铺满整个流道——出口的背压能影响到入口附近的解，入口的总条件也能影响到出口。</p><p class="note" lang="en"><b>Subsonic flow brings something the two-dimensional scalar pages cannot show: information travels both ways.</b> Their model equation is pure advection, its characteristics all run one way, and the adjoint therefore spreads only upstream. Here the three characteristics are <span class="eq"><i>u</i>−<i>a</i>&lt;<span class="dg">0</span>&lt;<i>u</i>&lt;<i>u</i>+<i>a</i></span>: <b>one upstream, two downstream</b>. Disturbances propagate in both directions, and the adjoint fills the whole duct &mdash; the back pressure reaches back towards the inlet, and the inlet's total conditions reach forward to the exit.</p>
   </div>
 
@@ -839,7 +908,7 @@ S=<span class="pmat"><span class="pstrut">&#8203;</span><span class="lp"></span>
     <h3 lang="zh">块 Jacobi 迭代</h3><h3 lang="en">The block-Jacobi iteration</h3>
     <p lang="zh">最简单的 matrix-free 解法是 Jacobi 迭代。与二维标量页不同，这里每个节点有 3 个未知量，对角元于是成了 <span class="eq"><span class="dg">3</span><span class="op">×</span><span class="dg">3</span></span> 的块：</p><p lang="en">The simplest matrix-free solver is the Jacobi iteration. Unlike the two-dimensional scalar pages, every node here carries 3 unknowns, so the diagonal entries become <span class="eq"><span class="dg">3</span><span class="op">×</span><span class="dg">3</span></span> blocks:</p>
     <div class="eqwrap"><span class="eqd"><i>Ψ</i><sub>i</sub><span class="op">←</span><i>Ψ</i><sub>i</sub>−<i>D</i><sub>i</sub><sup>−T</sup>(<i>A</i><sup>T</sup><i>Ψ</i>+g)<sub>i</sub>,<span class="sp2"></span><i>D</i><sub>i</sub>=<span class="frac"><span class="fcol"><span class="num"><i>∂</i>R<sub>i</sub></span><span class="den"><i>∂</i>u<sub>i</sub></span></span></span><span class="sp1"></span>(<span class="dg">3</span><span class="op">×</span><span class="dg">3</span>)</span></div>
-    <p lang="zh">与矩阵有关的操作仍然只有一次 residual_b 调用（第 8 节的对偶面循环）。<span class="eq"><i>D</i></span> 的 13 个块这里取自第 5 节的 Jacobian，实际代码在同一个面循环里顺手把它们累加出来；入口、出口节点的块里，被替换的行就是约束梯度。每次迭代 = 一次 residual_b + 13 个独立的 <span class="eq"><span class="dg">3</span><span class="op">×</span><span class="dg">3</span></span> 小系统。两层播放：<b>上面一行按面</b>播放本次迭代内的 residual_b，最后一步是块 Jacobi 更新；<b>下面一行按迭代</b>播放。</p><p lang="en">The only matrix operation is still one residual_b call (the dual-face loop of Section 8). The 13 blocks of <span class="eq"><i>D</i></span> are taken from the Jacobian of Section 5 here; a production code collects them in the same face loop; in the inlet and outlet nodes' blocks the replaced rows are the constraint gradients. One iteration is one residual_b call plus 13 independent <span class="eq"><span class="dg">3</span><span class="op">×</span><span class="dg">3</span></span> solves. There are two layers of playback: <b>the upper row plays the face loop</b> of residual_b within the current iteration, ending with the block-Jacobi update; <b>the lower row plays iteration by iteration</b>.</p>
+    <p lang="zh">与矩阵有关的操作仍然只有一次 residual_b 调用（第 8 节的对偶面循环）。<span class="eq"><i>D</i></span> 的 13 个块这里取自第 5 节的 Jacobian，实际代码在同一个面循环里顺手把它们累加出来；入口、出口节点的块里，被替换的行就是约束梯度。每次迭代 = 一次 residual_b + 13 个独立的 <span class="eq"><span class="dg">3</span><span class="op">×</span><span class="dg">3</span></span> 小系统。<a class="fref" href="#jacobi-lab"></a>有两层播放：<b>上面一行按面</b>播放本次迭代内的 residual_b，最后一步是块 Jacobi 更新；<b>下面一行按迭代</b>播放。</p><p lang="en">The only matrix operation is still one residual_b call (the dual-face loop of Section 8). The 13 blocks of <span class="eq"><i>D</i></span> are taken from the Jacobian of Section 5 here; a production code collects them in the same face loop; in the inlet and outlet nodes' blocks the replaced rows are the constraint gradients. One iteration is one residual_b call plus 13 independent <span class="eq"><span class="dg">3</span><span class="op">×</span><span class="dg">3</span></span> solves. <a class="fref" href="#jacobi-lab"></a> has two layers of playback: <b>the upper row plays the face loop</b> of residual_b within the current iteration, ending with the block-Jacobi update; <b>the lower row plays iteration by iteration</b>.</p>
   </div>
   <div class="lab" id="jacobi-lab">
     <div class="lab-head">
@@ -882,7 +951,7 @@ S=<span class="pmat"><span class="pstrut">&#8203;</span><span class="lp"></span>
     </div>
   </div>
   <div class="prose">
-    <p lang="zh" class="note"><b>为什么要近一千次？</b>二维标量页的 Jacobi 每次迭代把残差缩到约 0.79，122 次就收敛；这里每次只缩到约 0.977。块 Jacobi 每次迭代只在相邻节点之间交换一次信息。把 <span class="eq"><i>D</i><sup>−<span class="dg">1</span></sup></span> 乘上与上下游邻居相连的块，按特征方向看（实测，第 7 个节点）：Rusanov 对三条波只用一个耗散 <span class="eq"><i>λ</i>=|<i>u</i>|+<i>a</i></span>，它恰好等于最快那条 <span class="eq"><i>u</i>+<i>a</i></span> 的波速，所以这条波是纯迎风的，只连上游（强度 0.99，下游 0.00）；另外两条两头都连着：<span class="eq"><i>u</i></span> 上游 0.64、下游 0.35，<span class="eq"><i>u</i>−<i>a</i></span> 上游 0.29、下游 0.70。这正是本节开头说的双向传播：误差要在进出口之间来回走很多趟才消得掉。最慢的误差在相邻节点之间一大一小地交替，所以相邻两次迭代的残差比在 0.969 与 0.984 之间来回跳（面板状态栏里能看到）——这是块三对角矩阵上 Jacobi 的典型表现。真实代码保留同样的两样东西，residual_b 与块对角 <span class="eq"><i>D</i></span>，但把它们放进 Krylov 方法（例如 GMRES）里去加速。</p><p class="note" lang="en"><b>Why nearly a thousand iterations?</b> On the two-dimensional scalar pages each Jacobi iteration shrinks the residual to about 0.79 and 122 iterations suffice; here each one shrinks it only to about 0.977. Block Jacobi exchanges information between neighbouring nodes once per iteration. Multiply <span class="eq"><i>D</i><sup>−<span class="dg">1</span></sup></span> into the blocks that tie a node to its upstream and downstream neighbours and look along the characteristic directions (measured, node 7): Rusanov gives all three waves one dissipation, <span class="eq"><i>λ</i>=|<i>u</i>|+<i>a</i></span>, which is exactly the speed of the fastest wave <span class="eq"><i>u</i>+<i>a</i></span>, so that wave is purely upwinded and tied only upstream (strength 0.99, downstream 0.00); the other two are tied both ways: <span class="eq"><i>u</i></span> with 0.64 upstream and 0.35 downstream, <span class="eq"><i>u</i>−<i>a</i></span> with 0.29 upstream and 0.70 downstream. This is the two-way propagation described at the start of this section: an error has to travel back and forth between inlet and outlet many times before it dies out. The slowest error alternates large and small from one node to the next, so the ratio between successive residuals alternates between 0.969 and 0.984 (visible in the panel's status line) &mdash; typical of Jacobi on a block-tridiagonal matrix. Production codes keep the same two ingredients, residual_b and the block diagonal <span class="eq"><i>D</i></span>, and accelerate them inside a Krylov method such as GMRES.</p>
+    <p lang="zh" class="note"><b>为什么要近一千次？</b>二维标量页的 Jacobi 每次迭代把残差缩到约 0.79，122 次就收敛；这里每次只缩到约 0.977。块 Jacobi 每次迭代只在相邻节点之间交换一次信息。把 <span class="eq"><i>D</i><sup>−<span class="dg">1</span></sup></span> 乘上与上下游邻居相连的块，按特征方向看（实测，第 7 个节点）：Rusanov 对三条波只用一个耗散 <span class="eq"><i>λ</i>=|<i>u</i>|+<i>a</i></span>，它恰好等于最快那条 <span class="eq"><i>u</i>+<i>a</i></span> 的波速，所以这条波是纯迎风的，只连上游（强度 0.99，下游 0.00）；另外两条两头都连着：<span class="eq"><i>u</i></span> 上游 0.64、下游 0.35，<span class="eq"><i>u</i>−<i>a</i></span> 上游 0.29、下游 0.70。这正是本节开头说的双向传播：误差要在进出口之间来回走很多趟才消得掉。最慢的误差在相邻节点之间一大一小地交替，所以相邻两次迭代的残差比在 0.969 与 0.984 之间来回跳（<a class="fref" href="#jacobi-lab"></a>的状态栏里能看到）——这是块三对角矩阵上 Jacobi 的典型表现。真实代码保留同样的两样东西，residual_b 与块对角 <span class="eq"><i>D</i></span>，但把它们放进 Krylov 方法（例如 GMRES）里去加速。</p><p class="note" lang="en"><b>Why nearly a thousand iterations?</b> On the two-dimensional scalar pages each Jacobi iteration shrinks the residual to about 0.79 and 122 iterations suffice; here each one shrinks it only to about 0.977. Block Jacobi exchanges information between neighbouring nodes once per iteration. Multiply <span class="eq"><i>D</i><sup>−<span class="dg">1</span></sup></span> into the blocks that tie a node to its upstream and downstream neighbours and look along the characteristic directions (measured, node 7): Rusanov gives all three waves one dissipation, <span class="eq"><i>λ</i>=|<i>u</i>|+<i>a</i></span>, which is exactly the speed of the fastest wave <span class="eq"><i>u</i>+<i>a</i></span>, so that wave is purely upwinded and tied only upstream (strength 0.99, downstream 0.00); the other two are tied both ways: <span class="eq"><i>u</i></span> with 0.64 upstream and 0.35 downstream, <span class="eq"><i>u</i>−<i>a</i></span> with 0.29 upstream and 0.70 downstream. This is the two-way propagation described at the start of this section: an error has to travel back and forth between inlet and outlet many times before it dies out. The slowest error alternates large and small from one node to the next, so the ratio between successive residuals alternates between 0.969 and 0.984 (visible in the status line of <a class="fref" href="#jacobi-lab"></a>) &mdash; typical of Jacobi on a block-tridiagonal matrix. Production codes keep the same two ingredients, residual_b and the block diagonal <span class="eq"><i>D</i></span>, and accelerate them inside a Krylov method such as GMRES.</p>
   </div>
   <div class="lab" id="adj-lab">
     <div class="lab-head">
@@ -916,8 +985,8 @@ S=<span class="pmat"><span class="pstrut">&#8203;</span><span class="lp"></span>
 
     <h3 lang="zh">被替换的行里没有面积——所以 <span class="eq"><i>Ψ</i></span> 必须先清零</h3><h3 lang="en">The replaced rows contain no areas &mdash; so <span class="eq"><i>Ψ</i></span> must be zeroed first</h3>
     <p lang="zh">这是本页最容易错的一步，而且理由很干脆：被替换的那三行是 <span class="eq"><i>p</i><sub><span class="dg">0</span></sub>−<i>p</i><sub><span class="dg">0</span></sub><sup>given</sup></span>、<span class="eq"><i>T</i><sub><span class="dg">0</span></sub>−<i>T</i><sub><span class="dg">0</span></sub><sup>given</sup></span>、<span class="eq"><i>p</i>−<i>p</i><sub>b</sub></span>，<b>它们根本不含 <span class="eq"><i>A</i></span></b>。所以 <span class="eq"><i>∂</i>R/<i>∂</i>A</span> 在这三行上<b>恒为零</b>。</p><p lang="en">This is the step easiest to get wrong on this page, and the reason is blunt: the three replaced rows are <span class="eq"><i>p</i><sub><span class="dg">0</span></sub>−<i>p</i><sub><span class="dg">0</span></sub><sup>given</sup></span>, <span class="eq"><i>T</i><sub><span class="dg">0</span></sub>−<i>T</i><sub><span class="dg">0</span></sub><sup>given</sup></span> and <span class="eq"><i>p</i>−<i>p</i><sub>b</sub></span>, and <b>none of them contains <span class="eq"><i>A</i></span></b>. Their rows of <span class="eq"><i>∂</i>R/<i>∂</i>A</span> are therefore <b>identically zero</b>.</p>
-    <p lang="zh">而 <span class="eq"><i>Ψ</i></span> 在入口 <span class="eq"><i>p</i><sub><span class="dg">0</span></sub></span> 行和出口 <span class="eq"><i>p</i><sub>b</sub></span> 行上<b>并不为零</b>（上一节的面板可以直接读到）。如果照常把整个 <span class="eq"><i>Ψ</i></span> 喂进几何循环，这些分量就会去乘一堆<b>本该为零</b>的行，凭空造出贡献。所以组装几何梯度<b>之前</b>，必须先把 <span class="eq"><i>Ψ</i></span> 在受约束行上清零——和第 8 节伴随循环里那一步是同一件事，只是这次作用在几何方向上。<span class="eq"><i>T</i><sub><span class="dg">0</span></sub></span> 行上的 <span class="eq"><i>Ψ</i></span> 恰好为零：<span class="eq"><i>p</i><sub><span class="dg">0</span></sub></span>、<span class="eq"><i>p</i><sub>b</sub></span> 给定时，改变 <span class="eq"><i>T</i><sub><span class="dg">0</span></sub></span> 只会把 <span class="eq"><i>ρ</i></span>、<span class="eq"><i>u</i></span> 整体缩放而压力不变（实测把 <span class="eq"><i>T</i><sub><span class="dg">0</span></sub></span> 改成 1.21，压力差 <span class="eq"><span class="dg">3</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">16</span></sup></span>），两个目标都只看压力，所以感觉不到 <span class="eq"><i>T</i><sub><span class="dg">0</span></sub></span>。</p><p lang="en">And <span class="eq"><i>Ψ</i></span> on the inlet <span class="eq"><i>p</i><sub><span class="dg">0</span></sub></span> row and the outlet <span class="eq"><i>p</i><sub>b</sub></span> row is <b>not</b> zero &mdash; the panel in the previous section reads it out. Feed the whole of <span class="eq"><i>Ψ</i></span> into the geometric loop as usual and those components multiply rows that <b>should be zero</b>, conjuring contributions out of nothing. So before the geometric gradient is assembled, <span class="eq"><i>Ψ</i></span> has to be zeroed on the constrained rows &mdash; the same step as in the adjoint loop of Section 8, this time in the geometric direction. On the <span class="eq"><i>T</i><sub><span class="dg">0</span></sub></span> row <span class="eq"><i>Ψ</i></span> is exactly zero: with <span class="eq"><i>p</i><sub><span class="dg">0</span></sub></span> and <span class="eq"><i>p</i><sub>b</sub></span> fixed, changing <span class="eq"><i>T</i><sub><span class="dg">0</span></sub></span> only rescales <span class="eq"><i>ρ</i></span> and <span class="eq"><i>u</i></span> and leaves the pressure alone (measured: setting <span class="eq"><i>T</i><sub><span class="dg">0</span></sub>=<span class="dg">1.21</span></span> changes the pressure by <span class="eq"><span class="dg">3</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">16</span></sup></span>), and both objectives look only at pressure, so neither can feel <span class="eq"><i>T</i><sub><span class="dg">0</span></sub></span>.</p>
-    <p lang="zh" class="note"><b>忘记这一步，梯度不是「略有偏差」。</b>下面的面板把正确的梯度和忘记清零的梯度画在一起，并给出相对误差：反设计是 <b>108%</b>，推力是 <b>4%</b>——哪一个都不是「略有偏差」。这也是为什么这条链路上每一处都要用点积测试或全链路差分卡一遍：一个漏掉的清零不会让结果看起来可疑，它会让结果看起来<b>完全正常但完全错误</b>。</p><p class="note" lang="en"><b>Forget it and the gradient is not "slightly off".</b> The panel below draws the correct gradient against the one computed without the zeroing, and reports the relative error: <b>108%</b> for inverse design, <b>4%</b> for thrust &mdash; neither is &ldquo;slightly off&rdquo;. Which is why every link in this chain gets pinned by a dot-product test or a full-chain difference: a missing zeroing does not make the answer look suspicious, it makes it look <b>perfectly normal and completely wrong</b>.</p>
+    <p lang="zh">而 <span class="eq"><i>Ψ</i></span> 在入口 <span class="eq"><i>p</i><sub><span class="dg">0</span></sub></span> 行和出口 <span class="eq"><i>p</i><sub>b</sub></span> 行上<b>并不为零</b>（<a class="fref" href="#adj-lab"></a>可以直接读到）。如果照常把整个 <span class="eq"><i>Ψ</i></span> 喂进几何循环，这些分量就会去乘一堆<b>本该为零</b>的行，凭空造出贡献。所以组装几何梯度<b>之前</b>，必须先把 <span class="eq"><i>Ψ</i></span> 在受约束行上清零——和第 8 节伴随循环里那一步是同一件事，只是这次作用在几何方向上。<span class="eq"><i>T</i><sub><span class="dg">0</span></sub></span> 行上的 <span class="eq"><i>Ψ</i></span> 恰好为零：<span class="eq"><i>p</i><sub><span class="dg">0</span></sub></span>、<span class="eq"><i>p</i><sub>b</sub></span> 给定时，改变 <span class="eq"><i>T</i><sub><span class="dg">0</span></sub></span> 只会把 <span class="eq"><i>ρ</i></span>、<span class="eq"><i>u</i></span> 整体缩放而压力不变（实测把 <span class="eq"><i>T</i><sub><span class="dg">0</span></sub></span> 改成 1.21，压力差 <span class="eq"><span class="dg">3</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">16</span></sup></span>），两个目标都只看压力，所以感觉不到 <span class="eq"><i>T</i><sub><span class="dg">0</span></sub></span>。</p><p lang="en">And <span class="eq"><i>Ψ</i></span> on the inlet <span class="eq"><i>p</i><sub><span class="dg">0</span></sub></span> row and the outlet <span class="eq"><i>p</i><sub>b</sub></span> row is <b>not</b> zero &mdash; <a class="fref" href="#adj-lab"></a> reads it out. Feed the whole of <span class="eq"><i>Ψ</i></span> into the geometric loop as usual and those components multiply rows that <b>should be zero</b>, conjuring contributions out of nothing. So before the geometric gradient is assembled, <span class="eq"><i>Ψ</i></span> has to be zeroed on the constrained rows &mdash; the same step as in the adjoint loop of Section 8, this time in the geometric direction. On the <span class="eq"><i>T</i><sub><span class="dg">0</span></sub></span> row <span class="eq"><i>Ψ</i></span> is exactly zero: with <span class="eq"><i>p</i><sub><span class="dg">0</span></sub></span> and <span class="eq"><i>p</i><sub>b</sub></span> fixed, changing <span class="eq"><i>T</i><sub><span class="dg">0</span></sub></span> only rescales <span class="eq"><i>ρ</i></span> and <span class="eq"><i>u</i></span> and leaves the pressure alone (measured: setting <span class="eq"><i>T</i><sub><span class="dg">0</span></sub>=<span class="dg">1.21</span></span> changes the pressure by <span class="eq"><span class="dg">3</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">16</span></sup></span>), and both objectives look only at pressure, so neither can feel <span class="eq"><i>T</i><sub><span class="dg">0</span></sub></span>.</p>
+    <p lang="zh" class="note"><b>忘记这一步，梯度不是「略有偏差」。</b>下面的面板（<a class="fref" href="#grad-lab"></a>）把正确的梯度和忘记清零的梯度画在一起，并给出相对误差：反设计是 <b>108%</b>，推力是 <b>4%</b>——哪一个都不是「略有偏差」。这也是为什么这条链路上每一处都要用点积测试或全链路差分卡一遍：一个漏掉的清零不会让结果看起来可疑，它会让结果看起来<b>完全正常但完全错误</b>。</p><p class="note" lang="en"><b>Forget it and the gradient is not "slightly off".</b> The panel below (<a class="fref" href="#grad-lab"></a>) draws the correct gradient against the one computed without the zeroing, and reports the relative error: <b>108%</b> for inverse design, <b>4%</b> for thrust &mdash; neither is &ldquo;slightly off&rdquo;. Which is why every link in this chain gets pinned by a dot-product test or a full-chain difference: a missing zeroing does not make the answer look suspicious, it makes it look <b>perfectly normal and completely wrong</b>.</p>
   </div>
 
   <div class="lab" id="grad-lab">
@@ -1809,7 +1878,7 @@ if (!Element.prototype.replaceChildren) {
     dVdA: dVdA, dDiffA: dDiffA,
     GAMMA: GAMMA, RGAS: RGAS, NC: NC, NN: NN, DX: DX, XN: XN, AREA0: AREA0,
     PT0: PT0, TT0: TT0, PB: PB, WROWS: WROWS, isConstrained: isConstrained,
-    prim: prim, cons: cons, fluxPhys: fluxPhys, fluxNum: fluxNum,
+    prim: prim, cons: cons, fluxPhys: fluxPhys, fluxNum: fluxNum, lambdaFace: lambdaFace,
     fluxJac: fluxJac, fluxNumJac: fluxNumJac, dpdU: dpdU, dudU: dudU, dadU: dadU,
     totals: totals, dTotalsdU: dTotalsdU, constraintRow: constraintRow,
     faceArea: faceArea, volumes: volumes,
@@ -3377,18 +3446,22 @@ if (!Element.prototype.replaceChildren) {
   else boot();
 })();
 
-/* The two solver labs of the quasi-1-D pages, shared by both pages:
+/* The labs of the quasi-1-D pages that both pages share:
 
+     section 2  #flux-lab    the Rusanov flux on one face, term by term
      section 5  #newton-lab  R(u) = 0 by Newton, sweep by sweep
      section 9  #jacobi-lab  (dR/du)^T psi = -g by block Jacobi, face by face
 
-   Both replay the page's own core. newtonSweeps() is the very loop newton()
-   runs, so the lab cannot drift from the u* the page freezes; each Jacobi
-   step is the section-8 adjoint trace played on the current iterate, and the
-   iterates come from jacobiAdjoint(). Nothing is precomputed into the page.
-   The cell-centred page has 12 cells and a finite-difference Jacobian; the
-   node-centred page has 13 nodes and the analytic Jacobian, whose replaced
-   rows are constraint gradients.                                          */
+   plus the figure numbering (图 1, 图 2 ... and every a.fref in the prose).
+
+   All of them replay the page's own core. The flux lab calls the fluxNum()
+   that residual() calls, on the states residual() hands it; newtonSweeps()
+   is the very loop newton() runs, so the lab cannot drift from the u* the
+   page freezes; each Jacobi step is the section-8 adjoint trace played on
+   the current iterate, and the iterates come from jacobiAdjoint(). Nothing
+   is precomputed into the page. The cell-centred page has 12 cells and a
+   finite-difference Jacobian; the node-centred page has 13 nodes and the
+   analytic Jacobian, whose replaced rows are constraint gradients.        */
 (function () {
   "use strict";
   const NODE = !!window.FVQN;
@@ -3408,6 +3481,282 @@ if (!Element.prototype.replaceChildren) {
   const vol = () => (NODE ? TR("节点", "node") : TR("单元", "cell"));
   const comp = sel => (sel ? Number(sel.value) : 1);
   const compName = k => [TR("质量", "mass"), TR("动量", "momentum"), TR("能量", "energy")][k];
+  const SEP = () => TR("，", ", ");
+
+  /* ============================================ section 2: the flux on a face */
+  function fluxLab() {
+    const host = document.getElementById("flux-lab");
+    if (!host) return;
+    const faceSel = host.querySelector("select.q1d-face");
+    const plot = document.getElementById("flux-plot");
+    const KEYS = ["rL", "uL", "pL", "rR", "uR", "pR"];
+    const inputs = KEYS.map(k => document.getElementById("fx-" + k));
+    const outs = KEYS.map(k => document.getElementById("fx-" + k + "-out"));
+    if (!faceSel || !plot || inputs.some(el => !el)) return;
+    const S = V.S;
+    const NF = NODE ? F.NC : F.N + 1;               /* 12 dual faces or 13 faces */
+    const vol1 = i => U0.slice(3 * i, 3 * i + 3);
+    /* the very states residual() hands to fluxNum() on face f: on the cell
+       page the outer state of a boundary face comes from the boundary
+       condition; the node page has no boundary faces in its loop at all */
+    const FACES = Array.from({ length: NF }, (_, f) => {
+      if (NODE) return { UL: vol1(f), UR: vol1(f + 1), Af: F.faceArea(A0, f), x: 0.5 * (F.XN[f] + F.XN[f + 1]) };
+      let UL, UR;
+      if (f === 0) { UR = vol1(0); UL = F.inflowState(UR, F.PT0, F.TT0); }
+      else if (f === F.N) { UL = vol1(F.N - 1); UR = F.outflowState(UL, F.PB); }
+      else { UL = vol1(f - 1); UR = vol1(f); }
+      return { UL: UL, UR: UR, Af: A0[f], x: F.XF[f] };
+    });
+    const HALL = FACES.map(s => F.fluxNum(s.UL, s.UR, s.Af));
+    const range = v => Math.max.apply(null, v) - Math.min.apply(null, v);
+    const hSpread = [0, 1, 2].map(k => range(HALL.map(hh => hh[k])));
+    const CEN0 = FACES.map(s => 0.5 * s.Af * (F.fluxPhys(s.UL)[0] + F.fluxPhys(s.UR)[0]));
+    const cenRel = range(CEN0) / Math.abs(HALL[0][0]);
+    let face = 6, custom = false, st = null;
+
+    const num = (x, d) => (Math.abs(x) < 0.5 * Math.pow(10, -d) ? 0 : x).toFixed(d).replace("-", "−");
+    const sgn = (x, d) => (x > 0 && num(x, d) !== num(0, d) ? "+" : "") + num(x, d);
+    const sideName = right => {
+      if (NODE) return TR("节点 ", "node ") + (face + (right ? 2 : 1));
+      if (!right && face === 0) return TR("外侧状态（入口边界条件）", "ghost state (inflow BC)");
+      if (right && face === F.N) return TR("外侧状态（出口边界条件）", "ghost state (outflow BC)");
+      return TR("单元 ", "cell ") + (right ? face + 1 : face);
+    };
+    const optText = f => {
+      if (NODE) return "f" + f + " · " + TR("节点 " + (f + 1) + " 与 " + (f + 2) + " 之间", "between nodes " + (f + 1) + " and " + (f + 2));
+      if (f === 0) return "f0 · " + TR("入口面", "inflow face");
+      if (f === F.N) return "f" + f + " · " + TR("出口面", "outflow face");
+      return "f" + f + " · " + TR("单元 " + f + " 与 " + (f + 1) + " 之间", "between cells " + f + " and " + (f + 1));
+    };
+    const listing = () => [
+      ["function flux(uL, uR, A_f)", TR("Rusanov 通量，3 个分量", "the Rusanov flux, 3 components")],
+      ["    FL ← F(uL);  FR ← F(uR)", TR("物理通量 (ρu, ρu²+p, ρuH)", "physical fluxes (ρu, ρu²+p, ρuH)")],
+      ["    λ ← ½·(s(uL) + s(uR))", TR("s = |u| + a；两侧平均，不取 max", "s = |u| + a; the average of the two sides, not the max")],
+      ["    for k = 1 … 3", ""],
+      ["        h[k] ← A_f·(½(FL[k] + FR[k]) − ½λ·(uR[k] − uL[k]))", TR("中心项 + 耗散项", "central term + dissipation")],
+      ["    return h", TR("residual 把它分发给两侧", "residual scatters it to the two sides")]
+    ];
+
+    function load(f) {
+      face = f;
+      custom = false;
+      const qL = F.prim(FACES[f].UL), qR = F.prim(FACES[f].UR);
+      st = { rL: qL.rho, uL: qL.u, pL: qL.p, rR: qR.rho, uR: qR.u, pR: qR.p };
+      KEYS.forEach((k, i) => { inputs[i].value = String(st[k]); });
+      faceSel.value = String(f);
+    }
+    /* the converged states are used as they are, not rebuilt from the
+       rounded primitives, so h matches residual() bit for bit */
+    const states = () => (custom
+      ? { UL: F.cons(st.rL, st.uL, st.pL), UR: F.cons(st.rR, st.uR, st.pR) }
+      : { UL: FACES[face].UL, UR: FACES[face].UR });
+
+    /* the duct strip: x in [0,1] over [XA, XB], the walls at YC -+ HH*A */
+    const XA = 30, XB = 490, YC = 52, HH = 26, W = 520, HT = 358;
+    const px = x => XA + x * (XB - XA);
+    const areaAt = x => {
+      let i = 0;
+      while (i < XS.length - 2 && x > XS[i + 1]) i++;
+      return A0[i] + (x - XS[i]) / (XS[i + 1] - XS[i]) * (A0[i + 1] - A0[i]);
+    };
+    const top = x => YC - HH * areaAt(x), bot = x => YC + HH * areaAt(x);
+    const slab = (xa, xb) => {
+      const xs = [xa].concat(XS.filter(x => x > xa && x < xb), [xb]);
+      return xs.map(x => px(x).toFixed(1) + "," + top(x).toFixed(1))
+        .concat(xs.slice().reverse().map(x => px(x).toFixed(1) + "," + bot(x).toFixed(1))).join(" ");
+    };
+    /* a cell between two faces, or a node's median-dual volume */
+    const extent = i => (NODE
+      ? [i === 0 ? F.XN[0] : 0.5 * (F.XN[i - 1] + F.XN[i]), i === F.NN - 1 ? F.XN[F.NN - 1] : 0.5 * (F.XN[i] + F.XN[i + 1])]
+      : [F.XF[i], F.XF[i + 1]]);
+    const neighbours = f => (NODE ? [f, f + 1] : [f > 0 ? f - 1 : -1, f < F.N ? f : -1]);
+    const T = (g, x, y, s, o) => S("text", { x: x, y: y, "text-anchor": o.anchor || "start", text: s,
+      style: Object.assign({ fill: "var(--" + (o.role || "ink") + ")", fontSize: (o.size || 12) + "px" },
+        o.mono ? { fontFamily: "var(--font-mono)" } : {}, o.bold ? { fontWeight: 600 } : {}) }, g);
+
+    function draw() {
+      const s = states(), Af = FACES[face].Af;
+      const FL = F.fluxPhys(s.UL), FR = F.fluxPhys(s.UR);
+      const qL = F.prim(s.UL), qR = F.prim(s.UR);
+      const sL = Math.abs(qL.u) + qL.a, sR = Math.abs(qR.u) + qR.a;
+      const lam = F.lambdaFace(s.UL, s.UR), lmax = Math.max(sL, sR);
+      const cen = [0, 1, 2].map(k => Af * 0.5 * (FL[k] + FR[k]));
+      const dis = [0, 1, 2].map(k => -Af * 0.5 * lam * (s.UR[k] - s.UL[k]));
+      const h = F.fluxNum(s.UL, s.UR, Af);
+      KEYS.forEach((k, i) => { outs[i].textContent = num(st[k], 4); });
+
+      plot.replaceChildren();
+      const svg = S("svg", { viewBox: "0 0 " + W + " " + HT, role: "img",
+        "aria-label": TR("所选面在流道中的位置、它两侧的状态，以及三个分量各自的中心项、耗散项与通量",
+                         "where the chosen face sits in the duct, the states on either side of it, and the central term, dissipation and flux of each component"),
+        style: { width: "100%", height: "auto", display: "block" } }, plot);
+      const g = S("g", null, svg);
+
+      /* (a) the duct, the two volumes the face separates, the face itself */
+      neighbours(face).forEach(i => {
+        if (i < 0) return;
+        const e = extent(i);
+        S("polygon", { points: slab(e[0], e[1]), style: { fill: "var(--primal-soft)" } }, g);
+      });
+      FACES.forEach(fc => S("line", { x1: px(fc.x), y1: top(fc.x), x2: px(fc.x), y2: bot(fc.x),
+        style: { stroke: "var(--grid)", strokeWidth: 1 } }, g));
+      [-1, 1].forEach(sg => S("polyline", { points: XS.map(x => px(x).toFixed(1) + "," + (YC + sg * HH * areaAt(x)).toFixed(1)).join(" "),
+        style: { fill: "none", stroke: "var(--amber)", strokeWidth: 2 } }, g));
+      S("line", { x1: px(0), y1: top(0), x2: px(0), y2: bot(0), style: { stroke: "var(--primal)", strokeWidth: 2 } }, g);
+      S("line", { x1: px(1), y1: top(1), x2: px(1), y2: bot(1), style: { stroke: "var(--adjoint)", strokeWidth: 2 } }, g);
+      if (NODE) {
+        F.XN.forEach((x, i) => S("circle", { cx: px(x), cy: YC, r: neighbours(face).indexOf(i) >= 0 ? 3 : 2,
+          style: { fill: neighbours(face).indexOf(i) >= 0 ? "var(--primal)" : "var(--muted)" } }, g));
+      }
+      neighbours(face).forEach(i => {
+        if (i < 0) return;
+        const e = extent(i), xc = NODE ? F.XN[i] : 0.5 * (e[0] + e[1]);
+        T(g, px(xc), NODE ? YC + 14 : YC + 4, String(i + 1), { anchor: "middle", mono: true, size: 11, role: "ink2" });
+      });
+      const xf = FACES[face].x;
+      S("line", { x1: px(xf), y1: top(xf) - 5, x2: px(xf), y2: bot(xf) + 5, style: { stroke: "var(--violet)", strokeWidth: 3 } }, g);
+      T(g, Math.max(72, Math.min(448, px(xf))), 13, "f" + face + " · A_f = " + num(Af, 4),
+        { anchor: "middle", mono: true, role: "violet" });
+      FACES.forEach((fc, f) => {
+        const hit = S("rect", { x: px(fc.x) - 14, y: 18, width: 28, height: 70,
+          style: { fill: "transparent", cursor: "pointer" } }, g);
+        S("title", { text: optText(f) }, hit);
+        hit.addEventListener("click", () => { load(f); draw(); });
+      });
+
+      /* (b) the two states, either side of the face */
+      S("line", { x1: 260, y1: 96, x2: 260, y2: 196, "stroke-dasharray": "5 4",
+        style: { stroke: "var(--violet)", strokeWidth: 1.8 } }, g);
+      [[16, qL, sL, false], [272, qR, sR, true]].forEach(b => {
+        const x0 = b[0], q = b[1];
+        S("rect", { x: x0, y: 100, width: 232, height: 92, rx: 4,
+          style: { fill: "var(--primal-soft)", stroke: "var(--primal)", strokeWidth: 1.2 } }, g);
+        T(g, x0 + 12, 120, (b[3] ? "U_R · " : "U_L · ") + sideName(b[3]), { bold: true, role: "ink2", size: 12.5 });
+        /* one text per value: SVG collapses runs of spaces */
+        T(g, x0 + 12, 142, "ρ = " + num(q.rho, 4), { mono: true });
+        T(g, x0 + 122, 142, "u = " + num(q.u, 4), { mono: true });
+        T(g, x0 + 12, 161, "p = " + num(q.p, 4), { mono: true });
+        T(g, x0 + 122, 161, "a = " + num(q.a, 4), { mono: true });
+        T(g, x0 + 12, 180, "|u| + a = " + num(b[2], 4), { mono: true, role: "ink2" });
+      });
+
+      /* (c) each component: central + dissipation = h, one row each */
+      T(g, 16, 218, TR("逐分量：中心项 + 耗散项 = h（每行各自缩放）", "per component: central + dissipation = h (each row on its own scale)"),
+        { role: "muted", size: 11.5 });
+      for (let k = 0; k < 3; k++) {
+        const y = 244 + 42 * k;
+        T(g, 16, y + 4, compName(k), { role: "ink2" });
+        const lo = Math.min(0, cen[k], h[k]), hi = Math.max(0, cen[k], h[k]);
+        const sc = 380 / Math.max(hi - lo, 1e-300), X = v => 110 + (v - lo) * sc;
+        const seg = (a, b, role, op) => S("rect", { x: Math.min(X(a), X(b)), y: y - 7, width: Math.abs(X(b) - X(a)), height: 14,
+          style: { fill: "var(--" + role + ")", fillOpacity: op } }, g);
+        seg(0, cen[k], "primal", 0.8);
+        seg(cen[k], h[k], "muted", 0.6);
+        S("line", { x1: X(0), y1: y - 11, x2: X(0), y2: y + 11, style: { stroke: "var(--rule)", strokeWidth: 1 } }, g);
+        S("line", { x1: X(h[k]), y1: y - 11, x2: X(h[k]), y2: y + 11, style: { stroke: "var(--ink)", strokeWidth: 2.2 } }, g);
+        const small = { mono: true, role: "muted", size: 11 };
+        T(g, 110, y + 24, TR("中心 ", "central ") + num(cen[k], 6), small);
+        T(g, 250, y + 24, TR("耗散 ", "dissipation ") + sgn(dis[k], 6), small);
+        T(g, 408, y + 24, "h = " + num(h[k], 6), small);
+      }
+
+      const td = v => "<td class=\"num\">" + v + "</td>";
+      const row = (k, v) => "<tr><th>" + k + "</th>" + td(v) + "</tr>";
+      const pct = (100 * (lmax / lam - 1)).toFixed(2) + "%";
+      document.getElementById("flux-table").innerHTML =
+        "<table class=\"kv\"><thead><tr><th></th><th>" + [0, 1, 2].map(compName).join("</th><th>") + "</th></tr></thead><tbody>" +
+        "<tr><th>" + TR("中心项", "central") + "</th>" + cen.map(v => td(num(v, 6))).join("") + "</tr>" +
+        "<tr><th>" + TR("耗散项", "dissipation") + "</th>" + dis.map(v => td(sgn(v, 6))).join("") + "</tr>" +
+        "<tr><th>h<sub>f</sub></th>" + h.map(v => td("<b>" + num(v, 6) + "</b>")).join("") + "</tr>" +
+        "</tbody></table>";
+      document.getElementById("flux-lam").innerHTML =
+        "<table class=\"kv\">" +
+        row("A<sub>f</sub>", num(Af, 4)) +
+        row("(|u|+a)<sub>L</sub>" + SEP() + "(|u|+a)<sub>R</sub>", num(sL, 4) + SEP() + num(sR, 4)) +
+        row("λ<sub>f</sub>" + TR("：两侧平均（本页所用）", ": the average (used here)"), num(lam, 6)) +
+        row(TR("若取 max（教科书）", "with max (the textbook)"), num(lmax, 6) + TR("，耗散项大 " + pct, ", dissipation " + pct + " larger")) +
+        "</table>";
+
+      const same = ["r", "u", "p"].every(c => st[c + "L"] === st[c + "R"]);
+      let msg;
+      if (!custom) {
+        msg = TR("这是收敛解在 f" + face + " 两侧的状态，h 就是 residual 在这个" + (NODE ? "对偶面" : "面") + "上算出的那个数，逐位相同。换一" + (NODE ? "条对偶面" : "个面") + "看看：质量和能量的 h 在全部 " + NF +
+                 (NODE ? " 条对偶面" : " 个面") + "上都一样（散布 " + sci(hSpread[0]) + " 与 " + sci(hSpread[2]) + "），而单看中心项，质量分量在各" + (NODE ? "对偶面" : "面") + "之间差 " +
+                 (100 * cenRel).toFixed(1) + "%——是耗散项把它补齐的。动量的 h 逐" + (NODE ? "条对偶面" : "面") + "不同，相邻两" + (NODE ? "条对偶面" : "个面") + "之间的差额由源项 p·ΔA 补上。",
+                 "These are the converged states on either side of f" + face + ", and h is the very number residual computes on this " + (NODE ? "dual face" : "face") + ", bit for bit. Step to another " + (NODE ? "dual face" : "face") + ": the mass and energy components of h are the same on all " + NF +
+                 (NODE ? " dual faces" : " faces") + " (spread " + sci(hSpread[0]) + " and " + sci(hSpread[2]) + "), while the central term alone varies by " +
+                 (100 * cenRel).toFixed(1) + "% in its mass component &mdash; the dissipation makes up the difference. The momentum component of h does change from one " + (NODE ? "dual face" : "face") + " to the next, and the source p·ΔA takes up the difference.");
+      } else if (same) {
+        msg = TR("两侧状态相同：耗散项恰好为 0，h = A<sub>f</sub>·F(U)——数值通量退化为物理通量，这就是它的相容性。",
+                 "Both sides hold the same state: the dissipation is exactly zero and h = A<sub>f</sub>·F(U) &mdash; the numerical flux reduces to the physical flux, which is what makes it consistent.");
+      } else {
+        msg = TR("两侧状态由滑块给定。耗散项正比于跳跃 U<sub>R</sub> − U<sub>L</sub>、符号相反：每个分量上，它都从数值大的一侧往小的一侧输运。「恢复收敛解」回到 f" + face + " 的收敛状态。",
+                 "The two states come from the sliders. The dissipation is proportional to the jump U<sub>R</sub> − U<sub>L</sub>, with the opposite sign: in every component it carries from the side where the value is larger to the side where it is smaller. &ldquo;Back to the converged states&rdquo; restores f" + face + ".");
+      }
+      document.getElementById("flux-status").innerHTML = msg;
+    }
+
+    function build() {
+      const code = document.getElementById("flux-code");
+      if (code) { code.replaceChildren(); new V.Code(code, listing(), "code-static"); }
+      faceSel.replaceChildren();
+      for (let f = 0; f < NF; f++) V.H("option", { value: String(f), text: optText(f) }, faceSel);
+      faceSel.value = String(face);
+      draw();
+    }
+    inputs.forEach((el, i) => el.addEventListener("input", () => {
+      st[KEYS[i]] = Number(el.value);
+      custom = true;
+      draw();
+    }));
+    faceSel.addEventListener("change", () => { load(Number(faceSel.value)); draw(); });
+    const bLoad = document.getElementById("fx-load"), bSame = document.getElementById("fx-same");
+    if (bLoad) bLoad.addEventListener("click", () => { load(face); draw(); });
+    if (bSame) bSame.addEventListener("click", () => {
+      st.rR = st.rL; st.uR = st.uL; st.pR = st.pL;
+      custom = true;
+      KEYS.forEach((k, i) => { inputs[i].value = String(st[k]); });
+      draw();
+    });
+    load(face);
+    (window.REPAINT = window.REPAINT || []).push(build);
+    build();
+  }
+
+  /* Paper-style numbering, as on the two-dimensional pages: 图 1, 图 2 ... in
+     document order over every figure and panel, and each <a class="fref"
+     href="#id"> in the prose filled in with its number. Every caption exists
+     once per language, so each is stamped in its OWN language and a language
+     switch has nothing to redo. The class is not "figno": i18n.js removes
+     .figno on a switch, for the 2-D pages that renumber by rebuilding.     */
+  function numberFigures() {
+    const map = {};
+    let n = 0;
+    const isEn = el => /^en/.test((el.closest("[lang]") || document.documentElement).getAttribute("lang") || "");
+    const label = (en, k) => (en ? "Fig. " : "图 ") + k;
+    Array.prototype.forEach.call(document.querySelectorAll("b.fignum"), b => b.remove());
+    document.querySelectorAll("figure, .lab").forEach(el => {
+      n += 1;
+      el.querySelectorAll("figcaption, .lab-title").forEach(cap => {
+        const en = isEn(cap);
+        const b = document.createElement("b");
+        b.className = "fignum";
+        b.style.color = "var(--violet)";
+        b.textContent = label(en, n) + (en ? " " : "　");
+        cap.insertBefore(b, cap.firstChild);
+      });
+      let id = el.id;
+      if (!id) {
+        const p = el.parentElement ? el.parentElement.closest("[id]") : null;
+        id = p ? p.id : "";
+      }
+      if (id) map[id] = n;
+    });
+    document.querySelectorAll("a.fref").forEach(a => {
+      const k = map[(a.getAttribute("href") || "").slice(1)];
+      a.textContent = k ? label(isEn(a), k) : (isEn(a) ? "Fig. ?" : "图 ?");
+    });
+  }
 
   /* ===================================================== section 5: Newton */
   function newtonLab() {
@@ -3697,7 +4046,7 @@ if (!Element.prototype.replaceChildren) {
     }));
   }
 
-  function boot() { newtonLab(); jacobiLab(); linkObjectives(); }
+  function boot() { fluxLab(); newtonLab(); jacobiLab(); linkObjectives(); numberFigures(); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();
 })();
