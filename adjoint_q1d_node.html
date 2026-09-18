@@ -377,6 +377,18 @@ nav.toc li.tochome .num { color: var(--muted); }
    box: every numerator stuck ~0.665em out of its row, and .eqwrap (overflow-y
    hidden) cut the top off a lining superscript 2 in a^2/(gamma-1). */
 .frac { display: inline-block; margin: 0 .16em; }
+/* \sqrt, for one-line arguments. A radical GLYPH has a font-dependent
+   height, so its top never met a bar drawn over the argument (measured: a
+   gap of ~0.4em). Instead the sign is a small SVG laid over the left
+   padding and sized to exactly the argument's box, and the bar is the
+   argument's top border: the sign ends where the bar starts, in any font.
+   The SVG is out of flow, so the argument alone sets the height and the
+   baseline, and the construct sits on the line like the text around it. */
+.sqrt { display: inline-flex; position: relative; padding-left: .6em; margin: 0 .08em; }
+.sqrt .rad { position: absolute; left: 0; top: 0; width: .6em; height: 100%; overflow: visible; }
+.sqrt .rad path { fill: none; stroke: currentColor; stroke-width: 1.1; stroke-linejoin: round;
+  stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.sqrt .rarg { line-height: 1.15; border-top: 1px solid currentColor; padding: .02em .08em 0 .06em; }
 .frac .fcol { display: inline-flex; flex-direction: column; vertical-align: 0.663em;
   text-align: center; }
 .frac .num { border-bottom: 1px solid currentColor; padding: 0 .3em 1px; line-height: 1.25; }
