@@ -3598,7 +3598,10 @@ if (!Element.prototype.replaceChildren) {
       const hosts = el.querySelectorAll("figcaption, .lab-title");
       hosts.forEach(host => {
         if (!host.querySelector(".figno")) {
-          host.innerHTML = '<b class="figno">' + label + TR("</b>\u3000", "</b> ") + host.innerHTML;
+          /* the separator sits INSIDE the <b>: i18n.js removes .figno on a
+             language switch, and a separator left outside piled up, one
+             more gap per switch */
+          host.innerHTML = '<b class="figno">' + label + TR("\u3000", " ") + "</b>" + host.innerHTML;
         }
       });
       let id = el.id;
