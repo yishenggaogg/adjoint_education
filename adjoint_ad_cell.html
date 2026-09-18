@@ -687,7 +687,7 @@ table.lsqtab td { padding-right: 8px; }
 
   <div class="prose">
     <h3 lang="zh">用近似 Jacobian 的 Newton 法</h3><h3 lang="en">Newton with the approximate Jacobian</h3>
-    <p lang="zh">更新 <span class="eq"><i>u</i><span class="op">←</span><i>u</i>−<i>A&#771;</i><sup>−<span class="dg">1</span></sup><i>R</i>(<i>u</i>)</span>。残差是精确的，不动点就是精确的离散解；近似矩阵只决定收敛快慢：误差每轮乘以 <span class="eq"><i>I</i>−<i>A&#771;</i><sup>−<span class="dg">1</span></sup><i>A</i></span>，本算例它的谱半径是 0.151，比格点页面的 0.0485 大，每轮大约缩小 6.6 倍。判据 <span class="eq"><span class="up">max</span>|<i>δ</i><i>u</i>|&lt;<span class="dg">10</span><sup>−<span class="dg">13</span></sup></span> 在第 17 轮满足；换成精确矩阵，二次收敛，第 6 轮满足。<a class="fref" href="#newton-lab"></a> 逐轮重放。</p><p lang="en">The update is <span class="eq"><i>u</i><span class="op">←</span><i>u</i>−<i>A&#771;</i><sup>−<span class="dg">1</span></sup><i>R</i>(<i>u</i>)</span>. The residual is exact, so the fixed point is the exact discrete solution; the approximate matrix only sets the pace: every sweep multiplies the error by <span class="eq"><i>I</i>−<i>A&#771;</i><sup>−<span class="dg">1</span></sup><i>A</i></span>, whose spectral radius is 0.151 here, larger than the node page's 0.0485, a factor of about 6.6 per sweep. The criterion <span class="eq"><span class="up">max</span>|<i>δ</i><i>u</i>|&lt;<span class="dg">10</span><sup>−<span class="dg">13</span></sup></span> is met at sweep 17; with the exact matrix Newton converges quadratically and meets it at sweep 6. <a class="fref" href="#newton-lab"></a> replays it sweep by sweep.</p>
+    <p lang="zh">更新 <span class="eq"><i>u</i><span class="op">←</span><i>u</i>−<i>A&#771;</i><sup>−<span class="dg">1</span></sup><i>R</i>(<i>u</i>)</span>。残差是精确的，不动点就是精确的离散解；近似矩阵只决定收敛快慢：误差每轮乘以 <span class="eq"><i>I</i>−<i>A&#771;</i><sup>−<span class="dg">1</span></sup><i>A</i></span>，本算例它的谱半径是 0.151，比格点页面的 0.0485 大，每轮大约缩小 6.6 倍。判据 <span class="eq"><span class="up">max</span>|<i>δ</i><i>u</i>|&lt;<span class="dg">10</span><sup>−<span class="dg">13</span></sup></span> 在第 17 轮满足；换成精确矩阵，二次收敛，第 6 轮满足。<a class="fref" href="#newton-lab"></a> 逐轮重放。演示越过判据继续跑到第 30 轮：从第 21 轮起 <span class="eq"><span class="up">max</span>|<i>R</i>|</span> 只在 <span class="eq"><span class="dg">2.78</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">16</span></sup></span> 与 <span class="eq"><span class="dg">3.33</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">16</span></sup></span> 两个值之间交替，曲线变平，这才是收敛到机器精度的样子。</p><p lang="en">The update is <span class="eq"><i>u</i><span class="op">←</span><i>u</i>−<i>A&#771;</i><sup>−<span class="dg">1</span></sup><i>R</i>(<i>u</i>)</span>. The residual is exact, so the fixed point is the exact discrete solution; the approximate matrix only sets the pace: every sweep multiplies the error by <span class="eq"><i>I</i>−<i>A&#771;</i><sup>−<span class="dg">1</span></sup><i>A</i></span>, whose spectral radius is 0.151 here, larger than the node page's 0.0485, a factor of about 6.6 per sweep. The criterion <span class="eq"><span class="up">max</span>|<i>δ</i><i>u</i>|&lt;<span class="dg">10</span><sup>−<span class="dg">13</span></sup></span> is met at sweep 17; with the exact matrix Newton converges quadratically and meets it at sweep 6. <a class="fref" href="#newton-lab"></a> replays it sweep by sweep. The demo runs on past the criterion to sweep 30: from sweep 21 on <span class="eq"><span class="up">max</span>|<i>R</i>|</span> only alternates between <span class="eq"><span class="dg">2.78</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">16</span></sup></span> and <span class="eq"><span class="dg">3.33</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">16</span></sup></span>, and that flat tail is what convergence to machine precision looks like.</p>
   </div>
 
   <div class="lab" id="newton-lab">
@@ -843,7 +843,7 @@ table.lsqtab td { padding-right: 8px; }
     <h3 lang="zh">用求解器的一阶矩阵来驱动</h3><h3 lang="en">Driven by the solver's first-order matrix</h3>
     <p lang="zh">伴随方程 <span class="eq"><i>A</i><sup>T</sup><i>ψ</i>=−<i>g</i></span> 的解法与原始求解对应：残差用精确的 residual_b，近似逆用第 5 节一阶矩阵的转置：</p><p lang="en">The adjoint equation <span class="eq"><i>A</i><sup>T</sup><i>ψ</i>=−<i>g</i></span> is solved the way the primal is: the residual from the exact residual_b, the approximate inverse from the transpose of the first-order matrix of Section 5:</p>
     <div class="eqwrap"><span class="eqd"><i>ψ</i><span class="op">←</span><i>ψ</i>−<i>A&#771;</i><sup>−T</sup>(<i>A</i><sup>T</sup><i>ψ</i>+<i>g</i>)</span></div>
-    <p lang="zh">残差是精确的，不动点就是精确的伴随解。迭代矩阵 <span class="eq"><i>I</i>−<i>A&#771;</i><sup>−T</sup><i>A</i><sup>T</sup>=(<i>I</i>−<i>A</i><i>A&#771;</i><sup>−<span class="dg">1</span></sup>)<sup>T</sup></span> 与原始迭代的 <span class="eq"><i>I</i>−<i>A&#771;</i><sup>−<span class="dg">1</span></sup><i>A</i></span> 谱相同，所以渐近速率也是第 5 节的 0.151：实测 16 轮把残差的均方根降到 <span class="eq"><span class="dg">10</span><sup>−<span class="dg">13</span></sup></span>，最后几轮每轮乘以 0.156 到 0.171。<a class="fref" href="#adjit-lab"></a> 逐轮重放，并把原始迭代的收敛曲线画在一起。</p><p lang="en">The residual is exact, so the fixed point is the exact adjoint. The iteration matrix <span class="eq"><i>I</i>−<i>A&#771;</i><sup>−T</sup><i>A</i><sup>T</sup>=(<i>I</i>−<i>A</i><i>A&#771;</i><sup>−<span class="dg">1</span></sup>)<sup>T</sup></span> shares its spectrum with the primal's <span class="eq"><i>I</i>−<i>A&#771;</i><sup>−<span class="dg">1</span></sup><i>A</i></span>, so the asymptotic rate is again the 0.151 of Section 5: measured, 16 sweeps bring the rms residual to <span class="eq"><span class="dg">10</span><sup>−<span class="dg">13</span></sup></span>, the last ones multiplying it by 0.156 to 0.171. <a class="fref" href="#adjit-lab"></a> replays it sweep by sweep, with the primal iteration's convergence drawn beside it.</p>
+    <p lang="zh">残差是精确的，不动点就是精确的伴随解。迭代矩阵 <span class="eq"><i>I</i>−<i>A&#771;</i><sup>−T</sup><i>A</i><sup>T</sup>=(<i>I</i>−<i>A</i><i>A&#771;</i><sup>−<span class="dg">1</span></sup>)<sup>T</sup></span> 与原始迭代的 <span class="eq"><i>I</i>−<i>A&#771;</i><sup>−<span class="dg">1</span></sup><i>A</i></span> 谱相同，所以渐近速率也是第 5 节的 0.151：实测 16 轮把残差的均方根降到 <span class="eq"><span class="dg">10</span><sup>−<span class="dg">13</span></sup></span>，最后几轮每轮乘以 0.156 到 0.171。<a class="fref" href="#adjit-lab"></a> 逐轮重放，并把原始迭代的收敛曲线画在一起。演示不停在判据处，一直跑到第 30 轮：伴随残差从第 20 轮起落在 <span class="eq"><span class="dg">1.2</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">16</span></sup></span> 与 <span class="eq"><span class="dg">2.1</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">16</span></sup></span> 之间，原始迭代从第 20 轮起落在 <span class="eq"><span class="dg">1.2</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">16</span></sup></span> 与 <span class="eq"><span class="dg">2.5</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">16</span></sup></span> 之间。两条曲线都变平，才说明两个迭代都已收敛到机器精度。</p><p lang="en">The residual is exact, so the fixed point is the exact adjoint. The iteration matrix <span class="eq"><i>I</i>−<i>A&#771;</i><sup>−T</sup><i>A</i><sup>T</sup>=(<i>I</i>−<i>A</i><i>A&#771;</i><sup>−<span class="dg">1</span></sup>)<sup>T</sup></span> shares its spectrum with the primal's <span class="eq"><i>I</i>−<i>A&#771;</i><sup>−<span class="dg">1</span></sup><i>A</i></span>, so the asymptotic rate is again the 0.151 of Section 5: measured, 16 sweeps bring the rms residual to <span class="eq"><span class="dg">10</span><sup>−<span class="dg">13</span></sup></span>, the last ones multiplying it by 0.156 to 0.171. <a class="fref" href="#adjit-lab"></a> replays it sweep by sweep, with the primal iteration's convergence drawn beside it. The demo does not stop at the criterion but runs on to sweep 30: the adjoint residual stays between <span class="eq"><span class="dg">1.2</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">16</span></sup></span> and <span class="eq"><span class="dg">2.1</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">16</span></sup></span> from sweep 20 on, the primal one between <span class="eq"><span class="dg">1.2</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">16</span></sup></span> and <span class="eq"><span class="dg">2.5</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">16</span></sup></span> from sweep 20 on. Only because both curves go flat can one say that both iterations have converged to machine precision.</p>
   </div>
 
   <div class="lab" id="adjit-lab">
@@ -2543,7 +2543,7 @@ if (!Element.prototype.replaceChildren) {
       ["        res ← residual_b(u, ψ) + g", TR("精确的 Aᵀψ（第 8 节）", "the exact Aᵀψ (Section 8)")],
       ["        δψ ← solve(Ãᵀ, res)", TR("近似矩阵的转置", "the approximate matrix, transposed")],
       ["        ψ ← ψ − δψ", ""],
-      ["    until ‖res‖ < tol", ""],
+      ["    until ‖res‖ < tol", TR("演示越过判据，一直跑到舍入误差平台", "the demo runs on to the round-off floor")],
       ["    return ψ", ""]
     ]
     };
@@ -3341,12 +3341,19 @@ if (!Element.prototype.replaceChildren) {
   function newtonLab() {
     const host = $("newton-mesh");
     if (!host) return;
-    const K = NODE ? 14 : 20;
+    /* past the criterion to the round-off floor: the flat tail is what shows
+       convergence to machine precision (the code itself runs a fixed 60) */
+    const K = 30;
     const iter = newtonRun(K, false), ref = newtonRun(K, true);
     const Rn = NODE ? "R_bc" : "R", RnH = NODE ? "R<sub>bc</sub>" : "R";
     let hit = -1, hitRef = -1;
     iter.forEach((s, k) => { if (hit < 0 && s.dun < FV.NEWTON_TOL) hit = k + 1; });
     ref.forEach((s, k) => { if (hitRef < 0 && s.dun < FV.NEWTON_TOL) hitRef = k + 1; });
+    /* the flat tail starts at the sweep from which max|R| is never halved again */
+    const rnMin = iter.map(s => s.rn);
+    for (let q = K - 2; q >= 0; q--) rnMin[q] = Math.min(rnMin[q], rnMin[q + 1]);
+    let flo = K;
+    while (flo > 1 && rnMin[flo - 1] > 0.5 * iter[flo - 2].rn) flo--;
     const mesh = new V.MeshView(host, { scale: 150, label: TR("Newton 迭代中的状态 u", "the state u during the Newton iteration") });
     const lanes = new V.Lanes($("newton-lanes"));
     const code = new V.Code($("newton-code"), CODES.newton);
@@ -3380,7 +3387,8 @@ if (!Element.prototype.replaceChildren) {
         stat.innerHTML = TR("第 <b>", "sweep <b>") + (it + 1) + (NODE ? TR("</b> 轮：对当前 u 跑一次 <span class=\"mono\">residual</span>（两遍循环，再替换壁面行），max|r| = <span class=\"mono\">",
           "</b>: one <span class=\"mono\">residual</span> on the current u (two passes, then the wall rows replaced), max|r| = <span class=\"mono\">")
           : TR("</b> 轮：对当前 u 跑一次 <span class=\"mono\">residual</span>（两遍循环），max|r| = <span class=\"mono\">", "</b>: one <span class=\"mono\">residual</span> on the current u (two passes), max|r| = <span class=\"mono\">")) + e2(s.rn) + "</span>" +
-          (NODE ? TR("；壁面行的残差 u<sub>i</sub> − u<sub>w</sub> 从一开始就是 0。", "; the wall rows' residual u<sub>i</sub> − u<sub>w</sub> is 0 from the start.") : TR("。", "."));
+          (NODE ? TR("；壁面行的残差 u<sub>i</sub> − u<sub>w</sub> 从一开始就是 0。", "; the wall rows' residual u<sub>i</sub> − u<sub>w</sub> is 0 from the start.") : TR("。", ".")) +
+          (it + 1 >= flo ? TR("max|r| 已落到舍入误差平台，此后只在平台上起伏。", " max|r| has reached the round-off floor and from here on only wanders along it.") : "");
       } else if (st === 1) {
         stat.innerHTML = TR("解 <span class=\"mono\">Ã δu = r</span>（Ã 是一阶近似矩阵，稠密 LU）：max|δu| = <span class=\"mono\">", "solve <span class=\"mono\">Ã δu = r</span> (Ã is the first-order matrix; dense LU): max|δu| = <span class=\"mono\">") + e2(s.dun) + "</span>" + TR("。", ".") +
           (s.dun < FV.NEWTON_TOL ? TR("已小于判据 10⁻¹³。", " Already below the 10⁻¹³ criterion.") : TR("仍大于判据 10⁻¹³。", " Still above the 10⁻¹³ criterion."));
@@ -3394,15 +3402,21 @@ if (!Element.prototype.replaceChildren) {
         V.S("line", { x1: px0, y1: Y(ee), x2: px1, y2: Y(ee), style: { stroke: "var(--rule)", strokeWidth: 1 } }, g);
         V.S("text", { x: px0 - 8, y: Y(ee) + 4, "text-anchor": "end", text: "1e" + ee, style: { fill: "var(--muted)", fontFamily: "var(--font-mono)", fontSize: "10.5px" } }, g);
       }
-      iter.forEach((q, k) => V.S("text", { x: X(k), y: py1 + 18, "text-anchor": "middle", text: String(k + 1), style: { fill: "var(--muted)", fontFamily: "var(--font-mono)", fontSize: "10.5px" } }, g));
+      iter.forEach((q, k) => { if (k === 0 || (k + 1) % 5 === 0) V.S("text", { x: X(k), y: py1 + 18, "text-anchor": "middle", text: String(k + 1), style: { fill: "var(--muted)", fontFamily: "var(--font-mono)", fontSize: "10.5px" } }, g); });
       V.S("text", { x: (px0 + px1) / 2, y: Hh - 4, "text-anchor": "middle", text: TR("Newton 轮次 k（纵轴 max|" + Rn + "|，对数刻度）", "Newton sweep k (vertical axis max|" + Rn + "|, logarithmic)"), style: { fill: "var(--muted)", fontSize: "11.5px" } }, g);
       /* the exact matrix, for comparison only: quadratic, then round-off */
       const lr = ref.map(q => Math.log10(Math.max(q.rn, 1e-17)));
       V.S("polyline", { points: lr.map((v, k) => X(k) + "," + Y(Math.max(v, ymin))).join(" "),
         style: { fill: "none", stroke: "var(--muted)", strokeWidth: 1.4, strokeDasharray: "5 4" } }, g);
-      const kr = Math.min(2, lr.length - 1);
-      V.S("text", { x: X(kr) + 8, y: Y(Math.max(lr[kr], ymin)) + 14, text: TR("精确矩阵（仅作对照）", "exact matrix (for comparison)"),
+      /* its legend, top right: over 30 sweeps the steep early drops would run
+         through a label placed by the curve; up there every curve is on the floor */
+      V.S("line", { x1: px1 - 198, y1: py0 + 18, x2: px1 - 176, y2: py0 + 18, style: { stroke: "var(--muted)", strokeWidth: 1.4, strokeDasharray: "5 4" } }, g);
+      V.S("text", { x: px1 - 170, y: py0 + 22, "text-anchor": "start", text: TR("精确矩阵（仅作对照）", "exact matrix (for comparison)"),
         style: { fill: "var(--muted)", fontSize: "11px" } }, g);
+      /* the sweep that meets max|du| < 1e-13, and the flat tail */
+      V.S("circle", { cx: X(hit - 1), cy: Y(lg[hit - 1]), r: 3.5, style: { fill: "var(--surface)", stroke: "var(--muted)", strokeWidth: 1.5 } }, g);
+      V.S("text", { x: X(hit - 1) + 7, y: Y(lg[hit - 1]) - 6, "text-anchor": "start", text: TR("第 " + hit + " 轮满足判据", "criterion met at sweep " + hit), style: { fill: "var(--muted)", fontSize: "11px" } }, g);
+      V.S("text", { x: px1, y: Y(Math.max(...lg.slice(flo - 1))) - 8, "text-anchor": "end", text: TR("舍入误差平台", "round-off floor"), style: { fill: "var(--muted)", fontSize: "11px" } }, g);
       V.S("polyline", { points: lg.map((v, k) => X(k) + "," + Y(v)).join(" "), style: { fill: "none", stroke: "var(--grid)", strokeWidth: 1.5 } }, g);
       V.S("polyline", { points: lg.slice(0, it + 1).map((v, k) => X(k) + "," + Y(v)).join(" "), style: { fill: "none", stroke: "var(--primal)", strokeWidth: 2.2 } }, g);
       V.S("circle", { cx: X(it), cy: Y(lg[it]), r: 4, style: { fill: "var(--primal)" } }, g);
@@ -3587,8 +3601,17 @@ if (!Element.prototype.replaceChildren) {
   function adjointLab() {
     const host = $("adjit-mesh");
     if (!host) return;
-    const res = FV.adjointIterate(FV.U, 200, 1e-13);
+    /* past the stopping criterion to the round-off floor, on purpose: only the
+       flat tail shows that the iteration has converged to machine precision */
+    const TOL = 1e-13, SWEEPS = 30;
+    const res = FV.adjointIterate(FV.U, SWEEPS, 0);
     const hist = res.hist, n = hist.length;
+    const hit = hist.findIndex(h => h < TOL) + 1;
+    /* the flat tail starts at the sweep from which the rms is never halved again */
+    const sufMin = hist.slice();
+    for (let q = n - 2; q >= 0; q--) sufMin[q] = Math.min(hist[q], sufMin[q + 1]);
+    let flo = n;
+    while (flo > 1 && sufMin[flo - 1] > 0.5 * hist[flo - 2]) flo--;
     const prim = newtonRun(n, false).map(q => Math.sqrt(q.r.reduce((s, x) => s + x * x, 0) / NC));
     let view = "psi";
     const mesh = new V.MeshView(host, { scale: 150, pad: 44, label: TR("伴随解 ψ 在网格上的分布", "the adjoint solution ψ over the mesh") });
@@ -3628,14 +3651,21 @@ if (!Element.prototype.replaceChildren) {
       code.setActive(k >= n - 1 ? 10 : 6);
       stat.innerHTML = TR("第 <b>", "sweep <b>") + (k + 1) + "</b> / " + n + TR("：‖res‖ = <span class=\"mono\">", ": ‖res‖ = <span class=\"mono\">") + sci2(hist[k]) + "</span>" +
         (k > 0 ? TR("，本轮残差乘以 ", "; this sweep multiplied the residual by ") + fmt(hist[k] / hist[k - 1], 3) : "") +
+        (k + 1 >= flo ? TR("；已落到舍入误差平台，此后只在平台上起伏", "; on the round-off floor, only wandering along it from here on")
+          : k + 1 >= hit ? TR("；已低于判据 10⁻¹³，但还没有降到底", "; below the 10⁻¹³ criterion, but not bottomed out yet") : "") +
         (view === "phi" ? TR("。φ 与 ψ 只在壁面节点上不同：那里 φ = −1。", ". φ differs from ψ only on the wall nodes, where φ = −1.") : TR("。", "."));
       g.replaceChildren();
       for (let e = ymin; e <= ymax; e += 2) {
         V.S("line", { x1: px0, y1: Y(e), x2: px1, y2: Y(e), style: { stroke: "var(--rule)", strokeWidth: 1 } }, g);
         V.S("text", { x: px0 - 8, y: Y(e) + 4, "text-anchor": "end", text: "1e" + e, style: { fill: "var(--muted)", fontFamily: "var(--font-mono)", fontSize: "10.5px" } }, g);
       }
-      for (let q = 0; q < n; q++) V.S("text", { x: X(q), y: py1 + 18, "text-anchor": "middle", text: String(q + 1), style: { fill: "var(--muted)", fontFamily: "var(--font-mono)", fontSize: "10.5px" } }, g);
+      for (let q = 0; q < n; q++) if (q === 0 || (q + 1) % 5 === 0) V.S("text", { x: X(q), y: py1 + 18, "text-anchor": "middle", text: String(q + 1), style: { fill: "var(--muted)", fontFamily: "var(--font-mono)", fontSize: "10.5px" } }, g);
       V.S("text", { x: (px0 + px1) / 2, y: Hh - 6, "text-anchor": "middle", text: TR("迭代轮次（纵轴：残差的均方根，对数刻度）", "sweep (vertical axis: rms of the residual, logarithmic)"), style: { fill: "var(--muted)", fontSize: "11.5px" } }, g);
+      /* the criterion, where the adjoint curve crosses it, and the flat tails */
+      V.S("line", { x1: px0, y1: Y(Math.log10(TOL)), x2: px1, y2: Y(Math.log10(TOL)), style: { stroke: "var(--muted)", strokeWidth: 1, strokeDasharray: "2 3" } }, g);
+      V.S("text", { x: px0 + 6, y: Y(Math.log10(TOL)) - 5, "text-anchor": "start", text: TR("判据 ‖res‖ = 10⁻¹³", "criterion ‖res‖ = 10⁻¹³"), style: { fill: "var(--muted)", fontSize: "11px" } }, g);
+      V.S("circle", { cx: X(hit - 1), cy: Y(lg[hit - 1]), r: 3.5, style: { fill: "var(--surface)", stroke: "var(--muted)", strokeWidth: 1.5 } }, g);
+      V.S("text", { x: px1, y: Y(Math.max(...lg.slice(flo - 1), ...lp.slice(flo - 1))) - 8, "text-anchor": "end", text: TR("舍入误差平台", "round-off floor"), style: { fill: "var(--muted)", fontSize: "11px" } }, g);
       V.S("polyline", { points: lp.map((v, q) => X(q) + "," + Y(Math.max(v, ymin))).join(" "), style: { fill: "none", stroke: "var(--primal)", strokeWidth: 1.6, strokeDasharray: "5 4" } }, g);
       V.S("polyline", { points: lg.map((v, q) => X(q) + "," + Y(v)).join(" "), style: { fill: "none", stroke: "var(--grid)", strokeWidth: 1.5 } }, g);
       V.S("polyline", { points: lg.slice(0, k + 1).map((v, q) => X(q) + "," + Y(v)).join(" "), style: { fill: "none", stroke: "var(--adjoint)", strokeWidth: 2.2 } }, g);
@@ -3648,9 +3678,9 @@ if (!Element.prototype.replaceChildren) {
     player.set(n - 1);
     const info = $("adjit-info");
     if (info) {
-      const rates = hist.slice(1).map((h, q) => h / hist[q]).slice(-4);
-      info.innerHTML = TR("一阶矩阵 Ã 转置后驱动迭代；", "the first-order matrix Ã, transposed, drives the iteration; ") + n + TR(" 轮到 10⁻¹³；最后几轮每轮把残差依次乘以 ", " sweeps to 10⁻¹³; the last sweeps multiply the residual by ") +
-        rates.map(x => fmt(x, 3)).join(TR("、", ", "));
+      const rates = hist.slice(1, hit).map((h, q) => h / hist[q]).slice(-4);
+      info.innerHTML = TR("一阶矩阵 Ã 转置后驱动迭代；", "the first-order matrix Ã, transposed, drives the iteration; ") + hit + TR(" 轮到 10⁻¹³，这之前几轮每轮把残差依次乘以 ", " sweeps to 10⁻¹³, the sweeps before that multiplying the residual by ") +
+        rates.map(x => fmt(x, 3)).join(TR("、", ", ")) + TR("；演示一直跑到第 ", "; the demo runs on to sweep ") + n + TR(" 轮", "");
     }
   }
 

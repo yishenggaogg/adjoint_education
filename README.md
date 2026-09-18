@@ -177,7 +177,8 @@ equation with the transpose of the same matrix, at the same rate as the primal.
 - **点积测试**：随机向量，现场验证 $\langle w,Av\rangle=\langle A^{\mathsf T}w,v\rangle$；
   对流扩散格点页可以把壁面的转置换成照搬前向的错误写法，看它怎样失败
 - **两个求解过程**：primal 的 Newton 迭代逐轮播放；伴随方程的迭代逐轮播放（对流页与拟一维页是
-  Jacobi 迭代，逐面、逐次；对流扩散页用一阶矩阵的转置，并把原始迭代的收敛曲线画在一起）
+  Jacobi 迭代，逐面、逐次；对流扩散页用一阶矩阵的转置，并把原始迭代的收敛曲线画在一起）。
+  收敛曲线都越过停止判据，一直画到舍入误差平台：曲线变平，才说明已经收敛到机器精度
 - **流进物面的通量**（对流扩散页）：逐个壁面面或壁面节点看它吸收的通量；格点页把一致的反作用量
   与单侧差分公式并排对照
 - **精确 Jacobian 的组装**：拟一维页逐面播放 `jacobian(u, A)`——每个面的两个 3×3 块、边界块 $c_R+c_L\,\partial\mathbf B/\partial\mathbf u$、源项行、被替换的约束行——最后与中心差分对照；Newton 用的就是它
@@ -195,7 +196,8 @@ flux on one face can be taken apart term by term, the diffusive flux into its tw
 its gradient correction; a least-squares gradient can be taken apart weight by weight, and seen
 to be exact on a linear field; the exact Jacobian can be watched being assembled block by block,
 boundary terms included; the Newton
-solve and the adjoint iteration can be stepped through; the flux into the body can be read wall
+solve and the adjoint iteration can be stepped through, past the stopping criterion down to the
+round-off floor, where the curve goes flat; the flux into the body can be read wall
 face by wall face, or wall node by wall node against the one-sided formula; and the shape
 gradient can be checked against full-chain differences at any step and scheme, with its error
 swept against the step size, component by component.

@@ -1048,7 +1048,8 @@ S=<span class="pmat"><span class="pstrut">&#8203;</span><span class="lp"></span>
     </div>
   </div>
   <div class="prose">
-    <p lang="zh" class="note"><b>为什么要近一千次？</b>二维对流页的 Jacobi 每次迭代把残差缩到约 0.79，122 次就收敛；这里每次只缩到约 0.977。块 Jacobi 每次迭代只在相邻单元之间交换一次信息。把 <span class="eq"><i>D</i><sup>−<span class="dg">1</span></sup></span> 乘上与上下游邻居相连的块，按特征方向看（实测，第 7 个单元）：Rusanov 对三条波只用一个耗散 <span class="eq"><i>λ</i>=|<i>u</i>|+<i>a</i></span>，它恰好等于最快那条 <span class="eq"><i>u</i>+<i>a</i></span> 的波速，所以这条波是纯迎风的，只连上游（强度 0.98，下游 0.00）；另外两条两头都连着：<span class="eq"><i>u</i></span> 上游 0.64、下游 0.35，<span class="eq"><i>u</i>−<i>a</i></span> 上游 0.30、下游 0.69。这正是本节开头说的双向传播：误差要在进出口之间来回走很多趟才消得掉。最慢的误差在相邻单元之间一大一小地交替，所以相邻两次迭代的残差比在 0.971 与 0.984 之间来回跳（<a class="fref" href="#jacobi-lab"></a>的状态栏里能看到）——这是块三对角矩阵上 Jacobi 的典型表现。真实代码保留同样的两样东西，residual_b 与块对角 <span class="eq"><i>D</i></span>，但把它们放进 Krylov 方法（例如 GMRES）里去加速。</p><p class="note" lang="en"><b>Why nearly a thousand iterations?</b> On the two-dimensional advection pages each Jacobi iteration shrinks the residual to about 0.79 and 122 iterations suffice; here each one shrinks it only to about 0.977. Block Jacobi exchanges information between neighbouring cells once per iteration. Multiply <span class="eq"><i>D</i><sup>−<span class="dg">1</span></sup></span> into the blocks that tie a cell to its upstream and downstream neighbours and look along the characteristic directions (measured, cell 7): Rusanov gives all three waves one dissipation, <span class="eq"><i>λ</i>=|<i>u</i>|+<i>a</i></span>, which is exactly the speed of the fastest wave <span class="eq"><i>u</i>+<i>a</i></span>, so that wave is purely upwinded and tied only upstream (strength 0.98, downstream 0.00); the other two are tied both ways: <span class="eq"><i>u</i></span> with 0.64 upstream and 0.35 downstream, <span class="eq"><i>u</i>−<i>a</i></span> with 0.30 upstream and 0.69 downstream. This is the two-way propagation described at the start of this section: an error has to travel back and forth between inlet and outlet many times before it dies out. The slowest error alternates large and small from one cell to the next, so the ratio between successive residuals alternates between 0.971 and 0.984 (visible in the status line of <a class="fref" href="#jacobi-lab"></a>) &mdash; typical of Jacobi on a block-tridiagonal matrix. Production codes keep the same two ingredients, residual_b and the block diagonal <span class="eq"><i>D</i></span>, and accelerate them inside a Krylov method such as GMRES.</p>
+    <p lang="zh" class="note"><b>为什么要近一千次？</b>二维对流页的 Jacobi 每次迭代把残差缩到约 0.79，122 次就降到判据 <span class="eq"><span class="dg">10</span><sup>−<span class="dg">13</span></sup></span>；这里每次只缩到约 0.977。块 Jacobi 每次迭代只在相邻单元之间交换一次信息。把 <span class="eq"><i>D</i><sup>−<span class="dg">1</span></sup></span> 乘上与上下游邻居相连的块，按特征方向看（实测，第 7 个单元）：Rusanov 对三条波只用一个耗散 <span class="eq"><i>λ</i>=|<i>u</i>|+<i>a</i></span>，它恰好等于最快那条 <span class="eq"><i>u</i>+<i>a</i></span> 的波速，所以这条波是纯迎风的，只连上游（强度 0.98，下游 0.00）；另外两条两头都连着：<span class="eq"><i>u</i></span> 上游 0.64、下游 0.35，<span class="eq"><i>u</i>−<i>a</i></span> 上游 0.30、下游 0.69。这正是本节开头说的双向传播：误差要在进出口之间来回走很多趟才消得掉。最慢的误差在相邻单元之间一大一小地交替，所以相邻两次迭代的残差比在 0.971 与 0.984 之间来回跳（<a class="fref" href="#jacobi-lab"></a>的状态栏里能看到）——这是块三对角矩阵上 Jacobi 的典型表现。真实代码保留同样的两样东西，residual_b 与块对角 <span class="eq"><i>D</i></span>，但把它们放进 Krylov 方法（例如 GMRES）里去加速。</p><p class="note" lang="en"><b>Why nearly a thousand iterations?</b> On the two-dimensional advection pages each Jacobi iteration shrinks the residual to about 0.79 and 122 iterations reach the <span class="eq"><span class="dg">10</span><sup>−<span class="dg">13</span></sup></span> criterion; here each one shrinks it only to about 0.977. Block Jacobi exchanges information between neighbouring cells once per iteration. Multiply <span class="eq"><i>D</i><sup>−<span class="dg">1</span></sup></span> into the blocks that tie a cell to its upstream and downstream neighbours and look along the characteristic directions (measured, cell 7): Rusanov gives all three waves one dissipation, <span class="eq"><i>λ</i>=|<i>u</i>|+<i>a</i></span>, which is exactly the speed of the fastest wave <span class="eq"><i>u</i>+<i>a</i></span>, so that wave is purely upwinded and tied only upstream (strength 0.98, downstream 0.00); the other two are tied both ways: <span class="eq"><i>u</i></span> with 0.64 upstream and 0.35 downstream, <span class="eq"><i>u</i>−<i>a</i></span> with 0.30 upstream and 0.69 downstream. This is the two-way propagation described at the start of this section: an error has to travel back and forth between inlet and outlet many times before it dies out. The slowest error alternates large and small from one cell to the next, so the ratio between successive residuals alternates between 0.971 and 0.984 (visible in the status line of <a class="fref" href="#jacobi-lab"></a>) &mdash; typical of Jacobi on a block-tridiagonal matrix. Production codes keep the same two ingredients, residual_b and the block diagonal <span class="eq"><i>D</i></span>, and accelerate them inside a Krylov method such as GMRES.</p>
+    <p lang="zh" class="note"><b>收敛到机器精度是什么样子。</b>判据 <span class="eq"><span class="up">max</span>|res|&lt;<span class="dg">10</span><sup>−<span class="dg">13</span></sup></span> 在反设计目标下第 830 次满足，推力目标下第 1012 次满足，但这时残差仍按同一比例下降。所以<a class="fref" href="#jacobi-lab"></a>不停在判据处，一直迭代到第 2400 次：反设计目标从第 1349 次起、推力目标从第 1310 次起，<span class="eq"><span class="up">max</span>|res|</span> 分别一直落在 <span class="eq"><span class="dg">9.5</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">20</span></sup></span> 到 <span class="eq"><span class="dg">9.6</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">19</span></sup></span>、<span class="eq"><span class="dg">3.6</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">17</span></sup></span> 到 <span class="eq"><span class="dg">2.3</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">16</span></sup></span> 之间，曲线变平，这才是收敛到机器精度的样子。反设计的平台低得多，因为它的伴随解本身就小：<span class="eq"><span class="up">max</span>|<i>Ψ</i>|</span> 是 <span class="eq"><span class="dg">1.3</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">3</span></sup></span>，推力是 0.31。到第 2400 次，<span class="eq"><i>Ψ</i></span> 与直接解出的 <span class="eq"><i>Ψ</i></span> 最多相差 <span class="eq"><span class="dg">1.2</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">18</span></sup></span>（反设计）与 <span class="eq"><span class="dg">9.7</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">17</span></sup></span>（推力）。</p><p class="note" lang="en"><b>What convergence to machine precision looks like.</b> The criterion <span class="eq"><span class="up">max</span>|res|&lt;<span class="dg">10</span><sup>−<span class="dg">13</span></sup></span> is met at iteration 830 for inverse design and 1012 for thrust, but the residual is still falling at the same rate there. So <a class="fref" href="#jacobi-lab"></a> does not stop at the criterion; it iterates on to 2400: from iteration 1349 (inverse design) and 1310 (thrust) on, <span class="eq"><span class="up">max</span>|res|</span> stays between <span class="eq"><span class="dg">9.5</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">20</span></sup></span> and <span class="eq"><span class="dg">9.6</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">19</span></sup></span>, and between <span class="eq"><span class="dg">3.6</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">17</span></sup></span> and <span class="eq"><span class="dg">2.3</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">16</span></sup></span>, and the curve goes flat, which is what convergence to machine precision looks like. The inverse-design floor lies much lower because its adjoint is small to begin with: <span class="eq"><span class="up">max</span>|<i>Ψ</i>|</span> is <span class="eq"><span class="dg">1.3</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">3</span></sup></span>, against 0.31 for thrust. By iteration 2400, <span class="eq"><i>Ψ</i></span> differs from the directly solved <span class="eq"><i>Ψ</i></span> by at most <span class="eq"><span class="dg">1.2</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">18</span></sup></span> (inverse design) and <span class="eq"><span class="dg">9.7</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">17</span></sup></span> (thrust).</p>
   </div>
   <div class="lab" id="adj-lab">
     <div class="lab-head">
@@ -3182,7 +3183,9 @@ if (!Element.prototype.replaceChildren) {
       host.appendChild(this.svg);
     }
     /* cfg: { cur, role, xlabel, tickEvery, decStep, band: {from, to, text},
-              floor } -- entries are numbered from 1 on the axis */
+              floor, ref: {y, at, text}, tail: {from, text} } -- entries are
+       numbered from 1 on the axis. ref draws a dashed level y with a label
+       and rings entry `at`; tail labels the flat tail from entry `from`. */
     draw(hist, cfg) {
       const o = this.o, c = cfg || {}, n = hist.length;
       const floor = c.floor || 1e-17;
@@ -3215,6 +3218,21 @@ if (!Element.prototype.replaceChildren) {
       }
       s.push(S("text", { x: (x0 + x1) / 2, y: o.H - 4, "text-anchor": "middle",
         style: { fill: "var(--muted)", fontSize: "11.5px" }, text: c.xlabel || "" }));
+      if (c.ref) {
+        const yr = Y(Math.log10(c.ref.y));
+        s.push(S("line", { x1: x0, y1: yr, x2: x1, y2: yr, stroke: col("muted"), "stroke-width": 1,
+          "stroke-dasharray": "5 4" }));
+        /* right-aligned: once the curve has crossed the level it stays below
+           it, so the stretch above the line's right end is always empty */
+        s.push(S("text", { x: x1, y: yr - 5, "text-anchor": "end",
+          style: { fill: "var(--muted)", fontSize: "11px" }, text: c.ref.text }));
+        if (c.ref.at >= 0 && c.ref.at < n) s.push(S("circle", { cx: X(c.ref.at), cy: Y(lg[c.ref.at]), r: 3.5,
+          fill: "var(--surface)", stroke: col("muted"), "stroke-width": 1.5 }));
+      }
+      if (c.tail && c.tail.from >= 0 && c.tail.from < n) {
+        s.push(S("text", { x: x1, y: Y(Math.max.apply(null, lg.slice(c.tail.from))) - 8, "text-anchor": "end",
+          style: { fill: "var(--muted)", fontSize: "11px" }, text: c.tail.text }));
+      }
       s.push(S("polyline", { points: lg.map((v, k) => X(k) + "," + Y(v)).join(" "),
         fill: "none", stroke: col("grid"), "stroke-width": 1.5 }));
       const cur = Math.max(0, Math.min(n - 1, c.cur === undefined ? n - 1 : c.cur));
@@ -4621,8 +4639,24 @@ if (!Element.prototype.replaceChildren) {
     const compSel = host.querySelector("select.q1d-comp");
     const PTGT = F.targetPressures();
     const cache = {};
-    const solve = kind => (cache[kind] = cache[kind] ||
-      F.jacobiAdjoint(U0, A0, kind, kind === "inverse" ? PTGT : null, 5000, 1e-13));
+    /* on past the stopping criterion to the round-off floor, on purpose: only
+       the flat tail shows that the iteration has converged to machine precision.
+       The last update, whose residual is never evaluated, is dropped, so every
+       iterate keeps its own residual. */
+    const JSTEPS = 2400, JTOL = 1e-13;
+    const solve = kind => (cache[kind] = cache[kind] || (r => { r.iterates.length = r.hist.length; return r; })(
+      F.jacobiAdjoint(U0, A0, kind, kind === "inverse" ? PTGT : null, JSTEPS, 0)));
+    /* the step meeting the criterion, and the floor: it starts right after the
+       last time max|res| exceeds the largest value of the run's final third
+       (the floor is noisy here, a factor of 5 to 10, so a "never halved again"
+       rule would not find it) */
+    const marks = r => {
+      const h = r.hist, top = Math.max.apply(null, h.slice(Math.floor(2 * h.length / 3)));
+      let last = -1;
+      h.forEach((x, k) => { if (x > top) last = k; });
+      return { hit: h.findIndex(x => x < JTOL) + 1, flo: last + 2 };
+    };
+    let M = null;
     let res = null, it = 0, pos = 0, steps = null, groups = null, code = null, view = null, lplot = null,
         pplot = null, facePlayer = null, itPlayer = null, psiStar = null, psiLo = 0, psiHi = 1;
 
@@ -4650,7 +4684,7 @@ if (!Element.prototype.replaceChildren) {
       ["    repeat", ""],
       ["        res ← residual_b(u, A, ψ) + g", TR("第 8 节", "Section 8")],
       ["        ψ[i] ← ψ[i] − D[i]⁻ᵀ res[i]", ""],
-      ["    until max|res| < 10⁻¹³", ""],
+      ["    until max|res| < 10⁻¹³", TR("演示越过判据，一直跑到舍入误差平台", "the demo runs on to the round-off floor")],
       ["    return ψ", ""]
     ];
 
@@ -4663,11 +4697,13 @@ if (!Element.prototype.replaceChildren) {
       if (pos === n + 1) {
         const r = res.hist[it], rNext = res.hist[it + 1];
         if (rNext === undefined) {
-          return TR("面循环结束：max|res| = <span class=\"mono\">" + sci(r) + "</span> &lt; 10⁻¹³，<b>已收敛</b>，不再更新。",
-                    "loop finished: max|res| = <span class=\"mono\">" + sci(r) + "</span> &lt; 10⁻¹³, <b>converged</b>; no further update.");
+          return TR("面循环结束：max|res| = <span class=\"mono\">" + sci(r) + "</span>，在舍入误差平台上；演示到第 " + (it + 1) + " 次为止。",
+                    "loop finished: max|res| = <span class=\"mono\">" + sci(r) + "</span>, on the round-off floor; the demo stops at iteration " + (it + 1) + ".");
         }
         return TR("面循环结束：res = y + g，max|res| = <span class=\"mono\">" + sci(r) + "</span>；块 Jacobi 更新 ψ[i] ← ψ[i] − D[i]⁻ᵀ res[i]。下一次的 max|res| = <span class=\"mono\">" + sci(rNext) + "</span>，是这一次的 " + (rNext / r).toFixed(3) + " 倍。",
-                  "loop finished: res = y + g, max|res| = <span class=\"mono\">" + sci(r) + "</span>; the block-Jacobi update ψ[i] ← ψ[i] − D[i]⁻ᵀ res[i]. The next max|res| is <span class=\"mono\">" + sci(rNext) + "</span>, " + (rNext / r).toFixed(3) + " times this one.");
+                  "loop finished: res = y + g, max|res| = <span class=\"mono\">" + sci(r) + "</span>; the block-Jacobi update ψ[i] ← ψ[i] − D[i]⁻ᵀ res[i]. The next max|res| is <span class=\"mono\">" + sci(rNext) + "</span>, " + (rNext / r).toFixed(3) + " times this one.") +
+          (it + 1 >= M.flo ? TR("已落到舍入误差平台，此后只在平台上起伏。", " It has reached the round-off floor and from here on only wanders along it.")
+            : it + 1 >= M.hit ? TR("已低于判据 10⁻¹³，但还没有降到底。", " It is below the 10⁻¹³ criterion, but has not bottomed out yet.") : "");
       }
       const u = (x => x + 1);                   /* volumes are numbered from 1 on the figure */
       if (g.face >= 0) {
@@ -4725,7 +4761,9 @@ if (!Element.prototype.replaceChildren) {
         barTitle: title + "  ·  " + compName(c) + TR("分量", " component") });
       code.setActive(pos === 0 ? 5 : (pos <= n ? 6 : 7));     /* 1-based */
       lplot.draw(res.hist, { cur: pos === n + 1 && it + 1 < res.hist.length ? it + 1 : it, role: "adjoint",
-        decStep: 2, tickEvery: res.hist.length > 600 ? 200 : 100,
+        decStep: 2, tickEvery: res.hist.length > 600 ? 200 : 100, floor: 1e-25,
+        ref: { y: JTOL, at: M.hit - 1, text: TR("判据 max|res| = 10⁻¹³", "criterion max|res| = 10⁻¹³") },
+        tail: { from: M.flo - 1, text: TR("舍入误差平台", "round-off floor") },
         xlabel: TR("迭代次数（每次 = 一次 residual_b 调用），纵轴 max|res|", "iterations (one residual_b call each), vertical axis max|res|") });
       document.getElementById("jacobi-status").innerHTML = status(pos >= 1 && pos <= n ? groups[pos - 1] : null);
     }
@@ -4743,16 +4781,17 @@ if (!Element.prototype.replaceChildren) {
       const dense = F.adjointSolve(U0, A0, kind, kind === "inverse" ? PTGT : null);
       const last = res.iterates[res.iterates.length - 1];
       const err = maxAbs(last.map((x, i) => x - dense[i]));
-      const h = res.hist, m = h.length, span = Math.min(200, 2 * Math.floor((m - 1) / 2));
+      const h = res.hist, m = M.hit, span = Math.min(200, 2 * Math.floor((m - 1) / 2));
       const rate = Math.pow(h[m - 1] / h[m - 1 - span], 1 / span);
-      el.innerHTML = TR("D：" + NB + " 个 3×3 块；收敛到 max|res| &lt; 10⁻¹³ 用了 <b>" + m + "</b> 次 residual_b（" + (m - 1) + " 次更新），每次迭代残差约乘 <b>" + rate.toFixed(3) + "</b>；与下面直接解出的 Ψ 最大差 " + sci(err),
-                        "D: " + NB + " blocks of 3×3; reaching max|res| &lt; 10⁻¹³ took <b>" + m + "</b> residual_b calls (" + (m - 1) + " updates), the residual shrinking by about <b>" + rate.toFixed(3) + "</b> per iteration; largest difference from the directly solved Ψ below: " + sci(err));
+      el.innerHTML = TR("D：" + NB + " 个 3×3 块；第 <b>" + m + "</b> 次 residual_b 降到判据 max|res| &lt; 10⁻¹³，每次迭代残差约乘 <b>" + rate.toFixed(3) + "</b>；演示一直跑到第 " + h.length + " 次，从第 <b>" + M.flo + "</b> 次起在舍入误差平台上，最后的 Ψ 与下面直接解出的 Ψ 最大差 " + sci(err),
+                        "D: " + NB + " blocks of 3×3; max|res| drops below the 10⁻¹³ criterion at residual_b call <b>" + m + "</b>, the residual shrinking by about <b>" + rate.toFixed(3) + "</b> per iteration; the demo runs on to " + h.length + ", on the round-off floor from iteration <b>" + M.flo + "</b>, where Ψ differs from the directly solved Ψ below by at most " + sci(err));
     }
 
     function build() {
       ["jacobi-code", "jacobi-view", "jacobi-psi", "jacobi-plot", "jacobi-face-ctl", "jacobi-ctl"]
         .forEach(id => { const el = document.getElementById(id); if (el) el.replaceChildren(); });
       res = solve(objSel ? objSel.value : "inverse");
+      M = marks(res);
       psiStar = res.iterates[res.iterates.length - 1];
       /* one fixed vertical range per component, so the plot does not rescale while it plays */
       psiLo = [0, 1, 2].map(k => Math.min(0, Math.min.apply(null, psiStar.filter((_, i) => i % 3 === k))));

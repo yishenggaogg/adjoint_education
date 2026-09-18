@@ -936,6 +936,7 @@ nav.toc li.tochome .num { color: var(--muted); }
   </div>
 
   <div class="prose">
+    <p lang="zh" class="note"><b>收敛到机器精度是什么样子。</b><a class="fref" href="#jacobi-lab"></a> 的曲线是每次迭代的 ‖res‖（均方根）。它在第 122 次降到判据 <span class="eq"><span class="dg">10</span><sup>−<span class="dg">13</span></sup></span> 以下，但这时仍以每次约 0.79 倍的比例下降：判据只是约定的停止点，并不说明迭代已经走到头。所以演示没有停在判据处，而是一直迭代到第 200 次。‖res‖ 按同一比例一直降到 <span class="eq"><span class="dg">10</span><sup>−<span class="dg">16</span></sup></span> 附近，然后落到平台：从第 159 次起再也没有减半，从第 167 次起只在 <span class="eq"><span class="dg">3.43</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">17</span></sup></span> 与 <span class="eq"><span class="dg">3.66</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">17</span></sup></span> 两个值之间交替；相邻两次的 <span class="eq"><i>ψ</i></span> 只在最后几位上不同（最多 <span class="eq"><span class="dg">5.6</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">17</span></sup></span>）。曲线变平，才说明迭代已经收敛到机器精度：<span class="eq"><i>ψ</i></span> 的量级是 1（最大 0.61），双精度对这样大小的数只能分辨到 <span class="eq"><span class="dg">10</span><sup>−<span class="dg">16</span></sup></span> 左右。停在判据处的 <span class="eq"><i>ψ</i></span> 与平台上的 <span class="eq"><i>ψ</i></span> 相差 <span class="eq"><span class="dg">4.2</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">13</span></sup></span>。</p><p lang="en" class="note"><b>What convergence to machine precision looks like.</b> The curve in <a class="fref" href="#jacobi-lab"></a> is ‖res‖ (the rms) at each step. It drops below the <span class="eq"><span class="dg">10</span><sup>−<span class="dg">13</span></sup></span> criterion at step 122, but at that point it is still falling by a factor of about 0.79 per step: a criterion is an agreed place to stop, not a sign that the iteration has run its course. So the demo does not stop at the criterion; it runs on to step 200. ‖res‖ keeps falling at the same rate down to about <span class="eq"><span class="dg">10</span><sup>−<span class="dg">16</span></sup></span> and then settles onto the floor: from step 159 on it is never halved again, and from step 167 on it only alternates between <span class="eq"><span class="dg">3.43</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">17</span></sup></span> and <span class="eq"><span class="dg">3.66</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">17</span></sup></span>, while successive <span class="eq"><i>ψ</i></span> differ only in their last few bits (by at most <span class="eq"><span class="dg">5.6</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">17</span></sup></span>). Only this flat tail shows that the iteration has converged to machine precision: <span class="eq"><i>ψ</i></span> is of order 1 (at most 0.61), and double precision resolves a number of that size to about <span class="eq"><span class="dg">10</span><sup>−<span class="dg">16</span></sup></span>. The <span class="eq"><i>ψ</i></span> at the criterion is <span class="eq"><span class="dg">4.2</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">13</span></sup></span> away from the <span class="eq"><i>ψ</i></span> on the floor.</p>
     <p lang="zh"><span class="eq">−<i>ψ</i><sub>c</sub></span> 表示“在单元 <span class="eq"><i>c</i></span> 中加一个单位源项时 <span class="eq"><i>L</i></span> 的变化率”。<span class="eq"><i>g</i></span> 只在贴壁单元非零，<span class="eq"><i>ψ</i></span> 却遍布上游单元：它们通过一串面通量影响物面上的载荷。</p><p lang="en"><span class="eq">−<i>ψ</i><sub>c</sub></span> is "the rate of change of <span class="eq"><i>L</i></span> when a unit source is added in cell <span class="eq"><i>c</i></span>". <span class="eq"><i>g</i></span> is non-zero only on the wall-adjacent cells, yet <span class="eq"><i>ψ</i></span> spreads over the upstream cells: they influence the load on the body through a chain of face fluxes.</p>
   </div>
 </section>
@@ -2439,7 +2440,11 @@ if (!Element.prototype.replaceChildren) {
     const host = $("jacobi-mesh");
     if (!host) return;
     const NF = FV.faces.length;
-    const res = FV.jacobi(FV.U, 400, 1e-13);
+    /* on past the stopping criterion, on purpose: the rms keeps falling at
+       the same rate until round-off stops it, and only that flat tail shows
+       the iteration has converged to machine precision */
+    const TOL = 1e-13, STEPS = 200;
+    const res = FV.jacobi(FV.U, STEPS, 0);
     const D = res.D;
     const gv = res.g;
     const LC = FV.faces.map(f => FV.local(FV.U, f));
@@ -2456,6 +2461,13 @@ if (!Element.prototype.replaceChildren) {
     const code = new V.Code($("jacobi-code"), window.LAB.CODES.solve);
     const hist = res.hist;
     const n = hist.length;
+    const hit = hist.findIndex(h => h < TOL) + 1;          /* the step meeting the criterion */
+    /* the floor starts at the step from which the rms is never halved again:
+       no later step comes below half of it, nor of any step after it */
+    const sufMin = hist.slice();
+    for (let q = n - 2; q >= 0; q--) sufMin[q] = Math.min(hist[q], sufMin[q + 1]);
+    let flo = n;
+    while (flo > 1 && sufMin[flo - 1] > 0.5 * hist[flo - 2]) flo--;
     const lg = hist.map(h => Math.log10(Math.max(h, 1e-300)));
     const ymax = Math.ceil(Math.max(...lg));
     const ymin = Math.floor(Math.min(...lg));
@@ -2465,6 +2477,7 @@ if (!Element.prototype.replaceChildren) {
     const py1 = Hh - 40;
     const X = k => px0 + (k / Math.max(1, n - 1)) * (px1 - px0);
     const Y = v => py1 - (v - ymin) / (ymax - ymin) * (py1 - py0);
+    const lgTol = Math.log10(TOL), lgFloor = Math.max(...lg.slice(flo - 1));
     const walls = FV.faces.filter(f => f.wall);
 
     let it = res.iterates.length - 1;
@@ -2549,7 +2562,9 @@ if (!Element.prototype.replaceChildren) {
         stat.innerHTML = TR("面循环结束：res = A<sup>T</sup>ψ + g，‖res‖ = <span class=\"mono\">", "face loop finished: res = A<sup>T</sup>ψ + g, ‖res‖ = <span class=\"mono\">") +
           hist[Math.min(it, n - 1)].toExponential(2).replace("e-", "e−") +
           TR("</span>；Jacobi 更新 ψ ← ψ − res / D（D<sub>c</sub> 逐单元不同，在 ", "</span>; Jacobi update ψ ← ψ − res / D (D<sub>c</sub> varies by cell, between ") + fmt(Math.min(...D), 3) + TR(" 与 ", " and ") + fmt(Math.max(...D), 3) + TR(" 之间）。", ").") +
-          (it >= n - 1 ? TR("已收敛。", "Converged.") : TR("下一次迭代的 ψ 就是下面一行的值。", "The ψ of the next step is the row below."));
+          (it + 1 >= flo ? TR("已落到舍入误差平台：此后 ‖res‖ 只在平台上起伏。", "On the round-off floor: from here on ‖res‖ only wanders along it.")
+            : TR("下一次迭代的 ψ 就是下面一行的值。", "The ψ of the next step is the row below.") +
+              (it + 1 >= hit ? TR("‖res‖ 已低于判据 10⁻¹³，但还没有降到底。", " ‖res‖ is below the 10⁻¹³ criterion, but has not bottomed out yet.") : ""));
       }
       lanes.render(base);
       code.setActive(jf === 0 ? 5 : (jf <= NF ? 6 : 7));
@@ -2559,12 +2574,24 @@ if (!Element.prototype.replaceChildren) {
         V.S("text", { x: px0 - 8, y: Y(e) + 4, "text-anchor": "end", text: "1e" + e,
           style: { fill: "var(--muted)", fontFamily: "var(--font-mono)", fontSize: "10.5px" } }, g);
       }
-      for (let q = 0; q < n; q += 10) {
+      for (let s = 0; s <= n; s += 20) {
+        const q = Math.max(s, 1) - 1;                          /* steps 1, 20, 40, ... */
         V.S("text", { x: X(q), y: py1 + 18, "text-anchor": "middle", text: String(q + 1),
           style: { fill: "var(--muted)", fontFamily: "var(--font-mono)", fontSize: "10.5px" } }, g);
       }
       V.S("text", { x: (px0 + px1) / 2, y: Hh - 4, "text-anchor": "middle", text: TR("迭代次数（每次 = 一次 residual_b 调用）", "step count (one residual_b call each)"),
         style: { fill: "var(--muted)", fontSize: "11.5px" } }, g);
+      /* the criterion, where the curve crosses it, and the flat tail below it */
+      V.S("line", { x1: px0, y1: Y(lgTol), x2: px1, y2: Y(lgTol),
+        style: { stroke: "var(--muted)", strokeWidth: 1, strokeDasharray: "5 4" } }, g);
+      V.S("text", { x: px0 + 6, y: Y(lgTol) - 5, "text-anchor": "start", text: TR("判据 ‖res‖ = 10⁻¹³", "criterion ‖res‖ = 10⁻¹³"),
+        style: { fill: "var(--muted)", fontSize: "11px" } }, g);
+      V.S("circle", { cx: X(hit - 1), cy: Y(lg[hit - 1]), r: 3.5,
+        style: { fill: "var(--surface)", stroke: "var(--muted)", strokeWidth: 1.5 } }, g);
+      V.S("text", { x: X(hit - 1) + 7, y: Y(lgTol) - 5, "text-anchor": "start", text: TR("第 " + hit + " 次", "step " + hit),
+        style: { fill: "var(--muted)", fontFamily: "var(--font-mono)", fontSize: "10.5px" } }, g);
+      V.S("text", { x: px1, y: Y(lgFloor) - 8, "text-anchor": "end", text: TR("舍入误差平台", "round-off floor"),
+        style: { fill: "var(--muted)", fontSize: "11px" } }, g);
       const ptsAll = lg.map((v, q) => X(q) + "," + Y(v)).join(" ");
       V.S("polyline", { points: ptsAll, style: { fill: "none", stroke: "var(--grid)", strokeWidth: 1.5 } }, g);
       const ptsNow = lg.slice(0, Math.min(k + 1, n)).map((v, q) => X(q) + "," + Y(v)).join(" ");
@@ -3146,7 +3173,7 @@ if (!Element.prototype.replaceChildren) {
       ["    repeat", ""],
       ["        res ← residual_b(u, ψ) + g", TR("唯一用到 Aᵀ 的地方", "the only place Aᵀ is used")],
       ["        ψ ← ψ − res / D", TR("Jacobi 更新", "Jacobi update")],
-      ["    until ‖res‖ < tol", ""],
+      ["    until ‖res‖ < tol", TR("演示越过判据，一直跑到舍入误差平台", "the demo runs on to the round-off floor")],
       ["    return ψ", ""]
     ],
     newton: [
