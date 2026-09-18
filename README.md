@@ -121,14 +121,15 @@ constant quoted on the pages is measured live rather than written into the text.
   数组里的数字随之变化——转置在数据流上长什么样，一眼可见
 - **点积测试**：随机向量，现场验证 $\langle w,Av\rangle=\langle A^{\mathsf T}w,v\rangle$
 - **两个求解过程**：primal 的 Newton 迭代逐轮播放；伴随方程的块 Jacobi 迭代逐面、逐次播放
-- **矩阵视图**：拟一维页上可以直接看到 $A$ 的 3×3 块三对角结构
+- **精确 Jacobian 的组装**：拟一维页逐面播放 `jacobian(u, A)`——每个面的两个 3×3 块、边界块 $c_R+c_L\,\partial\mathbf B/\partial\mathbf u$、源项行、被替换的约束行——最后与中心差分对照；Newton 用的就是它
 - **边界块与它的秩**：拟一维格心页把两个边界 Jacobian 和它们的秩算出来
 - **梯度面板**：格点页把「忘记清零 $\Psi$」的后果和正确结果画在一起
 
 Nine to thirteen interactive panels per page, every figure generated from code and numbered
 in reading order. The three loops can be played statement by
 statement, with the arrays updating as each pseudocode line executes; the flux on one face
-can be taken apart term by term; the Newton solve and the block-Jacobi adjoint solve can be
+can be taken apart term by term; the exact Jacobian can be watched being assembled block by
+block, boundary terms included; the Newton solve and the block-Jacobi adjoint solve can be
 stepped through.
 
 ## 页面上的数字都是实测的 / Every number is measured
@@ -137,9 +138,9 @@ stepped through.
 
 | 检验 / Check | 二维格心 | 二维格点 | 拟一维格心 | 拟一维格点 |
 |---|---|---|---|---|
-| 点积测试 $\langle w,Av\rangle=\langle A^{\mathsf T}w,v\rangle$ | 8.9e−16 | 6.7e−16 | 2.7e−16 | 2.9e−16 |
+| 点积测试 $\langle w,Av\rangle=\langle A^{\mathsf T}w,v\rangle$ | 8.9e−16 | 6.7e−16 | 2.2e−16 | 2.9e−16 |
 | 几何点积测试 / geometric dot test | 4.0e−11 ¹ | 1.0e−10 ¹ | **4.6e−16** ² | **3.4e−16** ² |
-| 梯度对全链路差分 / gradient vs full-chain FD | 5.4e−11 | 5.1e−11 | 3.1e−9 | 1.0e−9 |
+| 梯度对全链路差分 / gradient vs full-chain FD | 5.4e−11 | 5.1e−11 | 4.4e−9 | 1.0e−9 |
 | 漏掉一步的后果 / cost of one missing step | — | 0.31 ³ | 1.0e−2 ⁴ | **108 %** ⁵ |
 
 ¹ 被差分步长卡住：二维页没有解析的前向几何算子。

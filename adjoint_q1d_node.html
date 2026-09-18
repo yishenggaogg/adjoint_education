@@ -703,32 +703,49 @@ S=<span class="pmat"><span class="pstrut">&#8203;</span><span class="lp"></span>
   <div class="prose">
     <div class="secnum" lang="zh">第 5 节</div><div class="secnum" lang="en">Section 5</div>
     <h2 lang="zh">求解：Jacobian 与 Newton法</h2><h2 lang="en">The solve: the Jacobian and Newton</h2>
-    <p lang="zh">第 4 节的 <code>residual(u, A)</code> 就是离散残差 <span class="eq">R(u)</span>。它的 Jacobian <span class="eq"><i>A</i>=<i>∂</i>R/<i>∂</i>u</span> 是 <span class="eq"><span class="dg">39</span><span class="op">×</span><span class="dg">39</span></span> 的，但真正的结构是 <b><span class="eq"><span class="dg">13</span><span class="op">×</span><span class="dg">13</span></span> 个 <span class="eq"><span class="dg">3</span><span class="op">×</span><span class="dg">3</span></span> 块</b>：一个节点只经由两侧的对偶面与它的两个邻居节点相连，所以 <span class="eq"><i>A</i></span> 是<b>块三对角</b>的。被替换的 3 行更简单：每行只有本节点那个块里的 3 个元，是约束梯度。</p><p lang="en">The <code>residual(u, A)</code> of Section 4 <i>is</i> the discrete residual <span class="eq">R(u)</span>. Its Jacobian <span class="eq"><i>A</i>=<i>∂</i>R/<i>∂</i>u</span> is <span class="eq"><span class="dg">39</span><span class="op">×</span><span class="dg">39</span></span>, but its real structure is <b><span class="eq"><span class="dg">13</span><span class="op">×</span><span class="dg">13</span></span> blocks of <span class="eq"><span class="dg">3</span><span class="op">×</span><span class="dg">3</span></span></b>: a node reaches only its two neighbouring nodes, through the dual faces on either side, so <span class="eq"><i>A</i></span> is <b>block tridiagonal</b>. The 3 replaced rows are simpler still: each holds just the 3 entries in its own node&rsquo;s block, the constraint gradient.</p>
-    <p lang="zh">每个面贡献两个块，来自对一维通量求导：</p><p lang="en">Each face contributes two blocks, obtained by differentiating the one-dimensional flux:</p>
-    <div class="eqwrap"><span class="eqd"><i>c</i><sub>L</sub>=<span class="frac"><span class="fcol"><span class="num"><i>∂</i>h</span><span class="den"><i>∂</i>U<sub>L</sub></span></span></span>
-=<i>A</i><sub>f</sub>[<span class="frac"><span class="fcol"><span class="num"><span class="dg">1</span></span><span class="den"><span class="dg">2</span></span></span></span>F'(U<sub>L</sub>)+<span class="frac"><span class="fcol"><span class="num"><span class="dg">1</span></span><span class="den"><span class="dg">2</span></span></span></span><i>λ</i><sub>f</sub>I
-−<span class="frac"><span class="fcol"><span class="num"><span class="dg">1</span></span><span class="den"><span class="dg">2</span></span></span></span>(U<sub>R</sub>−U<sub>L</sub>)<span class="spt"></span><span class="frac"><span class="fcol"><span class="num"><i>∂</i><i>λ</i><sub>f</sub></span><span class="den"><i>∂</i>U<sub>L</sub></span></span></span>],
-<span class="sp2"></span>F'=<span class="frac"><span class="fcol"><span class="num"><i>∂</i>F</span><span class="den"><i>∂</i>U</span></span></span></span></div>
-    <p lang="zh"><span class="eq">F'</span> 就是经典的 Euler 通量 Jacobian（记作 <span class="eq">F'</span>，免得与面积向量 <span class="eq">A</span> 混淆）。第三项常被忘记：耗散系数 <span class="eq"><i>λ</i><sub>f</sub></span> 自己也依赖两侧状态，漏掉它 Jacobian 就不精确，Newton 会退化成拟 Newton。</p><p lang="en"><span class="eq">F'</span> is the classical Euler flux Jacobian (written <span class="eq">F'</span> so as not to be confused with the vector of areas <span class="eq">A</span>). The third term is the one that gets forgotten: the dissipation coefficient <span class="eq"><i>λ</i><sub>f</sub></span> itself depends on both states, and dropping it makes the Jacobian inexact, degrading Newton to a quasi-Newton method.</p>
-    <p lang="zh" class="note"><b>这里没有 ghost 状态，也就没有 <span class="eq"><i>∂</i>B/<i>∂</i>u</span>。</b>边界节点本身就在边界上：入口、出口的通量直接用节点自己的状态算，它们的线性化 <span class="eq">−<i>A</i><sub><span class="dg">1</span></sub><i>F</i>'(u<sub><span class="dg">1</span></sub>)</span> 与 <span class="eq">+<i>A</i><sub><span class="dg">13</span></sub><i>F</i>'(u<sub><span class="dg">13</span></sub>)</span> 落在两个端节点自己的对角块上。然后第 3 节的部分行替换覆盖掉其中 3 行：入口的质量、动量行换成 <span class="eq"><i>∂</i><i>p</i><sub><span class="dg">0</span></sub>/<i>∂</i>u</span> 与 <span class="eq"><i>∂</i><i>T</i><sub><span class="dg">0</span></sub>/<i>∂</i>u</span>，出口的质量行换成 <span class="eq"><i>∂</i><i>p</i>/<i>∂</i>u</span>——都是只落在本节点块里的一般行向量（<a class="fref" href="#jac-view"></a>）。</p><p class="note" lang="en"><b>There is no ghost state here, and so no <span class="eq"><i>∂</i>B/<i>∂</i>u</span>.</b> A boundary node sits on the boundary itself: the inlet and outlet fluxes are computed from the node&rsquo;s own state, and their linearisations, <span class="eq">−<i>A</i><sub><span class="dg">1</span></sub><i>F</i>'(u<sub><span class="dg">1</span></sub>)</span> and <span class="eq">+<i>A</i><sub><span class="dg">13</span></sub><i>F</i>'(u<sub><span class="dg">13</span></sub>)</span>, land on the two end nodes&rsquo; own diagonal blocks. The partial row replacement of Section 3 then overwrites 3 of those rows: the inlet&rsquo;s mass and momentum rows become <span class="eq"><i>∂</i><i>p</i><sub><span class="dg">0</span></sub>/<i>∂</i>u</span> and <span class="eq"><i>∂</i><i>T</i><sub><span class="dg">0</span></sub>/<i>∂</i>u</span>, the outlet&rsquo;s mass row becomes <span class="eq"><i>∂</i><i>p</i>/<i>∂</i>u</span> &mdash; general row vectors, each confined to its own node&rsquo;s block (<a class="fref" href="#jac-view"></a>).</p>
+    <p lang="zh">第 4 节的 <code>residual(u, A)</code> 就是离散残差 <span class="eq">R(u)</span>。它的 Jacobian <span class="eq"><i>A</i>=<i>∂</i>R/<i>∂</i>u</span> 是 <span class="eq"><span class="dg">39</span><span class="op">×</span><span class="dg">39</span></span> 的，但真正的结构是 <b><span class="eq"><span class="dg">13</span><span class="op">×</span><span class="dg">13</span></span> 个 <span class="eq"><span class="dg">3</span><span class="op">×</span><span class="dg">3</span></span> 块</b>：一个节点只经由两侧的对偶面与它的两个邻居节点相连，所以 <span class="eq"><i>A</i></span> 是<b>块三对角</b>的。被替换的 3 行更简单：每行只有本节点那个块里的 3 个元，是约束梯度。Newton 的每一轮都要解一次 <span class="eq"><i>A</i><span class="spt"></span><i>δ</i>u=R</span>，<span class="eq"><i>A</i></span> 是求解的核心，所以它必须<b>精确</b>：下面逐项求导、解析地组装，不用差分近似。</p><p lang="en">The <code>residual(u, A)</code> of Section 4 is the discrete residual <span class="eq">R(u)</span>. Its Jacobian <span class="eq"><i>A</i>=<i>∂</i>R/<i>∂</i>u</span> is <span class="eq"><span class="dg">39</span><span class="op">×</span><span class="dg">39</span></span>, but its real structure is <b><span class="eq"><span class="dg">13</span><span class="op">×</span><span class="dg">13</span></span> blocks of <span class="eq"><span class="dg">3</span><span class="op">×</span><span class="dg">3</span></span></b>: a node is connected, through the dual faces on either side, only to its two neighbouring nodes, so <span class="eq"><i>A</i></span> is <b>block tridiagonal</b>. The 3 replaced rows are simpler still: each has just the 3 entries of its own node's block, a constraint gradient. Every Newton sweep solves <span class="eq"><i>A</i><span class="spt"></span><i>δ</i>u=R</span> once; <span class="eq"><i>A</i></span> is the core of the solve, so it has to be <b>exact</b>. Below it is differentiated term by term and assembled analytically, with no finite-difference approximation.</p>
+    <h3 lang="zh">精确 Jacobian：逐项求导</h3><h3 lang="en">The exact Jacobian, term by term</h3>
+    <p lang="zh"><b>① 三个原始量的梯度。</b>所有的块都由它们拼出来（<span class="eq"><i>E</i>=(<i>ρ</i><i>E</i>)/<i>ρ</i></span>）：</p><p lang="en"><b>1. The gradients of three primitive quantities.</b> Every block is built from them (<span class="eq"><i>E</i>=(<i>ρ</i><i>E</i>)/<i>ρ</i></span>):</p>
+    <div class="eqwrap"><span class="eqd"><span class="frac"><span class="fcol"><span class="num"><i>∂</i><i>u</i></span><span class="den"><i>∂</i>U</span></span></span>=(−<span class="frac"><span class="fcol"><span class="num"><i>u</i></span><span class="den"><i>ρ</i></span></span></span>,<span class="spt"></span><span class="frac"><span class="fcol"><span class="num"><span class="dg">1</span></span><span class="den"><i>ρ</i></span></span></span>,<span class="spt"></span><span class="dg">0</span>),<span class="sp2"></span><span class="frac"><span class="fcol"><span class="num"><i>∂</i><i>p</i></span><span class="den"><i>∂</i>U</span></span></span>=(<i>γ</i>−<span class="dg">1</span>)(<span class="frac"><span class="fcol"><span class="num"><span class="dg">1</span></span><span class="den"><span class="dg">2</span></span></span></span><i>u</i><sup><span class="dg">2</span></sup>,<span class="spt"></span>−<i>u</i>,<span class="spt"></span><span class="dg">1</span>),<span class="sp2"></span><span class="frac"><span class="fcol"><span class="num"><i>∂</i><i>a</i></span><span class="den"><i>∂</i>U</span></span></span>=<span class="frac"><span class="fcol"><span class="num"><i>γ</i>(<i>γ</i>−<span class="dg">1</span>)</span><span class="den"><span class="dg">2</span><i>a</i><i>ρ</i></span></span></span>(<i>u</i><sup><span class="dg">2</span></sup>−<i>E</i>,<span class="spt"></span>−<i>u</i>,<span class="spt"></span><span class="dg">1</span>)</span></div>
+    <p lang="zh"><b>② 物理通量的 Jacobian。</b>经典的一维 Euler 通量 Jacobian（记作 <span class="eq">F′</span>，免得与面积 <span class="eq">A</span> 混淆）：</p><p lang="en"><b>2. The Jacobian of the physical flux</b> &mdash; the classical one-dimensional Euler flux Jacobian, written <span class="eq">F′</span> so as not to clash with the areas <span class="eq">A</span>:</p>
+    <div class="eqwrap"><span class="eqd">F′=<span class="frac"><span class="fcol"><span class="num"><i>∂</i>F</span><span class="den"><i>∂</i>U</span></span></span>=<span class="pmat"><span class="pstrut">&#8203;</span><span class="lp"></span><span class="mgrid" style="grid-template-columns:repeat(3,auto)"><span class="mcell"><span class="dg">0</span></span><span class="mcell"><span class="dg">1</span></span><span class="mcell"><span class="dg">0</span></span><span class="mcell"><span class="frac"><span class="fcol"><span class="num"><i>γ</i>−<span class="dg">3</span></span><span class="den"><span class="dg">2</span></span></span></span><i>u</i><sup><span class="dg">2</span></sup></span><span class="mcell">(<span class="dg">3</span>−<i>γ</i>)<i>u</i></span><span class="mcell"><i>γ</i>−<span class="dg">1</span></span><span class="mcell">(<i>γ</i>−<span class="dg">1</span>)<i>u</i><sup><span class="dg">3</span></sup>−<i>γ</i><i>u</i><i>E</i></span><span class="mcell"><i>γ</i><i>E</i>−<span class="frac"><span class="fcol"><span class="num"><span class="dg">3</span></span><span class="den"><span class="dg">2</span></span></span></span>(<i>γ</i>−<span class="dg">1</span>)<i>u</i><sup><span class="dg">2</span></sup></span><span class="mcell"><i>γ</i><i>u</i></span></span><span class="rp"></span></span></span></div>
+    <p lang="zh"><b>③ 耗散系数。</b><span class="eq"><i>λ</i><sub>f</sub>=<span class="frac"><span class="fcol"><span class="num"><span class="dg">1</span></span><span class="den"><span class="dg">2</span></span></span></span>[(<i>u</i>+<i>a</i>)<sub>L</sub>+(<i>u</i>+<i>a</i>)<sub>R</sub>]</span>（本算例 <span class="eq"><i>u</i>&gt;<span class="dg">0</span></span>，<span class="eq">|<i>u</i>|=<i>u</i></span>），每一侧只依赖本侧的状态：</p><p lang="en"><b>3. The dissipation coefficient.</b> <span class="eq"><i>λ</i><sub>f</sub>=<span class="frac"><span class="fcol"><span class="num"><span class="dg">1</span></span><span class="den"><span class="dg">2</span></span></span></span>[(<i>u</i>+<i>a</i>)<sub>L</sub>+(<i>u</i>+<i>a</i>)<sub>R</sub>]</span> (here <span class="eq"><i>u</i>&gt;<span class="dg">0</span></span>, so <span class="eq">|<i>u</i>|=<i>u</i></span>), and each side depends on its own state only:</p>
+    <div class="eqwrap"><span class="eqd"><span class="frac"><span class="fcol"><span class="num"><i>∂</i><i>λ</i><sub>f</sub></span><span class="den"><i>∂</i>U<sub>L</sub></span></span></span>=<span class="frac"><span class="fcol"><span class="num"><span class="dg">1</span></span><span class="den"><span class="dg">2</span></span></span></span>(<span class="frac"><span class="fcol"><span class="num"><i>∂</i><i>u</i></span><span class="den"><i>∂</i>U</span></span></span>+<span class="frac"><span class="fcol"><span class="num"><i>∂</i><i>a</i></span><span class="den"><i>∂</i>U</span></span></span>)|<sub>U<sub>L</sub></sub>,<span class="sp2"></span><span class="frac"><span class="fcol"><span class="num"><i>∂</i><i>λ</i><sub>f</sub></span><span class="den"><i>∂</i>U<sub>R</sub></span></span></span>=<span class="frac"><span class="fcol"><span class="num"><span class="dg">1</span></span><span class="den"><span class="dg">2</span></span></span></span>(<span class="frac"><span class="fcol"><span class="num"><i>∂</i><i>u</i></span><span class="den"><i>∂</i>U</span></span></span>+<span class="frac"><span class="fcol"><span class="num"><i>∂</i><i>a</i></span><span class="den"><i>∂</i>U</span></span></span>)|<sub>U<sub>R</sub></sub></span></div>
+    <p lang="zh"><b>④ 一个面的两个块。</b>对面通量 <span class="eq">h<sub>f</sub></span> 的两侧状态分别求导：</p><p lang="en"><b>4. The two blocks of a face</b>, the derivatives of the face flux <span class="eq">h<sub>f</sub></span> with respect to each side's state:</p>
+    <div class="eqwrap"><span class="eqd"><i>c</i><sub>L</sub>=<span class="frac"><span class="fcol"><span class="num"><i>∂</i>h</span><span class="den"><i>∂</i>U<sub>L</sub></span></span></span>=<i>A</i><sub>f</sub>[<span class="frac"><span class="fcol"><span class="num"><span class="dg">1</span></span><span class="den"><span class="dg">2</span></span></span></span>F′(U<sub>L</sub>)+<span class="frac"><span class="fcol"><span class="num"><span class="dg">1</span></span><span class="den"><span class="dg">2</span></span></span></span><i>λ</i><sub>f</sub>I−<span class="frac"><span class="fcol"><span class="num"><span class="dg">1</span></span><span class="den"><span class="dg">2</span></span></span></span>(U<sub>R</sub>−U<sub>L</sub>)<span class="spt"></span><span class="frac"><span class="fcol"><span class="num"><i>∂</i><i>λ</i><sub>f</sub></span><span class="den"><i>∂</i>U<sub>L</sub></span></span></span>]</span></div>
+    <div class="eqwrap"><span class="eqd"><i>c</i><sub>R</sub>=<span class="frac"><span class="fcol"><span class="num"><i>∂</i>h</span><span class="den"><i>∂</i>U<sub>R</sub></span></span></span>=<i>A</i><sub>f</sub>[<span class="frac"><span class="fcol"><span class="num"><span class="dg">1</span></span><span class="den"><span class="dg">2</span></span></span></span>F′(U<sub>R</sub>)−<span class="frac"><span class="fcol"><span class="num"><span class="dg">1</span></span><span class="den"><span class="dg">2</span></span></span></span><i>λ</i><sub>f</sub>I−<span class="frac"><span class="fcol"><span class="num"><span class="dg">1</span></span><span class="den"><span class="dg">2</span></span></span></span>(U<sub>R</sub>−U<sub>L</sub>)<span class="spt"></span><span class="frac"><span class="fcol"><span class="num"><i>∂</i><i>λ</i><sub>f</sub></span><span class="den"><i>∂</i>U<sub>R</sub></span></span></span>]</span></div>
+    <p lang="zh">第三项是列向量乘行向量，一个秩 1 的 <span class="eq"><span class="dg">3</span><span class="op">×</span><span class="dg">3</span></span> 矩阵，也是最常被忘记的一项：耗散系数 <span class="eq"><i>λ</i><sub>f</sub></span> 自己也依赖两侧状态，漏掉它 Jacobian 就不精确，Newton 会退化成拟 Newton。</p><p lang="en">The third term, a column times a row &mdash; a rank-1 <span class="eq"><span class="dg">3</span><span class="op">×</span><span class="dg">3</span></span> matrix &mdash; is the one most often forgotten: the dissipation coefficient <span class="eq"><i>λ</i><sub>f</sub></span> depends on both states as well, and without it the Jacobian is not exact and Newton degrades into a quasi-Newton method.</p>
+    <p lang="zh"><b>⑤ 源项。</b><span class="eq">−<i>p</i><sub>i</sub><span class="spt"></span><i>Δ</i><i>A</i><sub>i</sub></span> 只在动量方程里，<span class="eq"><i>Δ</i><i>A</i><sub>i</sub>=<i>A</i><sub>i+<span class="frac"><span class="fcol"><span class="num"><span class="dg">1</span></span><span class="den"><span class="dg">2</span></span></span></span></sub>−<i>A</i><sub>i−<span class="frac"><span class="fcol"><span class="num"><span class="dg">1</span></span><span class="den"><span class="dg">2</span></span></span></span></sub></span> 是控制体两侧对偶面的面积差（两端取端点面积）。它对本节点状态的导数是一行 <span class="eq">−<i>Δ</i><i>A</i><sub>i</sub><span class="spt"></span><i>∂</i><i>p</i>/<i>∂</i>U</span>，只写进对角块的动量行。</p><p lang="en"><b>5. The source.</b> <span class="eq">−<i>p</i><sub>i</sub><span class="spt"></span><i>Δ</i><i>A</i><sub>i</sub></span> sits in the momentum equation only, <span class="eq"><i>Δ</i><i>A</i><sub>i</sub>=<i>A</i><sub>i+<span class="frac"><span class="fcol"><span class="num"><span class="dg">1</span></span><span class="den"><span class="dg">2</span></span></span></span></sub>−<i>A</i><sub>i−<span class="frac"><span class="fcol"><span class="num"><span class="dg">1</span></span><span class="den"><span class="dg">2</span></span></span></span></sub></span> being the difference of the dual-face areas bounding the control volume (the end areas at the two ends). Its derivative with respect to the node's own state is a single row, <span class="eq">−<i>Δ</i><i>A</i><sub>i</sub><span class="spt"></span><i>∂</i><i>p</i>/<i>∂</i>U</span>, written into the momentum row of the diagonal block.</p>
+    <p lang="zh"><b>⑥ 边界通量。</b>边界节点就在边界上，入口、出口的通量直接用节点自己的状态：<span class="eq"><i>A</i><sub><span class="dg">1</span></sub>F(u<sub><span class="dg">1</span></sub>)</span> 与 <span class="eq"><i>A</i><sub><span class="dg">13</span></sub>F(u<sub><span class="dg">13</span></sub>)</span>。它们的导数就是 ② 的 <span class="eq">F′</span> 乘面积：节点 1 的对角块减去 <span class="eq"><i>A</i><sub><span class="dg">1</span></sub>F′(u<sub><span class="dg">1</span></sub>)</span>（通量流入节点 1），节点 13 的加上 <span class="eq"><i>A</i><sub><span class="dg">13</span></sub>F′(u<sub><span class="dg">13</span></sub>)</span>。没有外侧状态，也就没有 <span class="eq"><i>∂</i>B/<i>∂</i>u</span>。</p><p lang="en"><b>6. The boundary fluxes.</b> A boundary node sits on the boundary, so the inflow and outflow fluxes use the nodes' own states: <span class="eq"><i>A</i><sub><span class="dg">1</span></sub>F(u<sub><span class="dg">1</span></sub>)</span> and <span class="eq"><i>A</i><sub><span class="dg">13</span></sub>F(u<sub><span class="dg">13</span></sub>)</span>. Their derivatives are the <span class="eq">F′</span> of step 2 times the area: <span class="eq"><i>A</i><sub><span class="dg">1</span></sub>F′(u<sub><span class="dg">1</span></sub>)</span> is subtracted from node 1's diagonal block (the flux enters node 1), and <span class="eq"><i>A</i><sub><span class="dg">13</span></sub>F′(u<sub><span class="dg">13</span></sub>)</span> is added to node 13's. There is no outer state, and so no <span class="eq"><i>∂</i>B/<i>∂</i>u</span>.</p>
+    <p lang="zh"><b>⑦ 被替换的行。</b>最后，第 3 节的强加边界条件把 3 行整行换成约束的梯度：入口节点的质量行、动量行换成 <span class="eq"><i>∂</i><i>p</i><sub><span class="dg">0</span></sub>/<i>∂</i>U</span> 与 <span class="eq"><i>∂</i><i>T</i><sub><span class="dg">0</span></sub>/<i>∂</i>U</span>，出口节点的质量行换成 <span class="eq"><i>∂</i><i>p</i>/<i>∂</i>U</span>（即 ①）。总压、总温的梯度同样逐步求导：</p><p lang="en"><b>7. The replaced rows.</b> Finally the strong boundary conditions of Section 3 replace 3 whole rows by constraint gradients: the inlet node's mass and momentum rows become <span class="eq"><i>∂</i><i>p</i><sub><span class="dg">0</span></sub>/<i>∂</i>U</span> and <span class="eq"><i>∂</i><i>T</i><sub><span class="dg">0</span></sub>/<i>∂</i>U</span>, the outlet node's mass row becomes <span class="eq"><i>∂</i><i>p</i>/<i>∂</i>U</span> (step 1). The total-pressure and total-temperature gradients are differentiated step by step too:</p>
+    <div class="eqwrap"><span class="eqd"><i>θ</i>=<span class="dg">1</span>+<span class="frac"><span class="fcol"><span class="num"><i>γ</i>−<span class="dg">1</span></span><span class="den"><span class="dg">2</span></span></span></span><i>M</i><sup><span class="dg">2</span></sup>,<span class="sp2"></span><i>M</i>=<span class="frac"><span class="fcol"><span class="num"><i>u</i></span><span class="den"><i>a</i></span></span></span>,<span class="sp2"></span><i>p</i><sub><span class="dg">0</span></sub>=<i>p</i><span class="spt"></span><i>θ</i><sup>γ/(γ−<span class="dg">1</span>)</sup>,<span class="sp2"></span><i>T</i><sub><span class="dg">0</span></sub>=<i>T</i><i>θ</i>,<span class="sp2"></span><i>T</i>=<span class="frac"><span class="fcol"><span class="num"><i>p</i></span><span class="den"><i>ρ</i><i>R</i></span></span></span></span></div>
+    <div class="eqwrap"><span class="eqd"><span class="frac"><span class="fcol"><span class="num"><i>∂</i><i>M</i></span><span class="den"><i>∂</i>U</span></span></span>=<span class="frac"><span class="fcol"><span class="num"><span class="dg">1</span></span><span class="den"><i>a</i><sup><span class="dg">2</span></sup></span></span></span>(<i>a</i><span class="spt"></span><span class="frac"><span class="fcol"><span class="num"><i>∂</i><i>u</i></span><span class="den"><i>∂</i>U</span></span></span>−<i>u</i><span class="spt"></span><span class="frac"><span class="fcol"><span class="num"><i>∂</i><i>a</i></span><span class="den"><i>∂</i>U</span></span></span>),<span class="sp2"></span><span class="frac"><span class="fcol"><span class="num"><i>∂</i><i>θ</i></span><span class="den"><i>∂</i>U</span></span></span>=(<i>γ</i>−<span class="dg">1</span>)<i>M</i><span class="spt"></span><span class="frac"><span class="fcol"><span class="num"><i>∂</i><i>M</i></span><span class="den"><i>∂</i>U</span></span></span></span></div>
+    <div class="eqwrap"><span class="eqd"><span class="frac"><span class="fcol"><span class="num"><i>∂</i><i>p</i><sub><span class="dg">0</span></sub></span><span class="den"><i>∂</i>U</span></span></span>=<i>θ</i><sup>γ/(γ−<span class="dg">1</span>)</sup><span class="spt"></span><span class="frac"><span class="fcol"><span class="num"><i>∂</i><i>p</i></span><span class="den"><i>∂</i>U</span></span></span>+<span class="frac"><span class="fcol"><span class="num"><i>γ</i></span><span class="den"><i>γ</i>−<span class="dg">1</span></span></span></span><span class="spt"></span><i>p</i><span class="spt"></span><i>θ</i><sup><span class="dg">1</span>/(γ−<span class="dg">1</span>)</sup><span class="spt"></span><span class="frac"><span class="fcol"><span class="num"><i>∂</i><i>θ</i></span><span class="den"><i>∂</i>U</span></span></span>,<span class="sp2"></span><span class="frac"><span class="fcol"><span class="num"><i>∂</i><i>T</i><sub><span class="dg">0</span></sub></span><span class="den"><i>∂</i>U</span></span></span>=<i>θ</i>(<span class="frac"><span class="fcol"><span class="num"><span class="dg">1</span></span><span class="den"><i>ρ</i><i>R</i></span></span></span><span class="spt"></span><span class="frac"><span class="fcol"><span class="num"><i>∂</i><i>p</i></span><span class="den"><i>∂</i>U</span></span></span>−<span class="frac"><span class="fcol"><span class="num"><i>p</i></span><span class="den"><i>ρ</i><sup><span class="dg">2</span></sup><i>R</i></span></span></span><span class="spt"></span>e<sub><span class="dg">1</span></sub>)+<i>T</i><span class="spt"></span><span class="frac"><span class="fcol"><span class="num"><i>∂</i><i>θ</i></span><span class="den"><i>∂</i>U</span></span></span></span></div>
+    <p lang="zh">这几行只落在本节点的块里，是一般的行向量；替换发生在组装的最后，前面累加进这三行的通量与源项全部作废。以上每一项都与所求导函数的中心差分逐项核对过。把它们按第 4 节的边循环放进矩阵，就是 <code>jacobian(u, A)</code>：<a class="fref" href="#jac-view"></a>逐面播放它，每一步写入的 <span class="eq"><span class="dg">3</span><span class="op">×</span><span class="dg">3</span></span> 块都由上面的公式算出。</p><p lang="en">These rows touch only their own node's block and are general row vectors; the replacement happens at the very end of the assembly, and whatever the fluxes and the source had put into those three rows is discarded. Every term here is checked against a central difference of the function it differentiates. Put into the matrix along the edge loop of Section 4, they make <code>jacobian(u, A)</code>: <a class="fref" href="#jac-view"></a> plays it face by face, and every <span class="eq"><span class="dg">3</span><span class="op">×</span><span class="dg">3</span></span> block it writes comes from the formulas above.</p>
   </div>
 
   <div class="lab" id="jac-view">
     <div class="lab-head">
       <div>
-        <div class="lab-title" lang="zh">实测：<span class="eq"><i>A</i></span> 的块结构</div><div class="lab-title" lang="en">Measured: the block structure of <span class="eq"><i>A</i></span></div>
-        <div class="lab-sub" lang="zh">深浅表示元素大小；细线划出 12×12 个 3×3 块</div><div class="lab-sub" lang="en">Shading is the magnitude of each entry; the thin grid marks the 12×12 blocks of 3×3</div>
+        <div class="lab-title" lang="zh">演示：精确 Jacobian 的组装</div><div class="lab-title" lang="en">Demo: assembling the exact Jacobian</div>
+        <div class="lab-sub" lang="zh">逐面播放 jacobian(u, A)：每一步写入的 3×3 块都由上面的解析公式算出，不做差分。紫框是这一步写入的块，深浅是元素的绝对值（对数刻度），行、列上的数字是节点编号</div><div class="lab-sub" lang="en">jacobian(u, A) played face by face: every 3×3 block it writes comes from the formulas above, with no differencing. Violet frames mark the blocks this step writes, shading is each entry's magnitude (logarithmic), and the numbers along the edges are node numbers</div>
       </div>
     </div>
     <div class="lab-body">
-      <div class="lab-pane"><div class="svgbox"></div></div>
-      <div class="lab-pane lab-info"></div>
+      <div class="lab-pane"><div class="svgbox" id="jac-matrix"></div></div>
+      <div class="lab-pane">
+        <div class="status" id="jac-status" aria-live="polite" style="margin-top:0"></div>
+        <div id="jac-blocks" style="margin-top:8px;overflow-x:auto"></div>
+      </div>
+    </div>
+    <div class="lab-foot">
+      <div id="jac-code"></div>
+      <div id="jac-ctl" style="margin-top:10px"></div>
     </div>
   </div>
-
   <div class="prose">
     <h3 lang="zh">怎么把 <span class="eq">R(u)=<span class="dg">0</span></span> 解出来</h3><h3 lang="en">How <span class="eq">R(u)=<span class="dg">0</span></span> is actually solved</h3>
-    <p lang="zh">Newton 迭代：在当前状态处线性化，解一个 <span class="eq"><span class="dg">39</span><span class="op">×</span><span class="dg">39</span></span> 的线性系统，更新状态。代码在前 6 轮用了欠松弛 <span class="eq"><i>ω</i>=<span class="dg">0.5</span></span>。<b>这个算例其实不需要它</b>：实测从同一个均匀初值直接走全步长，4 次更新就收敛，途中最低压力 0.850，离负压很远。保留它有两个原因：下面的演示（<a class="fref" href="#newton-lab"></a>）正好能把 Newton 的两种收敛并排看清——欠松弛时是线性的，残差每轮约乘 <span class="eq"><span class="dg">1</span>−<i>ω</i></span>；全步长时是二次的；另外，页面上所有实测常数都是沿这条迭代路径得到的，<span class="eq">u<sup>*</sup></span> 的末位比特随路径而变。</p><p lang="en">Newton iteration: linearise at the current state, solve one <span class="eq"><span class="dg">39</span><span class="op">×</span><span class="dg">39</span></span> linear system, update. The code damps the first 6 sweeps with <span class="eq"><i>ω</i>=<span class="dg">0.5</span></span>. <b>This case does not actually need it</b>: measured, full steps from the same uniform guess converge after 4 updates, the lowest pressure along the way being 0.850, nowhere near negative. It is kept for two reasons. The demo below (<a class="fref" href="#newton-lab"></a>) then shows both kinds of Newton convergence side by side &mdash; linear while damped, the residual shrinking by about <span class="eq"><span class="dg">1</span>−<i>ω</i></span> per sweep, and quadratic with full steps. And every constant measured on this page was produced along this iteration path; the last bits of <span class="eq">u<sup>*</sup></span> depend on the path.</p>
+    <p lang="zh">Newton 迭代：在当前状态处用上面精确组装的 <span class="eq"><i>A</i></span> 线性化，解一个 <span class="eq"><span class="dg">39</span><span class="op">×</span><span class="dg">39</span></span> 的线性系统，更新状态。代码在前 6 轮用了欠松弛 <span class="eq"><i>ω</i>=<span class="dg">0.5</span></span>。<b>这个算例其实不需要它</b>：实测从同一个均匀初值直接走全步长，4 次更新就收敛，途中最低压力 0.850，离负压很远。保留它有两个原因：下面的演示（<a class="fref" href="#newton-lab"></a>）正好能把 Newton 的两种收敛并排看清——欠松弛时是线性的，残差每轮约乘 <span class="eq"><span class="dg">1</span>−<i>ω</i></span>；全步长时是二次的；另外，页面上所有实测常数都是沿这条迭代路径得到的，<span class="eq">u<sup>*</sup></span> 的末位比特随路径而变。</p><p lang="en">Newton iteration: linearise at the current state with the exactly assembled <span class="eq"><i>A</i></span> above, solve one <span class="eq"><span class="dg">39</span><span class="op">×</span><span class="dg">39</span></span> linear system, update. The code damps the first 6 sweeps with <span class="eq"><i>ω</i>=<span class="dg">0.5</span></span>. <b>This case does not actually need it</b>: measured, full steps from the same uniform guess converge after 4 updates, the lowest pressure along the way being 0.850, nowhere near negative. It is kept for two reasons. The demo below (<a class="fref" href="#newton-lab"></a>) then shows both kinds of Newton convergence side by side &mdash; linear while damped, the residual shrinking by about <span class="eq"><span class="dg">1</span>−<i>ω</i></span> per sweep, and quadratic with full steps. And every constant measured on this page was produced along this iteration path; the last bits of <span class="eq">u<sup>*</sup></span> depend on the path.</p>
   </div>
   <div class="lab" id="newton-lab">
     <div class="lab-head">
@@ -765,7 +782,7 @@ S=<span class="pmat"><span class="pstrut">&#8203;</span><span class="lp"></span>
     </div>
   </div>
   <div class="prose">
-    <p lang="zh" class="note"><b>这一步显式地把 <span class="eq"><i>A</i></span> 造了出来。</b>本页其余部分讲的是怎样<b>不</b>形成矩阵地算 <span class="eq"><i>A</i>v</span> 与 <span class="eq"><i>A</i><sup>T</sup>w</span>；primal 求解本身用的是最笨也最稳的办法，因为它唯一的任务是造出随后被<b>冻结</b>的 <span class="eq">u<sup>*</sup></span>。</p><p class="note" lang="en"><b>This step does form <span class="eq"><i>A</i></span> explicitly.</b> The rest of the page is about computing <span class="eq"><i>A</i>v</span> and <span class="eq"><i>A</i><sup>T</sup>w</span> <b>without</b> a matrix; the primal solve itself uses the dullest, most robust method there is, because its only job is to produce the <span class="eq">u<sup>*</sup></span> that is then <b>frozen</b>.</p>
+    <p lang="zh" class="note"><b>这一步显式地把 <span class="eq"><i>A</i></span> 造了出来。</b>本页其余部分讲的是怎样<b>不</b>形成矩阵地算 <span class="eq"><i>A</i>v</span> 与 <span class="eq"><i>A</i><sup>T</sup>w</span>；primal 求解本身用的是最直接也最稳的办法——显式组装精确的 <span class="eq"><i>A</i></span>、稠密 LU 分解——因为它唯一的任务是造出随后被<b>冻结</b>的 <span class="eq">u<sup>*</sup></span>。</p><p class="note" lang="en"><b>This step does form <span class="eq"><i>A</i></span> explicitly.</b> The rest of the page is about computing <span class="eq"><i>A</i>v</span> and <span class="eq"><i>A</i><sup>T</sup>w</span> <b>without</b> a matrix; the primal solve itself uses the most direct and robust method there is &mdash; the exact <span class="eq"><i>A</i></span> assembled explicitly, then a dense LU &mdash; because its only job is to produce the <span class="eq">u<sup>*</sup></span> that is then <b>frozen</b>.</p>
   </div>
 </section>
 
@@ -1396,38 +1413,61 @@ if (!Element.prototype.replaceChildren) {
   }
 
   /* ---------------- Jacobian ---------------- */
-  function jacobian(U, A) {
-    const n = 3 * NN;
-    const J = Array.from({ length: n }, () => zeros(n));
+  /* jacobianSteps() records the assembly one dual face (one node, one row)
+     at a time; jacobian() is nothing but the sum of those steps, so the
+     section-5 demo that replays them shows the very matrix Newton solves
+     with. An add is {r, c, s, B}: J[block r][block c] += s * B; a "replace"
+     step wipes one row and writes the constraint gradient into it.       */
+  function jacobianSteps(U, A) {
     const node = i => U.slice(3 * i, 3 * i + 3);
-    const add = (ri, ci, B, s) => {
-      for (let k = 0; k < 3; k++) for (let j = 0; j < 3; j++) J[3 * ri + k][3 * ci + j] += s * B[k][j];
-    };
+    const steps = [];
     for (let f = 0; f < NC; f++) {
       const d = fluxNumJac(node(f), node(f + 1), faceArea(A, f));
-      add(f, f, d.L, +1); add(f, f + 1, d.R, +1);
-      add(f + 1, f, d.L, -1); add(f + 1, f + 1, d.R, -1);
+      steps.push({ phase: "face", f: f, cL: d.L, cR: d.R,
+                   adds: [{ r: f, c: f, s: +1, B: d.L }, { r: f, c: f + 1, s: +1, B: d.R },
+                          { r: f + 1, c: f, s: -1, B: d.L }, { r: f + 1, c: f + 1, s: -1, B: d.R }] });
     }
+    /* the boundary fluxes use the end nodes' own states: A F'(u) on their own block */
     const bL = fluxJac(node(0)), bR = fluxJac(node(NN - 1));
-    for (let k = 0; k < 3; k++) for (let j = 0; j < 3; j++) {
-      J[k][j] -= A[0] * bL[k][j];
-      J[3 * (NN - 1) + k][3 * (NN - 1) + j] += A[NN - 1] * bR[k][j];
-    }
+    steps.push({ phase: "bflux", node: 0, Fp: bL, area: A[0],
+                 adds: [{ r: 0, c: 0, s: -1, B: bL.map(row => row.map(x => A[0] * x)) }] });
+    steps.push({ phase: "bflux", node: NN - 1, Fp: bR, area: A[NN - 1],
+                 adds: [{ r: NN - 1, c: NN - 1, s: +1, B: bR.map(row => row.map(x => A[NN - 1] * x)) }] });
     for (let i = 0; i < NN; i++) {
       const dp = dpdU(node(i));
       const aR = i === NN - 1 ? A[NN - 1] : faceArea(A, i);
       const aL = i === 0 ? A[0] : faceArea(A, i - 1);
-      for (let j = 0; j < 3; j++) J[3 * i + 1][3 * i + j] -= (aR - aL) * dp[j];
+      const dA = aR - aL;
+      steps.push({ phase: "source", i: i, dA: dA, dp: dp,
+                   adds: [{ r: i, c: i, s: -1, B: [[0, 0, 0], [dA * dp[0], dA * dp[1], dA * dp[2]], [0, 0, 0]] }] });
     }
     /* replaced rows: wipe, then write the constraint gradient */
     const d0 = dTotalsdU(node(0)), dN = dTotalsdU(node(NN - 1));
-    for (let j = 0; j < n; j++) { J[0][j] = 0; J[1][j] = 0; J[3 * (NN - 1)][j] = 0; }
-    for (let j = 0; j < 3; j++) {
-      J[0][j] = d0.dp0[j];
-      J[1][j] = d0.dT0[j];
-      J[3 * (NN - 1)][3 * (NN - 1) + j] = dN.dp[j];
+    steps.push({ phase: "replace", node: 0, row: 0, kind: "p0", grad: d0.dp0, adds: [] });
+    steps.push({ phase: "replace", node: 0, row: 1, kind: "T0", grad: d0.dT0, adds: [] });
+    steps.push({ phase: "replace", node: NN - 1, row: 0, kind: "pb", grad: dN.dp, adds: [] });
+    return steps;
+  }
+  /* the sum of the steps, up to (and including) step `upto` */
+  function assembleJacobian(steps, upto) {
+    const n = 3 * NN;
+    const J = Array.from({ length: n }, () => zeros(n));
+    const last = upto === undefined ? steps.length - 1 : upto;
+    for (let q = 0; q <= last; q++) {
+      const st = steps[q];
+      st.adds.forEach(a => {
+        for (let k = 0; k < 3; k++) for (let j = 0; j < 3; j++) J[3 * a.r + k][3 * a.c + j] += a.s * a.B[k][j];
+      });
+      if (st.phase === "replace") {
+        const row = 3 * st.node + st.row;
+        for (let j = 0; j < n; j++) J[row][j] = 0;
+        for (let j = 0; j < 3; j++) J[row][3 * st.node + j] = st.grad[j];
+      }
     }
     return J;
+  }
+  function jacobian(U, A) {
+    return assembleJacobian(jacobianSteps(U, A));
   }
 
   /* the constraint gradient of a replaced row, as a 3-vector on its node */
@@ -1891,10 +1931,11 @@ if (!Element.prototype.replaceChildren) {
     GAMMA: GAMMA, RGAS: RGAS, NC: NC, NN: NN, DX: DX, XN: XN, AREA0: AREA0,
     PT0: PT0, TT0: TT0, PB: PB, WROWS: WROWS, isConstrained: isConstrained,
     prim: prim, cons: cons, fluxPhys: fluxPhys, fluxNum: fluxNum, lambdaFace: lambdaFace,
-    fluxJac: fluxJac, fluxNumJac: fluxNumJac, dpdU: dpdU, dudU: dudU, dadU: dadU,
+    fluxJac: fluxJac, fluxNumJac: fluxNumJac, dpdU: dpdU, dudU: dudU, dadU: dadU, dLambdaSide: dLambdaSide,
     totals: totals, dTotalsdU: dTotalsdU, constraintRow: constraintRow,
     faceArea: faceArea, volumes: volumes,
     residual: residual, jacobian: jacobian, residualD: residualD, residualB: residualB,
+    jacobianSteps: jacobianSteps, assembleJacobian: assembleJacobian,
     solveDense: solveDense, newton: newton, initialState: initialState, dot: dot,
     NEWTON_INFO: NEWTON_INFO, NEWTON_TOL: NEWTON_TOL, NEWTON_SWEEPS: NEWTON_SWEEPS,
     newtonSweeps: newtonSweeps, newtonRelax: newtonRelax, jacobiAdjoint: jacobiAdjoint
@@ -3386,48 +3427,6 @@ if (!Element.prototype.replaceChildren) {
     draw();
   }
 
-  /* ------------------------------------------------ the Jacobian's blocks */
-  function jacview() {
-    const host = document.getElementById("jac-view");
-    if (!host) return;
-    const box = host.querySelector(".svgbox");
-    const info = host.querySelector(".lab-info");
-    const draw = () => {
-      const J = F.jacobian(U0, A0), n = 3 * F.NN, W = 560, cellPx = W / n, s = [], S2 = V.S;
-      const svg = S2("svg", { viewBox: "0 0 " + (W + 40) + " " + (W + 40), role: "img",
-        "aria-label": TR("Jacobian 的块结构", "the block structure of the Jacobian"),
-        style: { width: "100%", height: "auto", display: "block" } });
-      const conRow = i => F.WROWS.some(c => 3 * c.node + c.row === i);
-      let nnz = 0, conNnz = 0;
-      for (let i = 0; i < n; i++) {
-        if (conRow(i)) s.push(S2("rect", { x: 20, y: 20 + i * cellPx, width: W, height: cellPx, fill: "var(--sunken)" }));
-        for (let j = 0; j < n; j++) {
-          if (J[i][j] === 0) continue;
-          nnz++; if (conRow(i)) conNnz++;
-          const mag = Math.min(1, Math.abs(J[i][j]) / 3);
-          s.push(S2("rect", { x: 20 + j * cellPx, y: 20 + i * cellPx, width: cellPx, height: cellPx,
-            fill: conRow(i) ? "var(--ink2)" : "color-mix(in srgb, var(--primal) " + (18 + 70 * mag).toFixed(0) + "%, transparent)" }));
-        }
-      }
-      for (let b = 0; b <= F.NN; b++) {
-        const t = 20 + b * 3 * cellPx;
-        s.push(S2("line", { x1: t, y1: 20, x2: t, y2: 20 + W, stroke: "var(--grid)", "stroke-width": 0.7 }));
-        s.push(S2("line", { x1: 20, y1: t, x2: 20 + W, y2: t, stroke: "var(--grid)", "stroke-width": 0.7 }));
-      }
-      svg.replaceChildren.apply(svg, s);
-      box.innerHTML = ""; box.appendChild(svg);
-      info.innerHTML = "<table class=\"kv\">" +
-        rw(TR("矩阵大小", "matrix size"), n + " × " + n + TR("（" + F.NN + " × " + F.NN + " 个 3×3 块）", " (" + F.NN + " × " + F.NN + " blocks of 3×3)")) +
-        rw(TR("非零元", "non-zeros"), String(nnz)) +
-        rw(TR("结构", "structure"), TR("块三对角：一个节点只经由两侧的对偶面与两个邻居相连", "block tridiagonal: a node reaches its two neighbours only, through the dual faces on either side")) +
-        rw(TR("被替换的 3 行（灰底）", "the 3 replaced rows (grey band)"),
-           TR("共 " + conNnz + " 个非零元，每行只落在本节点的块里：约束梯度", conNnz + " non-zeros in all, each row inside its own node's block: the constraint gradients")) +
-        "</table>";
-    };
-    (window.REPAINT = window.REPAINT || []).push(draw);
-    draw();
-  }
-
   /* ------------------------------------------------ the two objectives */
   function objectives() {
     const host = document.getElementById("obj-lab");
@@ -3473,7 +3472,7 @@ if (!Element.prototype.replaceChildren) {
 
   function boot() {
     bcfig();
-    explorer(); fields(); conservation(); bclab(); dotlab(); jacview(); objectives();
+    explorer(); fields(); conservation(); bclab(); dotlab(); objectives();
     loopPlayer("primal", "loop-primal");
     loopPlayer("tangent", "loop-tangent");
     loopPlayer("adjoint", "loop-adjoint");
@@ -3795,6 +3794,230 @@ if (!Element.prototype.replaceChildren) {
     });
   }
 
+  /* ================================ section 5: the exact Jacobian, assembled
+     Replays F.jacobianSteps(): jacobian() is the sum of exactly these steps,
+     and newton() solves with jacobian(), so what this panel builds is the
+     matrix of every Newton sweep. Each position of the player adds one face
+     (or one boundary flux, the whole source pass, the row replacement). */
+  function jacLab() {
+    const host = document.getElementById("jac-view");
+    if (!host || !F.jacobianSteps) return;
+    const steps = F.jacobianSteps(U0, A0);
+    const Jfin = F.assembleJacobian(steps);
+    const pos = [{ kind: "zero", upto: -1, lines: [2] }];
+    if (!NODE) {
+      pos.push({ kind: "inflow", upto: 0, lines: [5, 6] });
+      for (let f = 1; f < F.N; f++) pos.push({ kind: "face", f: f, upto: f, lines: [5, 8, 9] });
+      pos.push({ kind: "outflow", upto: F.N, lines: [5, 7] });
+      pos.push({ kind: "source", upto: steps.length - 1, lines: [10, 11] });
+    } else {
+      for (let f = 0; f < F.NC; f++) pos.push({ kind: "face", f: f, upto: f, lines: [4, 5, 6] });
+      pos.push({ kind: "bflux", end: 0, upto: F.NC, lines: [7] });
+      pos.push({ kind: "bflux", end: 1, upto: F.NC + 1, lines: [8] });
+      pos.push({ kind: "source", upto: F.NC + 1 + F.NN, lines: [9] });
+      pos.push({ kind: "replace", upto: steps.length - 1, lines: [10, 11] });
+    }
+    pos.push({ kind: "done", upto: steps.length - 1, lines: [12] });
+    pos.forEach((p, k) => { p.from = k === 0 ? 0 : pos[k - 1].upto + 1; });
+    let at = 0, code = null, fdCache = null;
+
+    /* the magnitude scale for the shading, from the finished matrix */
+    const mags = [];
+    Jfin.forEach(r => r.forEach(x => { if (x !== 0) mags.push(Math.abs(x)); }));
+    const big = Math.max.apply(null, mags), small = big * 1e-4;
+    const shade = x => 0.14 + 0.78 * Math.max(0, Math.log(Math.max(Math.abs(x), small) / small) / Math.log(big / small));
+
+    const num = x => (x === 0 ? "0" : (Math.abs(x) >= 1e-2 && Math.abs(x) < 1e4 ? x.toPrecision(4) : x.toExponential(2))).replace(/-/g, "−");
+    const mat = (name, M) => "<div style=\"display:inline-block;margin:0 16px 10px 0;vertical-align:top\">" +
+      "<div class=\"lab-sub\" style=\"margin-bottom:3px\">" + name + "</div>" +
+      "<table style=\"border-collapse:collapse;border-left:1.5px solid var(--ink2);border-right:1.5px solid var(--ink2);" +
+      "font-family:var(--font-mono);font-size:12px;font-variant-numeric:tabular-nums\">" +
+      M.map(r => "<tr>" + r.map(x => "<td style=\"padding:1px 7px;text-align:right\">" + num(x) + "</td>").join("") + "</tr>").join("") +
+      "</table></div>";
+    const vec = v => "(" + v.map(num).join(", ") + ")";
+    const scale = (M, s) => M.map(r => r.map(x => s * x));
+    const V1 = i => i + 1;                          /* volumes are numbered from 1 */
+    const vn = () => (NODE ? TR("节点", "node") : TR("单元", "cell"));
+
+    const listing = () => (NODE ? [
+      ["function jacobian(u, A)", TR("精确的 ∂R/∂u，逐块组装，不做差分", "the exact ∂R/∂u, block by block, no differencing")],
+      ["    J ← 0", NU + "×" + NU + TR("，" + NB + "×" + NB + " 个 3×3 块", ", " + NB + "×" + NB + " blocks of 3×3")],
+      ["    for each dual face between nodes i, j = i+1", TR("与 residual 同一条边循环", "the same edge loop as residual")],
+      ["        c_L, c_R ← ∂h/∂u[i], ∂h/∂u[j]", TR("F′、λI 与 ∂λ/∂u 三项，乘 A_f", "F′, λI and the ∂λ/∂u term, times A_f")],
+      ["        J[i,i] += c_L;  J[i,j] += c_R", TR("h 流出节点 i", "h leaves node i")],
+      ["        J[j,i] -= c_L;  J[j,j] -= c_R", TR("h 流入节点 j", "h enters node j")],
+      ["    J[1,1] -= A_1·F′(u[1])", TR("入口边界通量：节点自己的状态", "inflow boundary flux: the node's own state")],
+      ["    J[" + NB + "," + NB + "] += A_" + NB + "·F′(u[" + NB + "])", TR("出口边界通量", "outflow boundary flux")],
+      ["    for each node i: J[i,i].mom -= ΔA_i·∂p/∂u[i]", TR("源项：只在对角块的动量行", "the source: momentum row of the diagonal block")],
+      ["    J[1].mass ← ∂p0/∂u;  J[1].mom ← ∂T0/∂u", TR("替换受约束的行（第 3 节）", "replace the constrained rows (Section 3)")],
+      ["    J[" + NB + "].mass ← ∂p/∂u", TR("整行擦掉，写上约束梯度", "wipe the row, write the constraint gradient")],
+      ["    return J", TR("Newton 每一轮都用它", "Newton uses it at every sweep")]
+    ] : [
+      ["function jacobian(u, A)", TR("精确的 ∂R/∂u，逐块组装，不做差分", "the exact ∂R/∂u, block by block, no differencing")],
+      ["    J ← 0", NU + "×" + NU + TR("，" + NB + "×" + NB + " 个 3×3 块", ", " + NB + "×" + NB + " blocks of 3×3")],
+      ["    for each face f = 0 … N", TR("与 residual 同一个面循环", "the same face loop as residual")],
+      [TR("        uL, uR ← 两侧状态", "        uL, uR ← the two states"), TR("边界面：外侧状态 B(u) 见第 3 节", "boundary face: outer state B(u), Section 3")],
+      ["        c_L, c_R ← ∂h/∂uL, ∂h/∂uR", TR("F′、λI 与 ∂λ/∂u 三项，乘 A_f", "F′, λI and the ∂λ/∂u term, times A_f")],
+      ["        if f = 0 then J[1,1] -= c_R + c_L·∂B/∂u", TR("入口：∂B/∂u 秩 1", "inflow: ∂B/∂u has rank 1")],
+      ["        else if f = N then J[N,N] += c_L + c_R·∂B/∂u", TR("出口：∂B/∂u 秩 2", "outflow: ∂B/∂u has rank 2")],
+      ["        else J[f,f] += c_L;  J[f,f+1] += c_R", TR("h 流出单元 f", "h leaves cell f")],
+      ["             J[f+1,f] -= c_L;  J[f+1,f+1] -= c_R", TR("h 流入单元 f+1", "h enters cell f+1")],
+      ["    for each cell i", TR("源项：不经过任何面", "the source: it passes through no face")],
+      ["        J[i,i].mom -= (A[i] - A[i-1])·∂p/∂u[i]", TR("只有动量行，只在对角块", "momentum row only, diagonal block only")],
+      ["    return J", TR("Newton 每一轮都用它", "Newton uses it at every sweep")]
+    ]);
+
+    /* exact against central differences, computed once when first asked for */
+    function fd() {
+      if (fdCache) return fdCache;
+      const n = NU, Jf = Array.from({ length: n }, () => new Array(n).fill(0));
+      for (let j = 0; j < n; j++) {
+        const h = 1e-6 * Math.max(1, Math.abs(U0[j]));   /* near-optimal for central differences */
+        const up = U0.slice(), um = U0.slice();
+        up[j] += h; um[j] -= h;
+        const rp = F.residual(up, A0), rm = F.residual(um, A0);
+        for (let i = 0; i < n; i++) Jf[i][j] = (rp[i] - rm[i]) / (2 * h);
+      }
+      let e = 0, sc = 0;
+      for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+        e = Math.max(e, Math.abs(Jfin[i][j] - Jf[i][j]));
+        sc = Math.max(sc, Math.abs(Jf[i][j]));
+      }
+      fdCache = { e: e, rel: e / sc };
+      return fdCache;
+    }
+
+    function drawMatrix(p) {
+      const box = document.getElementById("jac-matrix");
+      const J = F.assembleJacobian(steps, p.upto);
+      const n = NU, M0 = 30, T0 = 26, S = 560, e = S / n;
+      const S2 = V.S;
+      const svg = S2("svg", { viewBox: "0 0 " + (M0 + S + 8) + " " + (T0 + S + 8), role: "img",
+        "aria-label": TR("逐步组装中的 Jacobian", "the Jacobian as it is assembled"),
+        style: { width: "100%", height: "auto", display: "block" } });
+      const g = S2("g", null, svg);
+      S2("rect", { x: M0, y: T0, width: S, height: S, fill: "var(--surface)", stroke: "var(--rule)" }, g);
+      for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+        if (J[i][j] === 0) continue;
+        S2("rect", { x: M0 + j * e, y: T0 + i * e, width: e, height: e, fill: "var(--primal)",
+          "fill-opacity": shade(J[i][j]).toFixed(3) }, g);
+      }
+      for (let b = 0; b <= NB; b++) {
+        const t = 3 * b * e;
+        S2("line", { x1: M0 + t, y1: T0, x2: M0 + t, y2: T0 + S, stroke: "var(--grid)", "stroke-width": 0.8 }, g);
+        S2("line", { x1: M0, y1: T0 + t, x2: M0 + S, y2: T0 + t, stroke: "var(--grid)", "stroke-width": 0.8 }, g);
+      }
+      /* what this step writes */
+      const rowsHit = {}, colsHit = {};
+      const frame = (x, y, w, h) => S2("rect", { x: x, y: y, width: w, height: h, fill: "none",
+        stroke: "var(--violet)", "stroke-width": 2.4 }, g);
+      for (let q = p.from; q <= p.upto; q++) {
+        const st = steps[q];
+        st.adds.forEach(a => {
+          rowsHit[a.r] = colsHit[a.c] = true;
+          if (st.phase === "source") frame(M0 + 3 * a.c * e, T0 + (3 * a.r + 1) * e, 3 * e, e);
+          else frame(M0 + 3 * a.c * e, T0 + 3 * a.r * e, 3 * e, 3 * e);
+        });
+        if (st.phase === "replace") {
+          const row = 3 * st.node + st.row;
+          rowsHit[st.node] = colsHit[st.node] = true;
+          S2("rect", { x: M0, y: T0 + row * e, width: S, height: e, fill: "var(--violet)", "fill-opacity": 0.1,
+            stroke: "var(--violet)", "stroke-width": 1, "stroke-dasharray": "4 3" }, g);
+          frame(M0 + 3 * st.node * e, T0 + row * e, 3 * e, e);
+        }
+      }
+      for (let b = 0; b < NB; b++) {
+        const c = (3 * b + 1.5) * e, hitR = !!rowsHit[b], hitC = !!colsHit[b];
+        S2("text", { x: M0 + c, y: T0 - 9, "text-anchor": "middle", text: String(V1(b)),
+          style: { fontSize: "10.5px", fill: hitC ? "var(--violet)" : "var(--muted)", fontWeight: hitC ? 700 : 400 } }, g);
+        S2("text", { x: M0 - 6, y: T0 + c + 3.5, "text-anchor": "end", text: String(V1(b)),
+          style: { fontSize: "10.5px", fill: hitR ? "var(--violet)" : "var(--muted)", fontWeight: hitR ? 700 : 400 } }, g);
+      }
+      box.replaceChildren(svg);
+      let nnz = 0;
+      J.forEach(r => r.forEach(x => { if (x !== 0) nnz++; }));
+      return nnz;
+    }
+
+    function explain(p, nnz) {
+      const st = p.kind === "zero" || p.kind === "done" ? null : steps[p.upto];
+      const m = NB;
+      switch (p.kind) {
+        case "zero":
+          return { s: TR("J ← 0：" + NU + "×" + NU + " 的零矩阵，分成 " + m + "×" + m + " 个 3×3 块（行、列上的数字是" + vn() + "编号）。下面把每个面的两个 3×3 块逐个加进去。",
+                         "J ← 0: a " + NU + "×" + NU + " zero matrix in " + m + "×" + m + " blocks of 3×3 (the numbers along the edges are " + vn() + " numbers). Each face's two 3×3 blocks are added one face at a time."), b: "" };
+        case "inflow":
+          return { s: TR("入口面 f0：外侧状态 B(u₁) 由第 3 节的五步从单元 1 算出，所以通量 h(B(u₁), u₁) 对 u₁ 的导数按链式法则是 c_R + c_L·∂B/∂u₁，两个槽位合并成一个块；∂B/∂u₁ 只经过 R⁻ 依赖 u₁，秩为 1。h 流入单元 1：J[1,1] −= c_R + c_L·∂B/∂u₁。",
+                         "Inflow face f0: the outer state B(u₁) is computed from cell 1 by the five steps of Section 3, so by the chain rule the derivative of h(B(u₁), u₁) with respect to u₁ is c_R + c_L·∂B/∂u₁ — the two slots merge into one block. ∂B/∂u₁ depends on u₁ only through R⁻: rank 1. h enters cell 1: J[1,1] −= c_R + c_L·∂B/∂u₁."),
+                   b: mat("∂B/∂u<sub>1</sub>" + TR("（秩 1）", " (rank 1)"), st.dB) + mat("c<sub>L</sub>", st.cL) + mat("c<sub>R</sub>", st.cR) +
+                      mat(TR("加进 J[1,1] 的块：−(c<sub>R</sub> + c<sub>L</sub>·∂B/∂u<sub>1</sub>)", "added to J[1,1]: −(c<sub>R</sub> + c<sub>L</sub>·∂B/∂u<sub>1</sub>)"), scale(st.block, -1)) };
+        case "outflow":
+          return { s: TR("出口面 f" + F.N + "：外侧状态 B(u" + m + ") 由背压 p_b、外推的熵与 R⁺ 算出，∂B/∂u 依赖两个外推量，秩为 2。h 流出单元 " + m + "：J[" + m + "," + m + "] += c_L + c_R·∂B/∂u。",
+                         "Outflow face f" + F.N + ": the outer state B(u" + m + ") comes from the back pressure p_b and the extrapolated entropy and R⁺, so ∂B/∂u depends on two extrapolated scalars: rank 2. h leaves cell " + m + ": J[" + m + "," + m + "] += c_L + c_R·∂B/∂u."),
+                   b: mat("∂B/∂u<sub>" + m + "</sub>" + TR("（秩 2）", " (rank 2)"), st.dB) + mat("c<sub>L</sub>", st.cL) + mat("c<sub>R</sub>", st.cR) +
+                      mat(TR("加进 J[" + m + "," + m + "] 的块：c<sub>L</sub> + c<sub>R</sub>·∂B/∂u", "added to J[" + m + "," + m + "]: c<sub>L</sub> + c<sub>R</sub>·∂B/∂u"), st.block) };
+        case "face": {
+          const f = st.f, i = NODE ? f + 1 : f, j = i + 1;
+          const lam = F.lambdaFace(U0.slice(3 * (i - 1), 3 * i), U0.slice(3 * (j - 1), 3 * j));
+          const where = NODE ? TR("对偶面 f" + f + "（节点 " + i + " 与 " + j + " 之间）", "dual face f" + f + " (between nodes " + i + " and " + j + ")")
+                             : TR("面 f" + f + "（单元 " + i + " 与 " + j + " 之间）", "face f" + f + " (between cells " + i + " and " + j + ")");
+          return { s: where + TR("：c_L、c_R 按上面的公式算出（λ_f = " + num(lam) + "）。h 流出" + vn() + " " + i + "、流入" + vn() + " " + j + "：J[" + i + "," + i + "] += c_L，J[" + i + "," + j + "] += c_R，J[" + j + "," + i + "] −= c_L，J[" + j + "," + j + "] −= c_R。",
+                                 ": c_L and c_R from the formulas above (λ_f = " + num(lam) + "). h leaves " + vn() + " " + i + " and enters " + vn() + " " + j + ": J[" + i + "," + i + "] += c_L, J[" + i + "," + j + "] += c_R, J[" + j + "," + i + "] −= c_L, J[" + j + "," + j + "] −= c_R."),
+                   b: mat("c<sub>L</sub> = ∂h/∂u<sub>" + i + "</sub>", st.cL) + mat("c<sub>R</sub> = ∂h/∂u<sub>" + j + "</sub>", st.cR) };
+        }
+        case "bflux": {
+          const k = st.node, lbl = V1(k);
+          return { s: p.end === 0
+              ? TR("入口边界通量：节点 1 就在边界上，通量是 A₁F(u₁)，用的是节点自己的状态，没有外侧状态；它的导数 A₁F′(u₁) 从节点 1 的对角块里减去（h 流入节点 1）。",
+                   "Inflow boundary flux: node 1 sits on the boundary, and its flux A₁F(u₁) uses the node's own state — there is no outer state. Its derivative A₁F′(u₁) is subtracted from node 1's diagonal block (h enters node 1).")
+              : TR("出口边界通量：A" + lbl + "F(u" + lbl + ") 流出节点 " + lbl + "，J[" + lbl + "," + lbl + "] += A" + lbl + "F′(u" + lbl + ")。",
+                   "Outflow boundary flux: A" + lbl + "F(u" + lbl + ") leaves node " + lbl + ", so J[" + lbl + "," + lbl + "] += A" + lbl + "F′(u" + lbl + ")."),
+            b: mat("A<sub>" + lbl + "</sub>F′(u<sub>" + lbl + "</sub>)", st.adds[0].B) };
+        }
+        case "source": {
+          const rows = [];
+          for (let q = p.from; q <= p.upto; q++) {
+            const s2 = steps[q];
+            rows.push("<tr><td style=\"padding:1px 8px 1px 0\">" + V1(s2.i) + "</td><td class=\"num\" style=\"padding:1px 8px\">" + num(s2.dA) +
+                      "</td><td class=\"num\" style=\"padding:1px 0\">" + vec(s2.dp.map(x => -s2.dA * x)) + "</td></tr>");
+          }
+          return { s: TR("源项：每个" + vn() + "只有动量那一行，写在自己的对角块里：J[i,i].mom −= ΔA_i·∂p/∂u_i。它不经过任何面，所以不产生任何非对角块。",
+                         "The source: for every " + (NODE ? "node" : "cell") + " only the momentum row, in its own diagonal block: J[i,i].mom −= ΔA_i·∂p/∂u_i. It passes through no face, so it creates no off-diagonal block."),
+                   b: "<table style=\"border-collapse:collapse;font-family:var(--font-mono);font-size:12px\"><tr style=\"color:var(--muted)\"><td style=\"padding:1px 8px 1px 0\">i</td><td style=\"padding:1px 8px\">ΔA<sub>i</sub></td><td>−ΔA<sub>i</sub>·∂p/∂u<sub>i</sub></td></tr>" + rows.join("") + "</table>" };
+        }
+        case "replace": {
+          const lbl = NB;
+          const g0 = steps[p.upto - 2].grad, g1 = steps[p.upto - 1].grad, g2 = steps[p.upto].grad;
+          return { s: TR("替换受约束的行：节点 1 的质量行整行擦掉、写上 ∂p₀/∂u₁，动量行写上 ∂T₀/∂u₁；节点 " + lbl + " 的质量行写上 ∂p/∂u" + lbl + "。前面累加进这三行的通量与源项全部作废——这就是第 3 节的强加边界条件在矩阵里的样子。",
+                         "Replace the constrained rows: node 1's mass row is wiped and gets ∂p₀/∂u₁, its momentum row ∂T₀/∂u₁; node " + lbl + "'s mass row gets ∂p/∂u" + lbl + ". Whatever the fluxes and the source had put into those three rows is discarded — this is what the strong boundary conditions of Section 3 look like in the matrix."),
+                   b: "<div style=\"font-family:var(--font-mono);font-size:12px;line-height:1.7\">∂p₀/∂u₁ = " + vec(g0) + "<br>∂T₀/∂u₁ = " + vec(g1) + "<br>∂p/∂u" + lbl + " = " + vec(g2) + "</div>" };
+        }
+        default: {
+          const c = fd();
+          return { s: TR("组装完成：" + nnz + " 个非零元，块三对角。与逐列中心差分（" + (2 * NU) + " 次 residual）相比，最大差 " + c.e.toExponential(1).replace("e-", "e−") + "（相对 " + c.rel.toExponential(1).replace("e-", "e−") + "）——那是差分自己的截断与舍入误差，不是这个 J 的误差。下面的 Newton 每一轮用的都是这个精确的 J。",
+                         "Assembled: " + nnz + " non-zeros, block tridiagonal. Against column-by-column central differences (" + (2 * NU) + " residual calls) the largest difference is " + c.e.toExponential(1).replace("e-", "e−") + " (relative " + c.rel.toExponential(1).replace("e-", "e−") + ") — the error of the differencing itself, not of this J. The Newton iteration below solves with exactly this J at every sweep."), b: "" };
+        }
+      }
+    }
+
+    function draw() {
+      const p = pos[at];
+      const nnz = drawMatrix(p);
+      code.rows.forEach((r, i) => r.classList.toggle("active", p.lines.indexOf(i + 1) >= 0));
+      const ex = explain(p, nnz);
+      document.getElementById("jac-status").innerHTML = ex.s;
+      document.getElementById("jac-blocks").innerHTML = ex.b;
+    }
+    function build() {
+      ["jac-code", "jac-ctl"].forEach(id => { const el = document.getElementById(id); if (el) el.replaceChildren(); });
+      code = new V.Code(document.getElementById("jac-code"), listing());
+      new V.Player(document.getElementById("jac-ctl"), {
+        count: pos.length, id: "q1d-jac", speed: 900, render: q => { at = q; draw(); } }).set(at);
+    }
+    (window.REPAINT = window.REPAINT || []).push(build);
+    build();
+  }
+
   /* ===================================================== section 5: Newton */
   function newtonLab() {
     const host = document.getElementById("newton-lab");
@@ -3819,9 +4042,9 @@ if (!Element.prototype.replaceChildren) {
       ["    for k = 1 … " + F.NEWTON_SWEEPS, TR("固定轮次，保证可复现", "a fixed sweep count, for reproducibility")],
       ["        r ← residual(u, A)", TR("第 4 节的面循环", "the face loop of Section 4")],
       [TR("        if max|r| < 10⁻¹³ then 记下 k", "        if max|r| < 10⁻¹³ then record k"), TR("查残差", "on r")],
-      [NODE ? "        J ← jacobian(u, A)" : "        J ← jacobian_fd(u, A)",
-       NODE ? TR("解析的，含 3 个约束行", "analytic, 3 constraint rows")
-            : TR("中心差分，" + (2 * NU) + " 次 residual", "central differences, " + (2 * NU) + " residual calls")],
+      ["        J ← jacobian(u, A)",
+       NODE ? TR("精确，逐块组装，含 3 个约束行", "exact, assembled block by block, 3 constraint rows")
+            : TR("精确，逐块组装，含两个边界块", "exact, assembled block by block, both boundary blocks")],
       ["        δu ← solve(J, r)", TR("稠密 LU，" + NU + "×" + NU, "dense LU, " + NU + "×" + NU)],
       ["        ω ← " + omega0 + " if k ≤ " + damped + " else 1", TR("前 " + damped + " 轮欠松弛", "damped for the first " + damped + " sweeps")],
       ["        u ← u − ω·δu", TR("Newton 更新", "the Newton update")],
@@ -3852,8 +4075,7 @@ if (!Element.prototype.replaceChildren) {
             "sweep <b>" + k + "</b>: one <span class=\"mono\">residual</span> call on the current u, max|r| = <span class=\"mono\">" + sci(rn) + "</span>") +
           (it === met ? TR("，<b>首次低于判据 10⁻¹³</b>", ", <b>below the 10⁻¹³ criterion for the first time</b>") : "") +
           TR("；然后组装 J = ∂R/∂u（", "; then assemble J = ∂R/∂u (") +
-          (NODE ? TR("解析地逐面累加", "analytically, face by face")
-                : TR(NU + " 列逐列中心差分，" + (2 * NU) + " 次 residual 调用", NU + " columns by central differences, " + (2 * NU) + " residual calls")) +
+          TR("精确、逐块组装：就是上面演示的那个 jacobian()", "exact, assembled block by block: the very jacobian() demonstrated above") +
           TR("）。", ").");
       } else if (st === 1) {
         stat.innerHTML = TR("解 <span class=\"mono\">J δu = r</span>（稠密 LU，" + NU + "×" + NU + "）：max|δu| = <span class=\"mono\">" + sci(dn) + "</span>。",
@@ -4083,7 +4305,7 @@ if (!Element.prototype.replaceChildren) {
     }));
   }
 
-  function boot() { fluxLab(); newtonLab(); jacobiLab(); linkObjectives(); numberFigures(); }
+  function boot() { fluxLab(); jacLab(); newtonLab(); jacobiLab(); linkObjectives(); numberFigures(); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();
 })();
