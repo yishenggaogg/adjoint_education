@@ -2725,12 +2725,13 @@ if (!Element.prototype.replaceChildren) {
         text: side === "in" ? TR("入口 x = 0", "inflow  x = 0") : TR("出口 x = 1", "outflow  x = 1") }));
 
       /* the three characteristics, scaled by their measured speeds */
-      const mx = Math.max.apply(null, sp.map(c => Math.abs(c.v)));
       sp.forEach((c, k) => {
         const y = top + 34 + k * 48;
-        /* the longest arrow stops short of the outer edge, leaving the strip
-           the domain caption runs down free */
-        const len = 26 + (half - 56) * Math.abs(c.v) / mx;
+        /* strictly proportional to the speed, on ONE scale shared by both
+           ends, so the caption's "drawn to scale" is literally true; the
+           longest stops short of the outer edge, leaving the strip the
+           domain caption runs down free */
+        const len = (half - 30) * Math.abs(c.v) / MX;
         const dir = c.v >= 0 ? 1 : -1;            /* speed sign = travel direction */
         const enters = side === "in" ? dir > 0 : dir < 0;
         const role = enters ? "violet" : "muted";
@@ -2765,6 +2766,7 @@ if (!Element.prototype.replaceChildren) {
     }
 
     const A = o.inflow, B = o.outflow;
+    const MX = Math.max(Math.abs(A.u) + A.a, Math.abs(B.u) + B.a);
     panel(0, "in",
       [{ name: "u+a", v: A.u + A.a }, { name: "u  ", v: A.u }, { name: "u-a", v: A.u - A.a }],
       TR("给定：总压 p₀、总温 T₀（2 个）", "prescribed: p₀ and T₀ (2)"),
