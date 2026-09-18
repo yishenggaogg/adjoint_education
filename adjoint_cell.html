@@ -1968,7 +1968,8 @@ if (!Element.prototype.replaceChildren) {
           const p = this.P(c);
           S("text", {
             x: p[0], y: p[1] - 9, "text-anchor": "middle", text: "c" + (i + 1),
-            style: { fill: "var(--muted)", fontFamily: "var(--font-mono)", fontSize: "11px" }
+            /* the halo keeps the label readable on a cell a lab has tinted */
+            style: { fill: "var(--muted)", fontFamily: "var(--font-mono)", fontSize: "11px", paintOrder: "stroke", stroke: "var(--surface)", strokeWidth: "3px", strokeLinejoin: "round" }
           }, this.gBase);
         });
       }
@@ -1999,7 +2000,7 @@ if (!Element.prototype.replaceChildren) {
         arrow(this.gNormals, this.mid, m, [m[0] + nh[0] * 22, m[1] + nh[1] * 22], role, 1.4);
         S("text", {
           x: m[0] - nh[0] * 13, y: m[1] - nh[1] * 13 + 4, "text-anchor": "middle", text: "f" + f.id,
-          style: { fill: "var(--" + role + ")", fontFamily: "var(--font-mono)", fontSize: "11px" }
+          style: { fill: "var(--" + role + ")", fontFamily: "var(--font-mono)", fontSize: "11px", paintOrder: "stroke", stroke: "var(--surface)", strokeWidth: "3px", strokeLinejoin: "round" }
         }, this.gNormals);
       });
     }
@@ -2044,7 +2045,7 @@ if (!Element.prototype.replaceChildren) {
     text(x, y, t, role, size, anchor) {
       return S("text", {
         x: x, y: y, "text-anchor": anchor || "middle", text: t,
-        style: { fill: "var(--" + (role || "ink") + ")", fontFamily: "var(--font-mono)", fontSize: (size || 12) + "px" }
+        style: { fill: "var(--" + (role || "ink") + ")", fontFamily: "var(--font-mono)", fontSize: (size || 12) + "px", paintOrder: "stroke", stroke: "var(--surface)", strokeWidth: "3px", strokeLinejoin: "round" }
       }, this.gOver);
     }
   }
