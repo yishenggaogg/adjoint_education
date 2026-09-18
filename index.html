@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>离散伴随教学页 / Discrete adjoint, taught page by page</title>
-<meta name="description" content="四个单文件、可交互的网页，把有限体积法的全离散伴随从头到尾讲一遍：二维标量方程与拟一维 Euler 方程，各有格心与格点两版，并排对照。">
+<meta name="description" content="六个单文件、可交互的网页，把有限体积法的全离散伴随从头到尾讲一遍：二维标量对流方程、二维标量对流扩散方程与拟一维 Euler 方程，各有格心与格点两版，并排对照。">
 <style>
 :root {
   --ground:#F3F5F7; --surface:#FFFFFF; --sunken:#EAEEF2;
@@ -71,30 +71,54 @@ code { font-family:var(--font-mono); font-size:.86em; }
   <p class="sub">Discrete adjoint, taught page by page &middot; 中文 / English</p>
 
   <p class="lede">
-    四个<b>单文件、可交互</b>的网页，把有限体积法的<b>全离散伴随</b>从头到尾讲一遍：
+    六个<b>单文件、可交互</b>的网页，把有限体积法的<b>全离散伴随</b>从头到尾讲一遍：
     从一个面上的一维通量开始，把同一个循环依次改写成 primal、matrix-free 前向与 matrix-free 伴随，
     再做伴随求解、几何导数，最后用有限差分逐项校验。
-    两组算例（<b>二维标量</b>与<b>拟一维 Euler</b>）各有<b>格心</b>与<b>格点</b>两版，
-    <b>四页结构完全平行</b>，可以任意两两并排对照。
+    三组算例（<b>二维标量对流</b>、<b>二维标量对流扩散</b>与<b>拟一维 Euler</b>）各有<b>格心</b>与<b>格点</b>两版，
+    <b>六页结构完全平行</b>，可以任意两两并排对照。
   </p>
 
-  <h3 style="margin-top:30px">二维标量方程 / A two-dimensional scalar equation</h3>
+  <h3 style="margin-top:30px">二维标量对流方程 / A two-dimensional scalar advection equation</h3>
   <p style="margin:0 0 14px;color:var(--muted);font-size:.93rem">
-    环形 O 型混合网格，24 个未知量。最小的模型问题：局部导数就是两个数。<br>
+    环形 O 型混合网格，24 个未知量。最小的模型问题：局部导数就是两个数。纯对流，边界条件全部写在通量里。<br>
     A hybrid annular O-mesh with 24 unknowns &mdash; the smallest model problem, where a local derivative is just two numbers.
+    Pure advection, with every boundary condition inside the flux.
   </p>
   <div class="cards">
     <a class="card" href="adjoint_cell.html">
       <h2>格心格式</h2>
       <p class="en">Cell-centred finite volume</p>
-      <p>未知量是单元平均值。物面无滑移只能<b>弱</b>加——通量里取常数右状态。</p>
+      <p>未知量是单元平均值。物面是无粘壁面（通量为零），远场按特征方向取来流值或外推——全部在通量里<b>弱</b>加。</p>
       <p class="facts">24 个单元 &middot; 48 个面 &middot; nnz(A) = 88<br>adjoint_cell.html</p>
     </a>
     <a class="card node" href="adjoint_node.html">
       <h2>格点格式</h2>
       <p class="en">Node-centred, median-dual</p>
-      <p>未知量在节点上。壁面节点本身就是未知量，所以无滑移是<b>强</b>加——整行替换。</p>
+      <p>未知量在节点上，控制体是中位对偶体。边界条件同样全部在通量里：纯对流方程放不下 Dirichlet 壁面。</p>
       <p class="facts">24 个节点 &middot; 80 个面 &middot; nnz(A) = 120<br>adjoint_node.html</p>
+    </a>
+  </div>
+
+  <h3 style="margin-top:30px">二维标量对流扩散方程 / A two-dimensional scalar advection&ndash;diffusion equation</h3>
+  <p style="margin:0 0 14px;color:var(--muted);font-size:.93rem">
+    同一张网格、同一个对流通量，加上常数扩散。扩散通量要用最小二乘梯度，残差变成两遍循环；
+    精确 Jacobian 伸到邻居的邻居，求解器只用一阶近似，伴随用精确算子。物面是 Dirichlet 壁面 u = u<sub>w</sub>。<br>
+    The same mesh and convective flux, with a constant diffusion added. The diffusive flux needs least-squares gradients,
+    so the residual becomes two loops; the exact Jacobian reaches the neighbours of neighbours, the solver uses only a
+    first-order approximation, and the adjoint the exact operator. The body is a Dirichlet wall, u = u<sub>w</sub>.
+  </p>
+  <div class="cards">
+    <a class="card" href="adjoint_ad_cell.html">
+      <h2>格心格式</h2>
+      <p class="en">Cell-centred finite volume</p>
+      <p>壁面<b>弱</b>加：u<sub>w</sub> 进入壁面面的通量与最小二乘模板。目标是流进物面的总通量。</p>
+      <p class="facts">24 个单元 &middot; nnz(A) = 200 &middot; 一阶 Ã：88<br>adjoint_ad_cell.html</p>
+    </a>
+    <a class="card node" href="adjoint_ad_node.html">
+      <h2>格点格式</h2>
+      <p class="en">Node-centred, median-dual</p>
+      <p>壁面节点的整行换成 u<sub>i</sub> &minus; u<sub>w</sub>，<b>强</b>加；伴随里「循环前清零、循环后加回」，顺序不能反。</p>
+      <p class="facts">24 个节点 &middot; nnz(A) = 264 &middot; 一阶 Ã<sub>bc</sub>：96<br>adjoint_ad_node.html</p>
     </a>
   </div>
 
@@ -122,9 +146,9 @@ code { font-family:var(--font-mono); font-size:.86em; }
   </div>
 
   <p class="note">
-四个页面都是<b>自包含的单个 HTML 文件</b>：不联网、不需要构建、不需要服务器，直接打开即可。
+六个页面都是<b>自包含的单个 HTML 文件</b>：不联网、不需要构建、不需要服务器，直接打开即可。
     页面右上角可切换中文 / English。<br>
-    All four are <b>self-contained single HTML files</b> — no network, no build step, no server.
+    All six are <b>self-contained single HTML files</b> — no network, no build step, no server.
     A 中文 / English toggle sits in the top-right corner of each page.
   </p>
 
@@ -135,15 +159,17 @@ code { font-family:var(--font-mono); font-size:.86em; }
     <li>同一个循环改写成 matrix-free 前向 <code>Av</code> 与伴随 <code>A&#8288;<sup>T</sup>w</code>，每一行都能逐句播放</li>
     <li>伴随求解、几何导数 <code>dR/dX</code> 与 <code>dL/dX</code> &mdash; the adjoint solve and the geometric derivatives</li>
     <li>点积测试与有限差分校验，以及差分校验本身的陷阱 &mdash; the dot-product test, and where finite differences mislead</li>
+    <li>（对流扩散）最小二乘梯度、两遍循环、一阶近似 Jacobian 与精确伴随、强加的 Dirichlet 壁面 &mdash; (advection&ndash;diffusion) least-squares gradients, two loops, a first-order Jacobian beside the exact adjoint, a strongly imposed Dirichlet wall</li>
     <li>（拟一维）源项、特征边界条件、3×3 块 &mdash; (quasi-1-D) the source term, characteristic boundary conditions, 3&times;3 blocks</li>
   </ul>
 
   <h3>页面上的数字都是实测的 / Every number is measured</h3>
   <p class="lede" style="font-size:.95rem;margin-bottom:0">
-    页面引用的每一个数值都在浏览器里现场算出，而不是写死的文字。
-    二维标量：点积测试 8.9e&minus;16（格心）／6.7e&minus;16（格点），梯度对全链路中心差分 5.4e&minus;11／5.1e&minus;11。
-    拟一维 Euler：点积测试 2.7e&minus;16／2.9e&minus;16，几何点积测试 4.6e&minus;16（两个方向都解析，不含步长），
-    反设计目标在<b>已知最优流道</b>上 L 与 dL/dA 逐比特为零。
+    交互面板里的数字在页面加载时由页面自己的脚本现场计算；正文里引用的数值事先用同一份模型代码算出。
+    梯度对全链路中心差分（h = 10<sup>&minus;6</sup>，相对最大分量）：二维对流 3.1e&minus;10（格心）／2.5e&minus;10（格点），
+    二维对流扩散 8.8e&minus;10／1.1e&minus;9，拟一维 Euler 4.4e&minus;9／1.0e&minus;9。
+    拟一维的几何点积测试 1.95e&minus;16／3.73e&minus;16（两个方向都解析，不含步长），
+    反设计目标在<b>已知最优流道</b>上 L 与 dL/dA 逐比特为零；对流扩散那一对还做了制造解精度阶研究（只有扩散时二阶）。
   </p>
 
   <footer>
