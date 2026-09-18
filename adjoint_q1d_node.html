@@ -502,6 +502,14 @@ html[data-lang="en"] [lang="zh"] { display: none; }
     <div class="secnum" lang="zh">第 3 节</div><div class="secnum" lang="en">Section 3</div>
     <h2 lang="zh">边界条件：强加与部分行替换</h2><h2 lang="en">Boundary conditions: strong imposition and partial row replacement</h2>
     <p lang="zh">特征分析和格心页完全一样：亚声速时左端有 2 条特征进入区域、右端 1 条，所以<b>左端给 2 个条件（总压 <span class="eq"><i>p</i><sub>0</sub></span>、总温 <span class="eq"><i>T</i><sub>0</sub></span>）、右端给 1 个（背压 <span class="eq"><i>p</i><sub>b</sub></span>）</b>。变的是<b>怎么加</b>。</p><p lang="en">The characteristic analysis is the same as on the cell-centred page: subsonic flow lets 2 characteristics into the domain at the left and 1 at the right, so <b>two conditions are prescribed at the left (<span class="eq"><i>p</i><sub>0</sub></span> and <span class="eq"><i>T</i><sub>0</sub></span>) and one at the right (<span class="eq"><i>p</i><sub>b</sub></span>)</b>. What changes is <b>how they are imposed</b>.</p>
+  </div>
+
+    <figure id="bc-fig-wrap">
+      <div class="svgbox" id="bc-fig"></div>
+      <figcaption lang="zh">亚声速进出口的特征方向。箭头是<b>实测</b>的三条特征速度 <span class="eq"><i>u</i>−<i>a</i></span>、<span class="eq"><i>u</i></span>、<span class="eq"><i>u</i>+<i>a</i></span>，长度按大小、方向按符号画出。<b>指进计算域</b>的特征（紫色）每条对应一个必须给定的条件，<b>指出</b>的（灰色）则把内部信息带出来、只能外推。入口 2 进 1 出，出口 1 进 2 出——这就是「入口给 2 个、出口给 1 个」的全部理由。</figcaption><figcaption lang="en">Characteristic directions at a subsonic inflow and outflow. The arrows are the <b>measured</b> speeds <span class="eq"><i>u</i>−<i>a</i></span>, <span class="eq"><i>u</i></span> and <span class="eq"><i>u</i>+<i>a</i></span>, drawn to scale and pointing the way they travel. Each characteristic <b>entering</b> the domain (violet) is one condition that must be supplied; each one <b>leaving</b> (grey) carries information out and can only be extrapolated. Two enter and one leaves at the inflow, one enters and two leave at the outflow &mdash; which is the whole reason the inflow takes two conditions and the outflow one.</figcaption>
+    </figure>
+
+  <div class="prose">
     <p lang="zh">边界节点本身就是未知量，所以直接把它的方程<b>换掉</b>：</p><p lang="en">The boundary node is itself an unknown, so its equations are simply <b>replaced</b>:</p>
     <div class="eqwrap"><span class="eqd"><i>R</i><sub>1,mass</sub><span class="op">←</span><i>p</i><sub>0</sub>(u<sub>1</sub>)−<i>p</i><sub>0</sub><sup>given</sup>,<span class="sp2"></span>
       <i>R</i><sub>1,mom</sub><span class="op">←</span><i>T</i><sub>0</sub>(u<sub>1</sub>)−<i>T</i><sub>0</sub><sup>given</sup>,<span class="sp2"></span>
@@ -2449,7 +2457,138 @@ if (!Element.prototype.replaceChildren) {
     }
   }
 
-  window.VIZQ = { DuctView: DuctView, Plot: Plot, LoopView: LoopView, col: col };
+  /* ------------------------------------------------------------- bcDiagram
+     Why a subsonic inflow takes two conditions and a subsonic outflow one.
+
+     The three characteristic speeds are drawn as arrows whose length and
+     direction are the MEASURED u-a, u, u+a at that boundary, so the count
+     of arrows pointing into the domain is something the reader can see
+     rather than take on trust. An arrow entering the domain is a piece of
+     information that must be supplied; one leaving carries information out
+     and is extrapolated.                                                  */
+  function bcDiagram(host, opts) {
+    const o = Object.assign({ W: 680, H: 330, strong: false }, opts || {});
+    const S2 = S;
+    const s = [];
+    const push = el => s.push(el);
+    const panelW = o.W / 2;
+
+    /* one end of the duct. The boundary line sits at the PANEL CENTRE and
+       every label is centred on its own arrow, so nothing can run off the
+       edge however the speeds scale. */
+    function panel(x0, side, sp, prescribed, extrapolated, verdict) {
+      const cx = x0 + panelW / 2;
+      const bx = cx;                       /* boundary at the middle */
+      const top = 58, bot = 210;
+      const half = panelW / 2 - 16;
+      /* the domain, shaded on the side the flow actually occupies */
+      const dx0 = side === "in" ? bx : x0 + 16;
+      const dx1 = side === "in" ? x0 + panelW - 16 : bx;
+      push(S2("rect", { x: dx0, y: top, width: dx1 - dx0, height: bot - top,
+        fill: "var(--sunken)", stroke: "none" }));
+      /* the domain caption runs down the OUTER edge. The arrow labels all
+         start at the boundary and read outward, so they stay well clear of
+         this strip in either language. */
+      const capx = side === "in" ? dx1 - 11 : dx0 + 11, capy = (top + bot) / 2;
+      const capStyle = { fontSize: "10.5px", fill: "var(--muted)" };
+      /* Chinese stacks upright and reads downward; English rotates. */
+      if (TR(true, false)) {
+        capStyle.writingMode = "vertical-rl";
+        capStyle.textOrientation = "upright";
+      }
+      push(S2("text", Object.assign({ x: capx, y: capy, "text-anchor": "middle",
+        style: capStyle, text: TR("计算域内部", "inside the domain") },
+        TR(null, { transform: "rotate(-90 " + capx + " " + capy + ")" }))));
+      /* the boundary itself */
+      push(S2("line", { x1: bx, y1: top - 8, x2: bx, y2: bot + 8,
+        stroke: col(side === "in" ? "primal" : "adjoint"), "stroke-width": 3.4 }));
+      push(S2("text", { x: bx, y: top - 16, "text-anchor": "middle",
+        style: { fontSize: "12.5px", fontWeight: "600",
+                 fill: col(side === "in" ? "primal" : "adjoint") },
+        text: side === "in" ? TR("入口 x = 0", "inflow  x = 0") : TR("出口 x = 1", "outflow  x = 1") }));
+
+      /* the three characteristics, scaled by their measured speeds */
+      const mx = Math.max.apply(null, sp.map(c => Math.abs(c.v)));
+      sp.forEach((c, k) => {
+        const y = top + 34 + k * 48;
+        /* the longest arrow stops short of the outer edge, leaving the strip
+           the domain caption runs down free */
+        const len = 26 + (half - 56) * Math.abs(c.v) / mx;
+        const dir = c.v >= 0 ? 1 : -1;            /* speed sign = travel direction */
+        const enters = side === "in" ? dir > 0 : dir < 0;
+        const role = enters ? "violet" : "muted";
+        const xb = bx + dir * len;
+        push(S2("line", { x1: bx, y1: y, x2: xb, y2: y,
+          stroke: col(role), "stroke-width": enters ? 2.6 : 1.6 }));
+        const h = 5.2;
+        push(S2("polygon", {
+          points: [xb + "," + y, (xb - dir * h * 1.7) + "," + (y - h),
+                   (xb - dir * h * 1.7) + "," + (y + h)].join(" "),
+          fill: col(role) }));
+        /* both labels start AT the boundary and read outward along the arrow,
+           so a short arrow can neither push its label off the panel nor let
+           it fall across the boundary line */
+        const lx = bx + dir * 8, anc = dir > 0 ? "start" : "end";
+        push(S2("text", { x: lx, y: y - 8, "text-anchor": anc,
+          style: { fontSize: "11.5px", fill: col(role),
+                   fontWeight: enters ? "600" : "400", fontFamily: "var(--font-mono)" },
+          text: c.name + " = " + c.v.toFixed(3) }));
+        push(S2("text", { x: lx, y: y + 15, "text-anchor": anc,
+          style: { fontSize: "10.5px", fill: col(role) },
+          text: enters ? TR("进入计算域", "enters the domain") : TR("离开", "leaves") }));
+      });
+
+      /* the verdict */
+      push(S2("text", { x: cx, y: bot + 32, "text-anchor": "middle",
+        style: { fontSize: "12px", fill: "var(--ink)", fontWeight: "600" }, text: verdict }));
+      push(S2("text", { x: cx, y: bot + 52, "text-anchor": "middle",
+        style: { fontSize: "11.5px", fill: col("violet") }, text: prescribed }));
+      push(S2("text", { x: cx, y: bot + 73, "text-anchor": "middle",
+        style: { fontSize: "11.5px", fill: "var(--muted)" }, text: extrapolated }));
+    }
+
+    const A = o.inflow, B = o.outflow;
+    panel(0, "in",
+      [{ name: "u+a", v: A.u + A.a }, { name: "u  ", v: A.u }, { name: "u-a", v: A.u - A.a }],
+      TR("给定：总压 p₀、总温 T₀（2 个）", "prescribed: p₀ and T₀ (2)"),
+      TR("外推：R⁻ = u − 2a/(γ−1)（1 个）", "extrapolated: R⁻ = u − 2a/(γ−1) (1)"),
+      TR("2 条进入 → 给 2 个条件", "2 enter → 2 conditions"));
+    panel(panelW, "out",
+      [{ name: "u+a", v: B.u + B.a }, { name: "u  ", v: B.u }, { name: "u-a", v: B.u - B.a }],
+      TR("给定：背压 p_b（1 个）", "prescribed: back pressure p_b (1)"),
+      TR("外推：熵 s 与 R⁺（2 个）", "extrapolated: entropy s and R⁺ (2)"),
+      TR("1 条进入 → 给 1 个条件", "1 enters → 1 condition"));
+
+    /* the consequence, which differs between the two pages. English needs two
+       lines: one line of it does not fit 680 units at any readable size. */
+    const tail = o.strong
+      ? TR(["强加：入口换 2 行、出口换 1 行 —— 换几行 = 进入的特征条数"],
+           ["strong: 2 rows are replaced at the inflow and 1 at the outflow",
+            "— as many rows as there are ENTERING characteristics"])
+      : TR(["弱加：边界状态由这些关系算出，∂B/∂u 的秩 = 离开的特征条数（1 与 2）"],
+           ["weak: the boundary state is built from these relations, so",
+            "rank(∂B/∂u) = the number of LEAVING characteristics (1 and 2)"]);
+    /* a second line adds a line of canvas, so the gap above the tail is the
+       same whether the language needs one line or two */
+    const H = o.H + (tail.length - 1) * 18;
+    tail.forEach((line, k) => {
+      push(S2("text", { x: o.W / 2, y: H - 10 - (tail.length - 1 - k) * 18,
+        "text-anchor": "middle",
+        style: { fontSize: "12px", fill: "var(--ink2)" }, text: line }));
+    });
+
+    const svg = S2("svg", { viewBox: "0 0 " + o.W + " " + H, role: "img",
+      "aria-label": TR("亚声速进出口的特征方向与条件个数",
+                       "characteristic directions at a subsonic inflow and outflow, and how many conditions each takes"),
+      style: { width: "100%", height: "auto", display: "block" } });
+    svg.replaceChildren.apply(svg, s);
+    host.innerHTML = "";
+    host.appendChild(svg);
+    return svg;
+  }
+
+  window.VIZQ = { DuctView: DuctView, Plot: Plot, LoopView: LoopView,
+                  bcDiagram: bcDiagram, col: col };
 })();
 
 /* Interactive panels for the node-centred quasi-1-D page.
@@ -2798,7 +2937,21 @@ if (!Element.prototype.replaceChildren) {
     draw();
   }
 
+  /* the characteristic picture behind section 3 */
+  function bcfig() {
+    const host = document.getElementById("bc-fig");
+    if (!host) return;
+    const draw = () => {
+      const qi = F.prim(node(0)), qo = F.prim(node(F.NN - 1));
+      Q.bcDiagram(host, { inflow: { u: qi.u, a: qi.a },
+                          outflow: { u: qo.u, a: qo.a }, strong: true });
+    };
+    (window.REPAINT = window.REPAINT || []).push(draw);
+    draw();
+  }
+
   function boot() {
+    bcfig();
     explorer(); fields(); bclab(); dotlab();
     loopPlayer("primal", "loop-primal");
     loopPlayer("tangent", "loop-tangent");
