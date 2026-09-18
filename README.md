@@ -21,6 +21,12 @@ term-by-term finite-difference verification.
 Just open either file in a browser — **no external dependencies**, no network, no build step,
 no server. Each page has a 中文 / English toggle in the top-right corner.
 
+**在线阅读 / Read online:** <https://yishenggaogg.github.io/adjoint_education/>
+
+**仓库 / Repositories:**
+[GitHub](https://github.com/yishenggaogg/adjoint_education) ·
+[Gitee](https://gitee.com/gaoyishenggg/adjoint_education) — 内容相同 / identical content
+
 ---
 
 ## 两个页面讲的是同一件事的两种格式
@@ -133,4 +139,4 @@ credit, provide a link to the licence, and indicate if changes were made. Full t
 建议的署名 / Suggested attribution:
 
 > Yisheng Gao，《非结构网格格心／格点格式的二维标量方程离散伴随》，CC BY 4.0，
-> <https://gitee.com/gaoyishenggg/adjoint_education>
+> <https://github.com/yishenggaogg/adjoint_education>

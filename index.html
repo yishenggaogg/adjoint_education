@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>离散伴随教学页 / Discrete adjoint, taught page by page</title>
+<meta name="description" content="两个单文件、可交互的网页，把非结构网格有限体积法的全离散伴随从头到尾讲一遍：格心格式与格点格式并排对照。">
+<style>
+:root {
+  --ground:#F3F5F7; --surface:#FFFFFF; --sunken:#EAEEF2;
+  --ink:#18202B; --ink2:#3A4553; --muted:#667283; --rule:#D3DAE2;
+  --primal:#2F5E9E; --tangent:#0B7A69; --adjoint:#B8432A; --violet:#7A4CB0;
+  --shadow:0 1px 2px rgba(20,30,45,.06), 0 6px 18px rgba(20,30,45,.05);
+  --font-body:"Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+  --font-display:"Noto Serif SC","Songti SC","STSong",serif;
+  --font-mono:"JetBrains Mono","SFMono-Regular",Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground:#0F141A; --surface:#161C24; --sunken:#1C2430;
+    --ink:#E6EAF0; --ink2:#C3CBD6; --muted:#8F9BAB; --rule:#2A3441;
+    --primal:#8DB3EA; --tangent:#4CC3AE; --adjoint:#F0876C; --violet:#B79AF0;
+    --shadow:0 1px 2px rgba(0,0,0,.30), 0 6px 18px rgba(0,0,0,.26);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground:#0F141A; --surface:#161C24; --sunken:#1C2430;
+  --ink:#E6EAF0; --ink2:#C3CBD6; --muted:#8F9BAB; --rule:#2A3441;
+  --primal:#8DB3EA; --tangent:#4CC3AE; --adjoint:#F0876C; --violet:#B79AF0;
+  color-scheme:dark;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:var(--font-body); line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap { max-width:860px; margin:0 auto; padding:56px 16px 72px; }
+h1 { font-family:var(--font-display); font-weight:600; font-size:clamp(1.5rem,4.2vw,2.1rem); line-height:1.35; margin:0 0 6px; text-wrap:balance; }
+.sub { color:var(--muted); font-size:.98rem; margin:0 0 30px; }
+.lede { font-size:1.03rem; color:var(--ink2); margin:0 0 34px; }
+.lede b { color:var(--ink); font-weight:600; }
+.cards { display:grid; gap:18px; grid-template-columns:repeat(auto-fit,minmax(290px,1fr)); margin:0 0 34px; }
+a.card {
+  display:block; padding:22px 22px 20px; background:var(--surface);
+  border:1px solid var(--rule); border-left:4px solid var(--accent,var(--primal));
+  border-radius:10px; box-shadow:var(--shadow); text-decoration:none; color:inherit;
+  transition:transform .13s ease, box-shadow .13s ease;
+}
+a.card:hover { transform:translateY(-2px); box-shadow:0 2px 4px rgba(20,30,45,.08), 0 10px 26px rgba(20,30,45,.10); }
+a.card.node { --accent:var(--tangent); }
+.card h2 { font-family:var(--font-display); font-size:1.14rem; font-weight:600; margin:0 0 2px; color:var(--accent,var(--primal)); }
+.card .en { font-size:.9rem; color:var(--muted); margin:0 0 12px; }
+.card p { margin:0 0 12px; font-size:.94rem; color:var(--ink2); }
+.card .facts { font-family:var(--font-mono); font-size:.78rem; color:var(--muted); line-height:1.65; }
+h3 { font-family:var(--font-display); font-size:1.04rem; font-weight:600; margin:32px 0 10px; }
+ul { padding-left:1.25em; margin:0 0 12px; }
+li { margin:5px 0; color:var(--ink2); font-size:.95rem; }
+.note { background:var(--sunken); border-radius:8px; padding:14px 18px; font-size:.92rem; color:var(--ink2); }
+footer { margin-top:44px; padding-top:20px; border-top:1px solid var(--rule); font-size:.86rem; color:var(--muted); }
+footer a { color:var(--primal); }
+code { font-family:var(--font-mono); font-size:.86em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>离散伴随教学页</h1>
+  <p class="sub">Discrete adjoint, taught page by page &middot; 中文 / English</p>
+
+  <p class="lede">
+    两个<b>单文件、可交互</b>的网页，把非结构网格有限体积法的<b>全离散伴随</b>从头到尾讲一遍：
+    从一个面上的一维通量开始，把同一个循环依次改写成 primal、matrix-free 前向与 matrix-free 伴随，
+    再做伴随求解、几何导数，最后用有限差分逐项校验。<b>两页结构完全平行</b>，可以并排对照阅读。
+  </p>
+
+  <div class="cards">
+    <a class="card" href="adjoint_cell.html">
+      <h2>格心格式</h2>
+      <p class="en">Cell-centred finite volume</p>
+      <p>未知量是单元平均值。物面无滑移只能<b>弱</b>加——通量里取常数右状态，和入流面结构相同。</p>
+      <p class="facts">24 个单元 &middot; 48 个面 &middot; nnz(A) = 88<br>adjoint_cell.html</p>
+    </a>
+    <a class="card node" href="adjoint_node.html">
+      <h2>格点格式</h2>
+      <p class="en">Node-centred, median-dual</p>
+      <p>未知量在节点上。壁面节点本身就是未知量，所以无滑移是<b>强</b>加——整行替换。</p>
+      <p class="facts">24 个节点 &middot; 80 个面 &middot; nnz(A) = 120<br>adjoint_node.html</p>
+    </a>
+  </div>
+
+  <p class="note">
+    两页都是<b>自包含的单个 HTML 文件</b>：不联网、不需要构建、不需要服务器，直接打开即可。
+    页面右上角可切换中文 / English。<br>
+    Both pages are <b>self-contained single HTML files</b> — no network, no build step, no server.
+    A 中文 / English toggle sits in the top-right corner of each page.
+  </p>
+
+  <h3>每页讲什么 / What each page covers</h3>
+  <ul>
+    <li>网格、一维通量与边界条件 &mdash; mesh, the one-dimensional flux, boundary conditions</li>
+    <li>残差 = 一个循环：收集、计算、分发 &mdash; the residual as one gather&ndash;compute&ndash;scatter loop</li>
+    <li>同一个循环改写成 matrix-free 前向 <code>Av</code> 与伴随 <code>A&#8288;<sup>T</sup>w</code>，每一行都能逐句播放</li>
+    <li>伴随求解、几何导数 <code>dR/dX</code> 与 <code>dL/dX</code> &mdash; the adjoint solve and the geometric derivatives</li>
+    <li>点积测试与有限差分校验，以及差分校验本身的陷阱 &mdash; the dot-product test, and where finite differences mislead</li>
+  </ul>
+
+  <h3>页面上的数字都是实测的 / Every number is measured</h3>
+  <p class="lede" style="font-size:.95rem;margin-bottom:0">
+    页面引用的每一个数值都在浏览器里现场算出，而不是写死的文字：点积测试 8.9e&minus;16（格心）／
+    6.7e&minus;16（格点），梯度对全链路中心差分 5.4e&minus;11／5.1e&minus;11。
+  </p>
+
+  <footer>
+    &copy; 2026 Yisheng Gao &middot;
+    <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a> &middot;
+    <a href="https://github.com/yishenggaogg/adjoint_education">GitHub</a> &middot;
+    <a href="https://gitee.com/gaoyishenggg/adjoint_education">Gitee</a>
+  </footer>
+
+</div>
+</body>
+</html>
