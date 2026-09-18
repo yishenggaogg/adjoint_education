@@ -112,7 +112,7 @@ constant quoted on the pages is measured live rather than written into the text.
 
 ## 可以动手的地方 / What is interactive
 
-每页 9–13 个交互面板，图全部由代码生成，按正文顺序编号（图 1、图 2……）：
+每页 9–14 个交互面板，图全部由代码生成，按正文顺序编号（图 1、图 2……）：
 
 - **网格／流道浏览器**：点任意单元或节点，看它的面、法向、守恒量、源项与残差
 - **一个面上的通量**：拖动两侧状态，看中心项与耗散项怎样组成数值通量；拟一维页还能逐个面载入收敛解，
@@ -124,13 +124,17 @@ constant quoted on the pages is measured live rather than written into the text.
 - **精确 Jacobian 的组装**：拟一维页逐面播放 `jacobian(u, A)`——每个面的两个 3×3 块、边界块 $c_R+c_L\,\partial\mathbf B/\partial\mathbf u$、源项行、被替换的约束行——最后与中心差分对照；Newton 用的就是它
 - **边界块与它的秩**：拟一维格心页把两个边界 Jacobian 和它们的秩算出来
 - **梯度面板**：格点页把「忘记清零 $\Psi$」的后果和正确结果画在一起
+- **差分验证与步长扫描**：自选差分格式（中心／前向）与步长 $h$，逐分量用全链路差分对照伴随梯度；
+  底部扫描相对误差随步长的变化，截断与舍入怎样围出最优步长一目了然。拟一维页把梯度画成流道壁上的箭头，
+  点一个面（或节点）就扫描那个分量
 
-Nine to thirteen interactive panels per page, every figure generated from code and numbered
+Nine to fourteen interactive panels per page, every figure generated from code and numbered
 in reading order. The three loops can be played statement by
 statement, with the arrays updating as each pseudocode line executes; the flux on one face
 can be taken apart term by term; the exact Jacobian can be watched being assembled block by
 block, boundary terms included; the Newton solve and the block-Jacobi adjoint solve can be
-stepped through.
+stepped through; and the shape gradient can be checked against full-chain differences at any
+step and scheme, with its error swept against the step size, component by component.
 
 ## 页面上的数字都是实测的 / Every number is measured
 

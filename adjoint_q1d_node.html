@@ -290,6 +290,14 @@ table.kv thead th { white-space: normal; width: auto; }
    conservation readouts), so no table is held wider than the screen */
 @media (max-width: 600px) { table.kv th { white-space: normal; } }
 table.kv td.num { font-family: var(--font-mono); font-size: 13px; }
+/* section 11: a row of the difference-check table picks the swept component */
+table.fdtab tbody tr { cursor: pointer; }
+table.fdtab tbody tr:hover > * { background: var(--sunken); }
+table.fdtab tbody tr.picked > * { background: color-mix(in srgb, var(--violet) 14%, transparent); }
+button.fdpick { font: inherit; font-family: var(--font-mono); font-size: 13px; color: var(--ink2);
+  background: none; border: 0; padding: 0 2px; cursor: pointer; }
+table.fdtab tbody tr.picked button.fdpick { color: var(--violet); font-weight: 700; }
+table.fdtab thead th:first-child { white-space: nowrap; }
 
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { font-size: 12.5px; border: 1px solid var(--rule); border-radius: 999px; padding: 1px 10px; color: var(--ink2); background: var(--surface); }
@@ -1062,10 +1070,51 @@ S=<span class="pmat"><span class="pstrut">&#8203;</span><span class="lp"></span>
   <div class="prose">
     <div class="secnum" lang="zh">第 11 节</div><div class="secnum" lang="en">Section 11</div>
     <h2 lang="zh">验证：<span class="eq">d<i>L</i>/d<i>A</i></span> 对有限差分</h2><h2 lang="en">Verification: <span class="eq">d<i>L</i>/d<i>A</i></span> against finite differences</h2>
-    <p lang="zh">最严格的检验是拿 <span class="eq">d<i>L</i>/d<i>A</i></span> 去对<b>全链路</b>中心差分：每扰动一个 <span class="eq"><i>A</i><sub>k</sub></span>，都<b>重新收敛一次 Newton</b>，再算目标。这样比的是全导数——状态对几何的响应也算在内——而不是冻结状态的偏导数。</p><p lang="en">The strict check is <span class="eq">d<i>L</i>/d<i>A</i></span> against <b>full-chain</b> central differences: perturb one <span class="eq"><i>A</i><sub>k</sub></span>, <b>re-converge Newton</b>, recompute the objective. What is compared is then the total derivative, with the state's response to the geometry included, rather than a partial derivative at frozen state.</p>
+    <p lang="zh">上一节把 <span class="eq">d<i>L</i>/d<i>A</i></span> 推了出来：伴随只解<b>一次</b>线性系统，就拿到全部 13 个分量。这一节只做一件事——<b>验证它是对的</b>。判据是最朴素的那个，逐个面积做<b>中心差分</b>：</p><p lang="en">The previous section derived <span class="eq">d<i>L</i>/d<i>A</i></span>: the adjoint solves <b>one</b> linear system and gets all 13 components. This section does one thing only &mdash; <b>check that it is right</b>. The criterion is the plainest one there is, a <b>central difference</b> taken area by area:</p>
+    <div class="eqwrap"><span class="eqd"><span class="frac"><span class="fcol"><span class="num">d<i>L</i></span><span class="den">d<i>A</i><sub>k</sub></span></span></span><span class="op">≈</span><span class="frac"><span class="fcol"><span class="num"><i>L</i>(<i>A</i><sub>k</sub>+<i>h</i>)−<i>L</i>(<i>A</i><sub>k</sub>−<i>h</i>)</span><span class="den"><span class="dg">2</span><i>h</i></span></span></span>.</span></div>
+    <p lang="zh">关键在于 <span class="eq"><i>L</i>(<i>A</i><sub>k</sub><span class="op">±</span><i>h</i>)</span> 是<b>全链路</b>的目标函数：每扰动一个 <span class="eq"><i>A</i><sub>k</sub></span>，都<b>重新收敛一次 Newton</b>，再算目标。所以这里比的是全导数——状态对几何的响应也算在内——而不是冻结状态的偏导数。代价也正因如此：每个分量两次扰动，13 个分量一共 26 次非线性求解，而伴随只用了一次线性求解。这里验证的是第 10 节的整条链路，组装前把 <span class="eq"><i>Ψ</i></span> 在约束行上清零那一步也在内。</p><p lang="en">What matters is that <span class="eq"><i>L</i>(<i>A</i><sub>k</sub><span class="op">±</span><i>h</i>)</span> is the <b>full-chain</b> objective: perturb one <span class="eq"><i>A</i><sub>k</sub></span>, <b>re-converge Newton</b>, recompute the objective. What is compared is then the total derivative, with the state's response to the geometry included, rather than a partial derivative at frozen state. That is also what it costs: two perturbations per component, 26 nonlinear solves for the 13 of them, against the single linear solve of the adjoint. What is verified is the whole chain of Section 10, the zeroing of <span class="eq"><i>Ψ</i></span> on the constrained rows before assembly included.</p>
+    <p lang="zh">省一半的做法是<b>前向差分</b>，只往一侧扰动：</p><p lang="en">A <b>forward difference</b>, perturbing to one side only, halves that:</p>
+    <div class="eqwrap"><span class="eqd"><span class="frac"><span class="fcol"><span class="num">d<i>L</i></span><span class="den">d<i>A</i><sub>k</sub></span></span></span><span class="op">≈</span><span class="frac"><span class="fcol"><span class="num"><i>L</i>(<i>A</i><sub>k</sub>+<i>h</i>)−<i>L</i>(<i>A</i>)</span><span class="den"><i>h</i></span></span></span>.</span></div>
+    <p lang="zh">基准值 <span class="eq"><i>L</i>(<i>A</i>)</span> 全局只算一次，一共 14 次非线性求解。代价是精度低一个档次：截断误差是 <span class="eq"><i>O</i>(<i>h</i>)</span> 而不是 <span class="eq"><i>O</i>(<i>h</i><sup><span class="dg">2</span></sup>)</span>。</p><p lang="en">The baseline <span class="eq"><i>L</i>(<i>A</i>)</span> is computed once for all, 14 nonlinear solves in all. The price is one order of accuracy: the truncation error is <span class="eq"><i>O</i>(<i>h</i>)</span> instead of <span class="eq"><i>O</i>(<i>h</i><sup><span class="dg">2</span></sup>)</span>.</p>
+    <p lang="zh"><a class="fref" href="#fd-lab"></a> 里可以选目标、差分格式和步长 <span class="eq"><i>h</i></span>，按“用差分验证”重算，表格逐个分量给出差分与伴随的相对误差。点流道上的一个节点，或者表格里的一行，底部就扫描这个分量的误差随步长怎么走。</p><p lang="en">In <a class="fref" href="#fd-lab"></a> the objective, the scheme and the step <span class="eq"><i>h</i></span> can be chosen and the check rerun with &ldquo;Verify by differences&rdquo;; the table gives the relative error between the difference and the adjoint, component by component. Click a node of the duct, or a row of the table, and the sweep at the foot of the figure shows how that component's error runs with the step size.</p>
+  </div>
+
+  <div class="lab" id="fd-lab">
+    <div class="lab-head">
+      <div>
+        <div class="lab-title" lang="zh">交互：形状梯度、差分验证与步长扫描</div><div class="lab-title" lang="en">Interactive: the shape gradient, its difference check, and a step-size sweep</div>
+        <div class="lab-sub"><span class="eq"><i>L</i></span> = <span class="mono" id="fd-L"></span><span lang="zh">；箭头是 <span class="eq"><i>L</i></span> 增加最快的方向：朝外表示在这个节点上把流道撑宽会让 <span class="eq"><i>L</i></span> 变大，朝内表示收窄会让 <span class="eq"><i>L</i></span> 变大；长度正比于 <span class="eq">|d<i>L</i>/d<i>A</i><sub>k</sub>|</span>，最短的也画到能看出方向</span><span lang="en">; the arrows point the way <span class="eq"><i>L</i></span> grows fastest: outward where widening the duct at that node raises <span class="eq"><i>L</i></span>, inward where narrowing it does, with length proportional to <span class="eq">|d<i>L</i>/d<i>A</i><sub>k</sub>|</span> and the shortest drawn just long enough to show a direction</span></div>
+      </div>
+      <div class="controls">
+        <label class="q1d-pick lab-sub"><span lang="zh">目标：</span><span lang="en">objective:</span>
+          <select class="q1d-obj"><option value="inverse" data-zh="反设计" data-en="inverse design">inverse design</option><option value="thrust" data-zh="推力" data-en="thrust">thrust</option></select>
+        </label>
+        <label lang="zh" for="fd-scheme" class="lab-sub">差分格式</label><label for="fd-scheme" class="lab-sub" lang="en">Difference scheme</label>
+        <select id="fd-scheme" aria-label="差分格式" data-zh-aria="差分格式" data-en-aria="Difference scheme">
+          <option value="central" selected data-zh="中心差分" data-en="Central difference">中心差分</option>
+          <option value="forward" data-zh="前向差分" data-en="Forward difference">前向差分</option>
+        </select>
+        <label lang="zh" for="fd-h" class="lab-sub">步长 h</label><label for="fd-h" class="lab-sub" lang="en">Step h</label>
+        <input type="text" id="fd-h" class="numinput" value="1e-6" inputmode="decimal" aria-label="差分步长 h" data-zh-aria="差分步长 h" data-en-aria="Finite-difference step h">
+        <button class="btn primary" type="button" id="fd-run"><span lang="zh">用差分验证</span><span lang="en">Verify by differences</span></button>
+      </div>
+    </div>
+    <div class="lab-body" style="grid-template-columns:minmax(0,1fr)">
+      <div class="lab-pane"><div class="svgbox" id="fd-duct" style="max-width:680px;margin:0 auto"></div></div>
+      <div class="lab-pane" id="fd-out" style="border-left:0;border-top:1px solid var(--rule)"></div>
+    </div>
+    <div class="lab-foot">
+      <div id="fd-sweep-ctl"></div>
+      <div class="svgbox" id="fd-sweep-plot"></div>
+      <div lang="zh" class="lab-sub" style="margin-top:10px">横轴是步长 <span class="eq"><i>h</i></span>，纵轴是<b>相对误差</b>——差分结果与伴随结果之差，再除以该分量伴随梯度的绝对值，纵横都是对数。<b>左半段</b>由截断误差主导：<span class="eq"><i>h</i></span> 每缩小十倍，前向降 10 倍（<span class="eq"><i>O</i>(<i>h</i>)</span>）、中心降 100 倍（<span class="eq"><i>O</i>(<i>h</i><sup><span class="dg">2</span></sup>)</span>），在 <span class="eq"><i>h</i>=<span class="dg">10</span><sup>−<span class="dg">2</span></sup></span> 到 <span class="eq"><span class="dg">10</span><sup>−<span class="dg">4</span></sup></span> 之间实测斜率是 1.0 和 2.0。<b>右半段</b>由舍入误差主导，两者都约 10 倍地涨，所以两条曲线并拢。两个圈是各自的最优步长，中心差分在那里通常比前向准两到三个数量级。紫色虚线是上面表格用的 <span class="eq"><i>h</i></span>，线上的点是那次校验在这个分量上的误差（选“全部”时取最大）；<span class="eq"><i>h</i></span> 取 10 的整数次幂时，这个点正好落在对应格式的曲线上。之所以取相对误差，是因为 13 个分量的 <span class="eq">d<i>L</i>/d<i>A</i></span> 大小差得很多（实测反设计 2.4e&minus;6 到 2.8e&minus;4，推力 4.3e&minus;3 到 0.92）：只看绝对误差时，梯度小的分量会显得更准，而这与步长好坏无关。曲线是在浏览器里实跑出来的：换一个分量，最优步长最多挪一两个数量级，中心差分在最优点能达到的精度却相差两个数量级以上——大体上梯度越小的分量越差。</div><div class="lab-sub" lang="en" style="margin-top:10px">The horizontal axis is the step <span class="eq"><i>h</i></span> and the vertical axis the <b>relative error</b> &mdash; the difference between the finite-difference and the adjoint result, divided by the magnitude of that component's own adjoint gradient &mdash; both logarithmic. <b>The left half</b> is dominated by truncation: for every tenfold reduction of <span class="eq"><i>h</i></span> the forward scheme falls by 10 (<span class="eq"><i>O</i>(<i>h</i>)</span>) and the central scheme by 100 (<span class="eq"><i>O</i>(<i>h</i><sup><span class="dg">2</span></sup>)</span>); between <span class="eq"><i>h</i>=<span class="dg">10</span><sup>−<span class="dg">2</span></sup></span> and <span class="eq"><span class="dg">10</span><sup>−<span class="dg">4</span></sup></span> the measured slopes are 1.0 and 2.0. <b>The right half</b> is dominated by round-off, which rises about tenfold per order for both, so the two curves close together. The two rings mark each curve's own optimum, where the central scheme is usually two to three orders of magnitude more accurate than the forward one. The dashed violet line is the step the table above used, and its dot that check's error on this component (the largest one when &ldquo;all&rdquo; is chosen); for a power of ten the dot sits exactly on the curve of its scheme. The error is relative because <span class="eq">d<i>L</i>/d<i>A</i></span> differs a lot across the 13 components (measured: 2.4e&minus;6 to 2.8e&minus;4 for inverse design, 4.3e&minus;3 to 0.92 for thrust): on an absolute axis a component with a small gradient would look more accurate for reasons that have nothing to do with the step. The curves are swept live in the browser: change the component and the optimal step moves by a decade or two at most, while the best error the central scheme reaches there changes by more than two orders of magnitude &mdash; broadly, the smaller the gradient, the worse.</div>
+    </div>
+  </div>
+
+  <div class="prose">
+    <p lang="zh" class="note"><b>步长为什么要能调。</b>中心差分的误差有两段：截断误差约 <span class="eq"><i>O</i>(<i>h</i><sup><span class="dg">2</span></sup>)</span>，随 <span class="eq"><i>h</i></span> 变小而减小；舍入误差约 <span class="eq"><i>O</i>(<i>ϵ</i>/<i>h</i>)</span>（<span class="eq"><i>ϵ</i><span class="op">≈</span><span class="dg">2.2</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">16</span></sup></span> 为机器精度），随 <span class="eq"><i>h</i></span> 变小反而<b>增大</b>。两者相抵，最佳步长大致在 <span class="eq"><i>h</i><span class="op">∼</span><i>ϵ</i><sup><span class="dg">1</span>/<span class="dg">3</span></sup><span class="op">≈</span><span class="dg">6</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">6</span></sup></span>；前向差分的截断误差是 <span class="eq"><i>O</i>(<i>h</i>)</span>，平衡点移到 <span class="eq"><i>ϵ</i><sup><span class="dg">1</span>/<span class="dg">2</span></sup><span class="op">≈</span><span class="dg">1.5</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">8</span></sup></span>。实测扫描与此一致：两个目标、13 个节点面积，中心差分的最优步长都在 <span class="eq"><span class="dg">10</span><sup>−<span class="dg">5</span></sup></span> 到 <span class="eq"><span class="dg">10</span><sup>−<span class="dg">7</span></sup></span> 之间（反设计多在 <span class="eq"><span class="dg">10</span><sup>−<span class="dg">6</span></sup></span>，推力多在 <span class="eq"><span class="dg">10</span><sup>−<span class="dg">5</span></sup></span>）；前向差分都在 <span class="eq"><span class="dg">10</span><sup>−<span class="dg">8</span></sup></span> 或 <span class="eq"><span class="dg">10</span><sup>−<span class="dg">9</span></sup></span>，多数在 <span class="eq"><span class="dg">10</span><sup>−<span class="dg">8</span></sup></span>。离开最优点，校验坏得很快：反设计、中心差分，最差那个分量的相对误差在 <span class="eq"><i>h</i>=<span class="dg">10</span><sup>−<span class="dg">6</span></sup></span> 时是 9.5e&minus;8，在 <span class="eq"><i>h</i>=<span class="dg">10</span><sup>−<span class="dg">2</span></sup></span> 时约 3%（截断主导），在 <span class="eq"><i>h</i>=<span class="dg">10</span><sup>−<span class="dg">12</span></sup></span> 时约 9%（舍入主导）——两头都会让“验证”看起来像是失败了。这正是差分校验最容易骗人的地方，也是<b>点积测试</b>更可靠的原因：它是精确恒等式，根本不含步长。第 10 节的几何点积测试落在 <span class="eq"><span class="dg">10</span><sup>−<span class="dg">16</span></sup></span>，而这里的全链路差分在 <span class="eq"><i>h</i>=<span class="dg">10</span><sup>−<span class="dg">6</span></sup></span> 时，与伴随之差最大还有最大分量的 1.0e&minus;9（反设计）与 1.0e&minus;10（推力）。</p><p class="note" lang="en"><b>Why the step has to be adjustable.</b> A central difference has two error contributions: truncation, about <span class="eq"><i>O</i>(<i>h</i><sup><span class="dg">2</span></sup>)</span>, which shrinks with <span class="eq"><i>h</i></span>; and round-off, about <span class="eq"><i>O</i>(<i>ϵ</i>/<i>h</i>)</span> (with <span class="eq"><i>ϵ</i><span class="op">≈</span><span class="dg">2.2</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">16</span></sup></span> the machine precision), which <b>grows</b> as <span class="eq"><i>h</i></span> shrinks. They balance roughly at <span class="eq"><i>h</i><span class="op">∼</span><i>ϵ</i><sup><span class="dg">1</span>/<span class="dg">3</span></sup><span class="op">≈</span><span class="dg">6</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">6</span></sup></span>; a forward difference truncates at <span class="eq"><i>O</i>(<i>h</i>)</span>, which moves the balance to <span class="eq"><i>ϵ</i><sup><span class="dg">1</span>/<span class="dg">2</span></sup><span class="op">≈</span><span class="dg">1.5</span><span class="op">×</span><span class="dg">10</span><sup>−<span class="dg">8</span></sup></span>. The measured sweeps agree: over both objectives and all 13 nodal areas, the central optimum lies between <span class="eq"><span class="dg">10</span><sup>−<span class="dg">5</span></sup></span> and <span class="eq"><span class="dg">10</span><sup>−<span class="dg">7</span></sup></span> (mostly at <span class="eq"><span class="dg">10</span><sup>−<span class="dg">6</span></sup></span> for inverse design, <span class="eq"><span class="dg">10</span><sup>−<span class="dg">5</span></sup></span> for thrust), and the forward one at <span class="eq"><span class="dg">10</span><sup>−<span class="dg">8</span></sup></span> or <span class="eq"><span class="dg">10</span><sup>−<span class="dg">9</span></sup></span>, mostly <span class="eq"><span class="dg">10</span><sup>−<span class="dg">8</span></sup></span>. Away from the optimum the check degrades fast: for inverse design with central differences the worst component is off by 9.5e&minus;8 at <span class="eq"><i>h</i>=<span class="dg">10</span><sup>−<span class="dg">6</span></sup></span>, but by about 3% at <span class="eq"><i>h</i>=<span class="dg">10</span><sup>−<span class="dg">2</span></sup></span>, where truncation dominates, and by about 9% at <span class="eq"><i>h</i>=<span class="dg">10</span><sup>−<span class="dg">12</span></sup></span>, where round-off does &mdash; at either end the &ldquo;verification&rdquo; looks like a failure. This is exactly where a difference check is most deceptive, and why the <b>dot-product test</b> is the more reliable instrument: it is an exact identity, with no step size in it at all. The geometric dot-product test of Section 10 lands at <span class="eq"><span class="dg">10</span><sup>−<span class="dg">16</span></sup></span>, while the full-chain differences here, at <span class="eq"><i>h</i>=<span class="dg">10</span><sup>−<span class="dg">6</span></sup></span>, still differ from the adjoint by up to 1.0e&minus;9 (inverse design) and 1.0e&minus;10 (thrust) of the largest component.</p>
+    <p lang="zh" class="note"><b>那么哪一侧更糟？</b>对中心差分，两侧的斜率不同：<span class="eq"><i>h</i></span> 每<b>放大</b>一个数量级，截断误差涨约 <b>100 倍</b>（二次）；<span class="eq"><i>h</i></span> 每<b>缩小</b>一个数量级，舍入误差只涨约 <b>10 倍</b>，而且起伏不定（舍入误差本身近乎随机）。实测离最优点两个数量级时，偏大那一侧更糟的，反设计是 13 个节点面积里的 11 个，推力也是 11 个。前向差分没有这种不对称——它的截断误差 <span class="eq"><i>O</i>(<i>h</i>)</span> 和舍入误差一样，都是每个数量级约 10 倍——哪一侧更糟随分量而变（偏大那一侧更糟的：反设计 9 个，推力 2 个）。所以实用结论只对中心差分成立：<b>宁可把 <span class="eq"><i>h</i></span> 取偏小，也不要取偏大</b>。</p><p class="note" lang="en"><b>So which side is worse?</b> For central differences the two slopes differ: <b>enlarging</b> <span class="eq"><i>h</i></span> by one order multiplies the truncation error by about <b>100</b> (quadratic), while <b>shrinking</b> it multiplies the round-off error by only about <b>10</b>, and raggedly, since round-off is close to random. Measured two orders of magnitude from the optimum, the too-large side is the worse one for 11 of the 13 nodal areas under inverse design and for 11 under thrust. A forward difference has no such asymmetry &mdash; its truncation error, <span class="eq"><i>O</i>(<i>h</i>)</span>, rises about tenfold per order just as the round-off does &mdash; and which side is worse changes from area to area (the too-large side for 9 of them under inverse design, 2 under thrust). So the practical rule holds for central differences only: <b>better to take <span class="eq"><i>h</i></span> a little too small than a little too large</b>.</p>
+    <p lang="zh" class="note"><b>还有一个更强的检验：已知的最优点。</b>第 6 节里目标压力取自一条<b>已知</b>的流道。在那条流道上，<span class="eq"><i>L</i></span> 应当为零，梯度也应当为零——而且不是「很小」，是逐比特为零，因为同一个确定性的 Newton 会复现出同一个状态。下表就是它。一个梯度能在一个<b>独立构造</b>的最优点上归零，比任何差分对照都更有说服力——它根本不需要步长。</p><p class="note" lang="en"><b>And a stronger check still: a known optimum.</b> In Section 6 the target pressures were taken from a <b>known</b> duct. On that duct both <span class="eq"><i>L</i></span> and the gradient must vanish &mdash; and not merely be small, but be zero to the last bit, because the same deterministic Newton reproduces the same state. The table below measures it. A gradient that vanishes at an <b>independently constructed</b> optimum is better evidence than any finite-difference comparison &mdash; it needs no step at all.</p>
     <div id="verify-readout"></div>
-    <p lang="zh" class="note"><b>还有一个更强的检验：已知的最优点。</b>第 6 节里目标压力取自一条<b>已知</b>的流道。在那条流道上，<span class="eq"><i>L</i></span> 应当为零，梯度也应当为零——而且不是「很小」，是逐比特为零，因为同一个确定性的 Newton 会复现出同一个状态。上表最后两行就是它。一个梯度能在一个<b>独立构造</b>的最优点上归零，比任何差分对照都更有说服力。</p><p class="note" lang="en"><b>And a stronger check still: a known optimum.</b> In Section 6 the target pressures were taken from a <b>known</b> duct. On that duct both <span class="eq"><i>L</i></span> and the gradient must vanish &mdash; and not merely be small, but be zero to the last bit, because the same deterministic Newton reproduces the same state. Those are the last two rows above. A gradient that vanishes at an <b>independently constructed</b> optimum is better evidence than any finite-difference comparison.</p>
-    <p lang="zh" class="note"><b>差分校验本身是会骗人的。</b>中心差分的误差有两段：截断误差约 <span class="eq"><i>O</i>(<i>h</i><sup><span class="dg">2</span></sup>)</span>，随 <span class="eq"><i>h</i></span> 变小而减小；舍入误差约 <span class="eq"><i>O</i>(<i>ϵ</i>/<i>h</i>)</span>，随 <span class="eq"><i>h</i></span> 变小反而增大。<span class="eq"><i>h</i></span> 取得太大或太小，一个<b>正确</b>的梯度都会看起来像是错的。这正是点积测试更可靠的原因——它是精确恒等式，根本不含步长。上面几何方向那条测试就是明证：它落在 <span class="eq"><span class="dg">10</span><sup>−<span class="dg">16</span></sup></span>，而第 11 节拿差分对照整条链路，只能到 <span class="eq"><span class="dg">10</span><sup>−<span class="dg">9</span></sup></span>（反设计）与 <span class="eq"><span class="dg">10</span><sup>−<span class="dg">10</span></sup></span>（推力）。</p><p class="note" lang="en"><b>Finite-difference checking is itself capable of lying.</b> A central difference has two error contributions: truncation, about <span class="eq"><i>O</i>(<i>h</i><sup><span class="dg">2</span></sup>)</span>, which shrinks with <span class="eq"><i>h</i></span>; and round-off, about <span class="eq"><i>O</i>(<i>ϵ</i>/<i>h</i>)</span>, which grows as <span class="eq"><i>h</i></span> shrinks. Too large or too small a step makes a <b>correct</b> gradient look wrong. That is exactly why the dot-product test is the more reliable instrument &mdash; it is an exact identity with no step size in it. The geometric test above proves the point: it lands at <span class="eq"><span class="dg">10</span><sup>−<span class="dg">16</span></sup></span>, while the full-chain differences of Section 11 reach only <span class="eq"><span class="dg">10</span><sup>−<span class="dg">9</span></sup></span> (inverse design) and <span class="eq"><span class="dg">10</span><sup>−<span class="dg">10</span></sup></span> (thrust).</p>
   </div>
 </section>
 
@@ -1814,6 +1863,40 @@ if (!Element.prototype.replaceChildren) {
     return Array.from({ length: NN }, (_, i) => prim(Ut.slice(3 * i, 3 * i + 3)).p);
   }
 
+  /* ================= full-chain differences (section 11) =================
+     What a difference check differentiates is the WHOLE chain: change one
+     area, re-converge Newton (from the nominal state, as every check on the
+     page does), evaluate the objective. objectiveAt() is that L(A).
+     fdDerivative() returns one component, central or forward; the forward
+     scheme takes the baseline L(A) from the caller, who computes it once for
+     all components. fdSweep() runs one component over a list of steps and
+     shares each L(A_k + h) between the two schemes, so every point of a
+     sweep is bit for bit what fdDerivative() returns for that step.       */
+  function objectiveAt(A, kind, ptgt, Ustart) {
+    return objective(newton(A, Ustart), A, kind, ptgt);
+  }
+  function fdDerivative(A, k, h, scheme, kind, ptgt, Ustart, L0) {
+    const ap = A.slice();
+    ap[k] += h;
+    const Lp = objectiveAt(ap, kind, ptgt, Ustart);
+    if (scheme === "forward") return (Lp - L0) / h;
+    const am = A.slice();
+    am[k] -= h;
+    return (Lp - objectiveAt(am, kind, ptgt, Ustart)) / (2 * h);
+  }
+  function fdSweep(A, k, hs, kind, ptgt, Ustart, L0) {
+    const f = [], c = [];
+    hs.forEach(h => {
+      const ap = A.slice(), am = A.slice();
+      ap[k] += h;
+      am[k] -= h;
+      const Lp = objectiveAt(ap, kind, ptgt, Ustart);
+      f.push((Lp - L0) / h);
+      c.push((Lp - objectiveAt(am, kind, ptgt, Ustart)) / (2 * h));
+    });
+    return { f: f, c: c };
+  }
+
   /* ================= step-by-step trace =================
      The shape that matters on this page:
 
@@ -1946,6 +2029,7 @@ if (!Element.prototype.replaceChildren) {
     residualDA: residualDA, residualBA: residualBA,
     adjointSolve: adjointSolve, gradient: gradient,
     targetAreas: targetAreas, targetPressures: targetPressures,
+    objectiveAt: objectiveAt, fdDerivative: fdDerivative, fdSweep: fdSweep,
     dVdA: dVdA, dDiffA: dDiffA,
     GAMMA: GAMMA, RGAS: RGAS, NC: NC, NN: NN, DX: DX, XN: XN, AREA0: AREA0,
     PT0: PT0, TT0: TT0, PB: PB, WROWS: WROWS, isConstrained: isConstrained,
@@ -2509,12 +2593,18 @@ if (!Element.prototype.replaceChildren) {
 
   /* ---------------------------------------------------------------- DuctView
      opts: { areas, nodes (x of each face/node), kind: "cell"|"node",
-             height, label, onPick }                                        */
+             height, label, onPick,
+             marks    true: the inflow/outflow bars and their names;
+                      "label": the names only (a panel that draws on the
+                      end faces itself); false: neither
+             numbers  false leaves the cells / nodes unnumbered
+             overlay  fn(elements, view): called at the end of every draw()
+                      to add a panel's own elements on top }               */
   class DuctView {
     constructor(host, opts) {
       const o = this.o = Object.assign({
         W: 680, H: 250, padX: 46, padTop: 26, padBot: 46, kind: "cell",
-        scale: 150, onPick: null, label: ""
+        scale: 150, onPick: null, label: "", marks: true, numbers: true, overlay: null
       }, opts || {});
       this.host = host;
       this.sel = -1;
@@ -2601,17 +2691,21 @@ if (!Element.prototype.replaceChildren) {
       /* boundary markers: inflow blue on the left, outflow red on the right */
       const mark = (x, c, txt) => {
         const X = this.px(x);
-        s.push(S("line", { x1: X, y1: this.py(this.areaAt(x)) - 10, x2: X, y2: this.py(-this.areaAt(x)) + 10,
-          stroke: col(c), "stroke-width": 3 }));
+        if (o.marks !== "label") {
+          s.push(S("line", { x1: X, y1: this.py(this.areaAt(x)) - 10, x2: X, y2: this.py(-this.areaAt(x)) + 10,
+            stroke: col(c), "stroke-width": 3 }));
+        }
         s.push(S("text", { x: X, y: o.H - 16, "text-anchor": "middle",
           style: { fontSize: "11.5px", fill: col(c) }, text: txt }));
       };
-      mark(0, "primal", TR("入口  p₀, T₀", "inflow  p₀, T₀"));
-      mark(1, "adjoint", TR("出口  p_b", "outflow  p_b"));
+      if (o.marks) {
+        mark(0, "primal", TR("入口  p₀, T₀", "inflow  p₀, T₀"));
+        mark(1, "adjoint", TR("出口  p_b", "outflow  p_b"));
+      }
 
       /* numbering, every other one when the grid is fine */
       const step = nCell > 16 ? 2 : 1;
-      for (let i = 0; i < nCell; i += step) {
+      for (let i = 0; o.numbers && i < nCell; i += step) {
         let xm;
         if (o.kind === "cell") xm = 0.5 * (xs[i] + xs[i + 1]);
         else xm = xs[i];
@@ -2619,6 +2713,7 @@ if (!Element.prototype.replaceChildren) {
           style: { fontSize: "10.5px", fill: "var(--ink2)", fontWeight: "500" },
           text: String(i + 1) }));
       }
+      if (o.overlay) o.overlay(s, this);
       this.svg.replaceChildren.apply(this.svg, s);
       return this;
     }
@@ -3380,35 +3475,16 @@ if (!Element.prototype.replaceChildren) {
     draw();
   }
 
+  /* the known optimum; the difference check is the section-11 lab */
   function verify() {
     const el = document.getElementById("verify-readout");
     if (!el) return;
     const draw = () => {
-      const rows = [];
-      for (const kind of ["inverse", "thrust"]) {
-        const psi = F.adjointSolve(U0, A0, kind, PTGT);
-        const grad = F.gradient(U0, A0, psi, kind, PTGT);
-        let e = 0, sc = 0;
-        for (let k = 0; k < F.NN; k++) {
-          const ap = A0.slice(), am = A0.slice();
-          ap[k] += 1e-6; am[k] -= 1e-6;
-          const Lp = F.objective(F.newton(ap, U0), ap, kind, PTGT);
-          const Lm = F.objective(F.newton(am, U0), am, kind, PTGT);
-          const fd = (Lp - Lm) / 2e-6;
-          sc = Math.max(sc, Math.abs(fd)); e = Math.max(e, Math.abs(grad[k] - fd));
-        }
-        rows.push("<tr><th>" + (kind === "inverse" ? TR("反设计", "inverse design") : TR("推力", "thrust")) +
-          "</th><td class=\"num\">" + (e / sc).toExponential(2).replace("e-", "e−") +
-          "</td><td class=\"num\">" + sc.toExponential(3) + "</td></tr>");
-      }
       const At = F.targetAreas(), Ut = F.newton(At);
       const L = F.objective(Ut, At, "inverse", PTGT);
       const gt = F.gradient(Ut, At, F.adjointSolve(Ut, At, "inverse", PTGT), "inverse", PTGT);
       const gm = Math.max.apply(null, gt.map(Math.abs));
-      el.innerHTML = "<table class=\"kv\"><thead><tr><th>" + TR("目标", "objective") + "</th><th>" +
-        TR("dL/dA 对全链路差分（相对）", "dL/dA vs full-chain differences (relative)") + "</th><th>" +
-        TR("量级", "magnitude") + "</th></tr></thead><tbody>" + rows.join("") + "</tbody></table>" +
-        "<table class=\"kv\" style=\"margin-top:10px\">" +
+      el.innerHTML = "<table class=\"kv\">" +
         rw(TR("已知最优流道上：L", "at the known optimal duct: L"), L === 0 ? "0" : L.toExponential(2)) +
         rw(TR("已知最优流道上：max |dL/dA|", "at the known optimal duct: max |dL/dA|"),
            gm === 0 ? "0" : gm.toExponential(2)) + "</table>";
@@ -3506,6 +3582,8 @@ if (!Element.prototype.replaceChildren) {
      section 2  #flux-lab    the Rusanov flux on one face, term by term
      section 5  #newton-lab  R(u) = 0 by Newton, sweep by sweep
      section 9  #jacobi-lab  (dR/du)^T psi = -g by block Jacobi, face by face
+     section 11 #fd-lab      dL/dA against full-chain differences, and a
+                             sweep of the difference step
 
    plus the figure numbering (图 1, 图 2 ... and every a.fref in the prose).
 
@@ -4310,6 +4388,423 @@ if (!Element.prototype.replaceChildren) {
     build();
   }
 
+  /* ============== section 11: the difference check, and a sweep of its step
+     The shape gradient of Section 10 against full-chain differences: every
+     perturbed area re-converges Newton (F.fdDerivative), so what is compared
+     is the total derivative. The sweep at the foot runs one component, or
+     all of them, over h = 1e-1 .. 1e-12 with F.fdSweep, which shares each
+     L(A_k + h) between the two schemes; a sweep point is therefore bit for
+     bit what the check returns for the same step, which is why the check's
+     own error can be drawn onto the sweep.
+
+     Cost, one nonlinear solve being about 1.3 ms: the check is 26 solves
+     (central) or 14 (forward), one component's sweep 24, all thirteen 312,
+     so "all" is deferred behind a status line. Everything is cached per
+     objective; a language switch only repaints.                          */
+  function fdLab() {
+    const host = document.getElementById("fd-lab");
+    if (!host) return;
+    const $ = id => document.getElementById(id);
+    const objSel = host.querySelector("select.q1d-obj");
+    const schemeSel = $("fd-scheme"), hIn = $("fd-h"), runBtn = $("fd-run"), Lout = $("fd-L");
+    const ductBox = $("fd-duct"), out = $("fd-out"), ctl = $("fd-sweep-ctl"), plotBox = $("fd-sweep-plot");
+    if (!ductBox || !out || !ctl || !plotBox) return;
+    const M = XS.length;                              /* 13 design variables */
+    const EXP = [];
+    for (let e = 1; e <= 12; e++) EXP.push(e);
+    /* parsed the way the step box is parsed, so h = 1e-6 typed there is
+       the very same double as the sweep's 1e-6 */
+    const HS = EXP.map(e => Number("1e-" + e));
+    const PT = F.targetPressures();
+    const kindNow = () => (objSel ? objSel.value : "inverse");
+    const name = k => (NODE ? TR("节点 ", "node ") + (k + 1) : TR("面 ", "face ") + k);
+    const idx = k => String(NODE ? k + 1 : k);
+    const num = x => (Math.abs(x) >= 1e-2 ? x.toPrecision(5) : x.toExponential(4)).replace(/-/g, "−");
+    const hTxt = h => h.toExponential().replace("e-", "e−");
+    const e2 = v => v.toExponential(1).replace("e-", "e−");
+
+    /* per objective: the adjoint gradient, L at u*, and the baseline L(A)
+       the forward scheme divides against -- re-solved like every L(A + h) */
+    const G = {};
+    function gradOf(kind) {
+      if (!G[kind]) {
+        const psi = F.adjointSolve(U0, A0, kind, PT);
+        G[kind] = { g: F.gradient(U0, A0, psi, kind, PT), L: F.objective(U0, A0, kind, PT),
+                    L0: F.objectiveAt(A0, kind, PT, U0) };
+      }
+      return G[kind];
+    }
+
+    /* ---- the check: every component at the reader's h and scheme ---- */
+    let last = null;
+    function readH() {
+      const v = Number(String(hIn ? hIn.value : "").trim().replace(/[−–]/g, "-"));
+      if (isFinite(v) && v > 0) return v;
+      if (hIn) hIn.value = "1e-6";
+      return 1e-6;
+    }
+    function check() {
+      const kind = kindNow(), scheme = schemeSel && schemeSel.value === "forward" ? "forward" : "central";
+      const h = readH(), G0 = gradOf(kind), fd = [], rel = [];
+      let tried = 0;
+      for (let k = 0; k < M; k++) {
+        let v = NaN;
+        /* an area pushed to zero or below is no duct: Newton is not asked */
+        if (A0[k] - (scheme === "central" ? h : 0) > 0) {
+          tried++;
+          try { v = F.fdDerivative(A0, k, h, scheme, kind, PT, U0, G0.L0); } catch (e) { v = NaN; }
+        }
+        fd.push(v);
+        rel.push(isFinite(v) ? Math.abs(v - G0.g[k]) / Math.max(Math.abs(G0.g[k]), 1e-300) : NaN);
+      }
+      /* the forward scheme's baseline L(A) is one more solve, made once */
+      last = { kind: kind, scheme: scheme, h: h, fd: fd, rel: rel,
+               solves: scheme === "forward" ? tried + 1 : 2 * tried };
+    }
+
+    /* ---- the sweep: relative errors, cached per objective and component ---- */
+    const SW = {};
+    function sweepOf(kind, k) {
+      const key = kind + ":" + k;
+      if (!SW[key]) {
+        if (k < 0) {
+          const f = HS.map(() => 0), c = HS.map(() => 0);
+          for (let j = 0; j < M; j++) {
+            const r = sweepOf(kind, j);
+            HS.forEach((_, i) => { f[i] = Math.max(f[i], r.f[i]); c[i] = Math.max(c[i], r.c[i]); });
+          }
+          SW[key] = { f: f, c: c };
+        } else {
+          const G0 = gradOf(kind), d = F.fdSweep(A0, k, HS, kind, PT, U0, G0.L0);
+          const ref = Math.max(Math.abs(G0.g[k]), 1e-300);
+          SW[key] = { f: d.f.map(v => Math.abs(v - G0.g[k]) / ref),
+                      c: d.c.map(v => Math.abs(v - G0.g[k]) / ref) };
+        }
+      }
+      return SW[key];
+    }
+
+    let pick = 6;                                     /* the throat: face 6, node 7 */
+
+    /* ---- the duct: one arrow per design variable, on both walls ---- */
+    function arrows(s, view) {
+      const g = gradOf(kindNow()).g, gm = maxAbs(g), yc = view.axis();
+      const grp = V.S("g");
+      const LMAX = 46, LMIN = 10, HL = 7, HW = 4.2;
+      /* a vertical arrow from y0, dir -1 up or +1 down: a line and a head of
+         fixed size, so the shortest arrow is still a readable direction */
+      const vArrow = (x, y0, dir, len, role, w) => {
+        const y1 = y0 + dir * len;
+        V.S("line", { x1: x, y1: y0, x2: x, y2: y1 - dir * HL * 0.8,
+          style: { stroke: "var(--" + role + ")", strokeWidth: w } }, grp);
+        V.S("polygon", { points: x + "," + y1 + " " + (x - HW) + "," + (y1 - dir * HL) + " " +
+          (x + HW) + "," + (y1 - dir * HL), style: { fill: "var(--" + role + ")" } }, grp);
+      };
+      XS.forEach((x, k) => {
+        const X = view.px(x), yt = view.py(A0[k]), yb = view.py(-A0[k]), on = k === pick;
+        const role = on ? "violet" : "adjoint", w = on ? 2.6 : 2;
+        if (on) V.S("line", { x1: X, y1: yt, x2: X, y2: yb, style: { stroke: "var(--violet)", strokeWidth: 2 } }, grp);
+        const len = Math.max(LMIN, LMAX * Math.abs(g[k]) / gm);
+        const outward = g[k] >= 0 ? 1 : -1;           /* L grows as the duct widens here */
+        vArrow(X, yt, -outward, len, role, w);
+        vArrow(X, yb, outward, len, role, w);
+        [yt, yb].forEach(y => V.S("circle", { cx: X, cy: y, r: on ? 3.6 : 2.4,
+          style: { fill: on ? "var(--violet)" : "var(--amber)" } }, grp));
+        V.S("text", { x: X, y: yc + 4, "text-anchor": "middle", text: idx(k),
+          style: { fontSize: "10.5px", fill: on ? "var(--violet)" : "var(--ink2)", fontWeight: on ? "700" : "500",
+                   paintOrder: "stroke", stroke: "var(--sunken)", strokeWidth: "3px", strokeLinejoin: "round" } }, grp);
+      });
+      if (pick >= 0) {
+        const fdv = last && last.kind === kindNow() ? last.fd[pick] : NaN;
+        V.S("text", { x: view.o.padX, y: 16, "text-anchor": "start",
+          text: name(pick) + " · x = " + XS[pick].toFixed(3) + " · " + TR("伴随 ", "adjoint ") + num(g[pick]) +
+            (isFinite(fdv) ? " · " + TR("差分 ", "FD ") + num(fdv) : ""),
+          style: { fontSize: "11.5px", fill: "var(--violet)", fontFamily: "var(--font-mono)" } }, grp);
+      }
+      /* click targets: the strip of the duct nearest each design variable */
+      XS.forEach((x, k) => {
+        const xa = k === 0 ? 0 : 0.5 * (view.px(XS[k - 1]) + view.px(x));
+        const xb = k === M - 1 ? view.o.W : 0.5 * (view.px(x) + view.px(XS[k + 1]));
+        const r = V.S("rect", { x: xa, y: 22, width: xb - xa, height: view.o.H - 22 - 30,
+          role: "button", tabindex: "0", "data-fdk": String(k),
+          "aria-label": name(k) + TR("：dL/dA = ", ": dL/dA = ") + num(g[k]) + TR("，点击扫描这个分量", ", click to sweep this component"),
+          style: { fill: "transparent", cursor: "pointer" } }, grp);
+        r.addEventListener("click", () => setPick(k));
+        r.addEventListener("keydown", e => {
+          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setPick(k); }
+        });
+      });
+      s.push(grp);
+    }
+    const duct = new Q.DuctView(ductBox, {
+      nodes: XS, areas: A0, kind: LAYOUT, H: 300, padTop: 74, padBot: 76,
+      marks: "label", numbers: false, overlay: arrows
+    });
+
+    /* ---- the table, and the one-line verdict under it ---- */
+    function verdict() {
+      const L = last;
+      if (!L) return "";
+      const g = gradOf(L.kind).g, gm = maxAbs(g);
+      let dmax = 0, rmax = -1, kmax = 0, bad = 0;
+      for (let k = 0; k < M; k++) {
+        if (!isFinite(L.fd[k])) { bad++; continue; }
+        dmax = Math.max(dmax, Math.abs(L.fd[k] - g[k]));
+        if (L.rel[k] > rmax) { rmax = L.rel[k]; kmax = k; }
+      }
+      const solves = L.solves;
+      const tail = (L.scheme === "forward" ? TR("前向差分", "Forward difference") : TR("中心差分", "Central difference")) +
+        TR("，h = ", ", h = ") + hTxt(L.h) + TR("；差分做了 ", "; the differences took ") + solves +
+        TR(" 次非线性求解，伴随只做了 1 次线性求解。", " nonlinear solves, the adjoint just 1 linear solve.");
+      if (bad === M) {
+        return TR("这个 h 下一个分量也算不出来：扰动后的面积已经不是一条能解的流道。",
+                  "Not one component can be computed at this h: the perturbed areas no longer make a duct Newton can solve.") +
+          TR("", " ") + tail;
+      }
+      let t = (M - bad) + TR(" 个分量：最大差 |差分 − 伴随| = ", " components: largest |FD − adjoint| = ") + sci(dmax) +
+        TR("，是最大分量 |dL/dA| 的 ", ", which is ") + sci(dmax / gm) +
+        TR("；单个分量的相对误差最大是 ", " of the largest |dL/dA|; the largest relative error of a single component is ") +
+        sci(rmax) + TR("（", " (") + name(kmax) + TR("）。", ").");
+      if (bad) {
+        t += TR("另有 ", " Another ") + bad + TR(" 个分量在这个 h 下算不出来（面积被扰动到非正，或 Newton 不收敛）。",
+          " cannot be computed at this h (an area pushed to zero or below, or Newton failing).");
+      }
+      return t + TR("", " ") + tail;
+    }
+    function table() {
+      const g = gradOf(kindNow()).g, L = last && last.kind === kindNow() ? last : null;
+      let h = "<table class=\"kv fdtab\"><thead><tr><th>" + (NODE ? TR("节点", "node") : TR("面", "face")) +
+        "</th><th>" + TR("伴随梯度（1 次伴随求解）", "adjoint gradient (one adjoint solve)") +
+        "</th><th>" + TR("有限差分", "finite difference") + "</th><th>" + TR("相对误差", "relative error") +
+        "</th></tr></thead><tbody>";
+      for (let k = 0; k < M; k++) {
+        const fdv = L ? L.fd[k] : NaN, r = L ? L.rel[k] : NaN;
+        h += "<tr data-k=\"" + k + "\"" + (k === pick ? " class=\"picked\"" : "") + "><th>" +
+          "<button type=\"button\" class=\"fdpick\" data-k=\"" + k + "\" aria-label=\"" + name(k) +
+          TR("：扫描这个分量", ": sweep this component") + "\">" + idx(k) + "</button></th>" +
+          "<td class=\"num\">" + num(g[k]) + "</td>" +
+          "<td class=\"num\">" + (L ? (isFinite(fdv) ? num(fdv) : TR("算不出", "none")) : "—") + "</td>" +
+          "<td class=\"num\">" + (isFinite(r) ? sci(r, 1) : "—") + "</td></tr>";
+      }
+      out.innerHTML = h + "</tbody></table><p class=\"lab-sub\" id=\"fd-sum\" style=\"margin-top:8px\">" +
+        verdict() + "</p>";
+    }
+    out.addEventListener("click", e => {
+      const tr = e.target && e.target.closest ? e.target.closest("tr[data-k]") : null;
+      if (tr) setPick(Number(tr.getAttribute("data-k")));
+    });
+
+    /* ---- the sweep: its control row, status line and plot ---- */
+    const row = V.H("div", { class: "controls", style: "margin-bottom:8px" }, ctl);
+    const cap = V.H("span", { class: "lab-sub" }, row);
+    const sweepSel = V.H("select", { id: "fd-sweep-var" }, row);
+    V.H("option", { value: "-1" }, sweepSel);
+    for (let k = 0; k < M; k++) V.H("option", { value: String(k) }, sweepSel);
+    sweepSel.value = String(pick);
+    const status = V.H("div", { class: "status", "aria-live": "polite" }, ctl);
+    function paintCtl() {
+      cap.textContent = TR("扫描变量：", "sweep variable: ");
+      sweepSel.setAttribute("aria-label", TR("扫描变量", "sweep variable"));
+      Array.prototype.forEach.call(sweepSel.options, o => {
+        const k = Number(o.value);
+        o.textContent = k < 0
+          ? TR("全部 " + M + " 个分量（取最大；" + 2 * M * HS.length + " 次非线性求解）",
+               "all " + M + " components (largest; " + 2 * M * HS.length + " nonlinear solves)")
+          : name(k) + " · x = " + XS[k].toFixed(3);
+      });
+    }
+
+    function drawPlot(sel) {
+      const kind = kindNow(), E = sweepOf(kind, sel);
+      /* the same frame as the 2-D pages' sweep: every decade labelled */
+      const W = 660, Hh = 400, PX = 64, PW = W - PX - 18, PY = 16, PH = Hh - PY - 56;
+      const Xp = e => PX + (e - 1) / (EXP.length - 1) * PW;       /* e = -log10 h */
+      /* the table's own check on this plot: its step, and its error here */
+      let mk = null;
+      if (last && last.kind === kind) {
+        const vals = sel < 0 ? last.rel.filter(v => isFinite(v)) : [last.rel[sel]];
+        const v = vals.length ? Math.max.apply(null, vals) : NaN;
+        const e = -Math.log10(last.h);
+        mk = { e: e, v: v, h: last.h, inside: e >= 1 - 1e-9 && e <= 12 + 1e-9 };
+      }
+      const pool = E.f.concat(E.c);
+      if (mk && mk.inside && isFinite(mk.v) && mk.v > 0) pool.push(mk.v);
+      const all = pool.filter(v => v > 0 && isFinite(v));
+      const YT = Math.ceil(Math.log10(Math.max.apply(null, all)));
+      const YB = Math.min(Math.floor(Math.log10(Math.min.apply(null, all))), YT - 2);
+      const Yp = v => PY + (YT - Math.max(YB, Math.min(YT,
+        Math.log10(Math.max(v, Math.pow(10, YB)))))) / (YT - YB) * PH;
+      plotBox.replaceChildren();
+      const svg = V.S("svg", { viewBox: "0 0 " + W + " " + Hh, role: "img",
+        "aria-label": TR("差分校验的相对误差随步长的变化", "how the relative error of the difference check varies with the step") }, plotBox);
+      for (let e = YT; e >= YB; e--) {
+        const y = PY + (YT - e) / (YT - YB) * PH;
+        V.S("line", { x1: PX, y1: y, x2: PX + PW, y2: y,
+          style: { stroke: "var(--rule)", strokeWidth: 1, strokeDasharray: "3 3" } }, svg);
+        V.S("text", { x: PX - 10, y: y + 4, "text-anchor": "end", text: "1e" + String(e).replace("-", "−"),
+          style: { fill: "var(--muted)", fontSize: "10.5px", fontFamily: "var(--font-mono)" } }, svg);
+      }
+      EXP.forEach(e => {
+        V.S("text", { x: Xp(e), y: PY + PH + 20, "text-anchor": "middle", text: "1e−" + e,
+          style: { fill: "var(--muted)", fontSize: "10.5px", fontFamily: "var(--font-mono)" } }, svg);
+      });
+      V.S("text", { x: PX + PW / 2, y: PY + PH + 42, "text-anchor": "middle", text: TR("步长 h", "step h"),
+        style: { fill: "var(--muted)", fontSize: "11.5px" } }, svg);
+      V.S("text", { x: 14, y: PY + PH / 2, "text-anchor": "middle",
+        transform: "rotate(-90 14 " + (PY + PH / 2) + ")", text: TR("相对误差", "relative error"),
+        style: { fill: "var(--muted)", fontSize: "11.5px" } }, svg);
+
+      /* the table's step first, under the curves */
+      const taken = [];
+      if (mk && mk.inside) {
+        const x = Xp(mk.e);
+        V.S("line", { x1: x, y1: PY, x2: x, y2: PY + PH,
+          style: { stroke: "var(--violet)", strokeWidth: 1.6, strokeDasharray: "5 4" } }, svg);
+        const t = TR("表格的 h", "the table's h"), tw = 11.5 * [...t].reduce((s, c) => s + (c.charCodeAt(0) > 0x2e7f ? 0.98 : 0.6), 0);
+        const right = x + 6 + tw <= PX + PW - 4;
+        const tx = right ? x + 6 : x - 6;
+        V.S("text", { x: tx, y: PY + 13, "text-anchor": right ? "start" : "end", text: t,
+          style: { fill: "var(--violet)", fontSize: "11.5px" } }, svg);
+        taken.push(right ? { x0: tx - 2, x1: tx + tw + 2, y0: PY, y1: PY + 17 } : { x0: tx - tw - 2, x1: tx + 2, y0: PY, y1: PY + 17 });
+      }
+      const curve = (arr, role) => {
+        V.S("polyline", { points: arr.map((v, i) => Xp(EXP[i]).toFixed(1) + "," + Yp(v).toFixed(1)).join(" "),
+          style: { fill: "none", stroke: "var(--" + role + ")", strokeWidth: 2.2 } }, svg);
+        arr.forEach((v, i) => V.S("circle", { cx: Xp(EXP[i]), cy: Yp(v), r: 3.2, style: { fill: "var(--" + role + ")" } }, svg));
+        /* ring each curve's own optimum */
+        const b = arr.indexOf(Math.min.apply(null, arr));
+        V.S("circle", { cx: Xp(EXP[b]), cy: Yp(arr[b]), r: 6.5,
+          style: { fill: "none", stroke: "var(--" + role + ")", strokeWidth: 1.6 } }, svg);
+        return b;
+      };
+      const bf = curve(E.f, "muted");
+      const bc = curve(E.c, "ink");
+      if (mk && mk.inside && isFinite(mk.v) && mk.v > 0) {
+        V.S("circle", { cx: Xp(mk.e), cy: Yp(mk.v), r: 5,
+          style: { fill: "var(--violet)", stroke: "var(--surface)", strokeWidth: 1.5 } }, svg);
+      }
+      /* each curve is named beside one of its own points: points and offsets
+         are tried in turn and the first box inside the plot, at least 10
+         from both curves and clear of every other label, is used (the
+         placement of the 2-D pages' sweep, which measures the boxes the
+         same way) */
+      const lines = [E.f, E.c].map(arr => arr.map((v, i) => [Xp(EXP[i]), Yp(v)]));
+      const inPlot = b => b.x0 >= PX + 4 && b.x1 <= PX + PW - 4 && b.y0 >= PY + 4 && b.y1 <= PY + PH - 4;
+      const gap = b => {
+        let d = Infinity;
+        lines.forEach(pl => pl.forEach((q, i) => {
+          const p = i ? pl[i - 1] : q;
+          for (let s = 0; s <= 200; s++) {
+            const x = p[0] + (q[0] - p[0]) * s / 200, y = p[1] + (q[1] - p[1]) * s / 200;
+            d = Math.min(d, Math.hypot(Math.max(b.x0 - x, 0, x - b.x1), Math.max(b.y0 - y, 0, y - b.y1)));
+          }
+        }));
+        return d;
+      };
+      const clear = b => inPlot(b) && gap(b) >= 10 &&
+        taken.every(o => b.x1 < o.x0 || b.x0 > o.x1 || b.y1 < o.y0 || b.y0 > o.y1);
+      const label = (arr, text, role, order, offsets) => {
+        const w = 11.5 * [...text].reduce((s, c) => s + (c === "^" ? 0 : (c.charCodeAt(0) > 0x2e7f ? 0.98 : 0.6)), 0);
+        const boxes = [];
+        order.forEach(i => offsets.forEach(dy => {
+          const x = Xp(EXP[i]) + 10, y = Yp(arr[i]) + dy;
+          boxes.push({ x: x, y: y, x0: x - 2, x1: x + w + 2, y0: y - 13, y1: y + 4 });
+        }));
+        const b = boxes.find(clear) || boxes.find(inPlot) || boxes[0];
+        taken.push(b);
+        V.S("text", { x: b.x, y: b.y, "text-anchor": "start", text: text,
+          style: { fill: "var(--" + role + ")", fontSize: "11.5px", fontFamily: "var(--font-mono)" } }, svg);
+      };
+      label(E.f, TR("前向差分  O(h)", "forward  O(h)"), "muted",
+        [2, 1, 3, 0, 4, 5, 6, 7, 8, 9, 10, 11], [-12, 22, -26, 36]);
+      label(E.c, TR("中心差分  O(h^2)", "central  O(h^2)"), "ink",
+        [4, 3, 5, 2, 6, 1, 7, 0, 8, 9, 10, 11], [22, -12, 36, -26]);
+
+      /* every fragment through TR, connectors included: this line is built
+         here, so no checker of the page source ever sees it */
+      const what = sel < 0 ? TR("全部 " + M + " 个分量（取最大）", "all " + M + " components (largest)")
+        : name(sel) + TR("（x = ", " (x = ") + XS[sel].toFixed(3) + TR("）", ")");
+      const LP = TR("（相对误差 ", " (rel. err. "), RP = TR("）", ")");
+      let st = what + TR("：前向最优 h = ", " — forward optimum h = ") + "1e−" + EXP[bf] + LP + e2(E.f[bf]) + RP +
+        TR("；中心最优 h = ", "; central optimum h = ") + "1e−" + EXP[bc] + LP + e2(E.c[bc]) + RP + TR("。", ".");
+      if (mk && mk.inside && isFinite(mk.v)) {
+        st += TR("紫色虚线是表格用的 h = ", " The violet line is the table's step, h = ") + hTxt(mk.h) +
+          TR("，圆点是那次校验", "; its dot is that check's ") +
+          (sel < 0 ? TR("的最大误差 ", "largest error, ") : TR("在这个分量上的误差 ", "error on this component, ")) +
+          e2(mk.v) + TR("。", ".");
+      } else if (mk && !mk.inside) {
+        st += TR("表格用的 h = ", " The table's step, h = ") + hTxt(mk.h) + TR(" 不在扫描范围内。", ", is outside the swept range.");
+      }
+      status.textContent = st;
+    }
+    let token = 0;
+    function renderSweep() {
+      const sel = Number(sweepSel.value), kind = kindNow(), my = ++token;
+      if (sel < 0 && !SW[kind + ":-1"]) {
+        status.textContent = TR("正在扫描全部 " + M + " 个分量（" + 2 * M * HS.length + " 次非线性求解）…",
+          "sweeping all " + M + " components (" + 2 * M * HS.length + " nonlinear solves)…");
+        /* let the status paint before the main thread is taken */
+        setTimeout(() => { if (my === token) drawPlot(sel); }, 0);
+        return;
+      }
+      drawPlot(sel);
+    }
+
+    /* ---- wiring ---- */
+    function paintDuct() {
+      duct.svg.setAttribute("aria-label", TR("流道上的形状梯度：每个设计变量一对箭头",
+        "the shape gradient on the duct: one pair of arrows per design variable"));
+      duct.draw();
+    }
+    function paint() {
+      if (Lout) Lout.textContent = num(gradOf(kindNow()).L);
+      paintDuct();
+      table();
+      paintCtl();
+      renderSweep();
+    }
+    /* re-rendering replaces the element that had the focus: give it back */
+    function refocus(k, how) {
+      const el = how === "row" ? out.querySelector("button.fdpick[data-k=\"" + k + "\"]")
+        : (how === "duct" ? ductBox.querySelector("[data-fdk=\"" + k + "\"]") : null);
+      if (el) el.focus();
+    }
+    function setPick(k) {
+      const a = document.activeElement;
+      const how = a && a.classList && a.classList.contains("fdpick") ? "row"
+        : (a && a.getAttribute && a.getAttribute("data-fdk") !== null ? "duct" : "");
+      pick = k;
+      sweepSel.value = String(k);
+      paintDuct();
+      table();
+      renderSweep();
+      refocus(k, how);
+    }
+    function run() {
+      check();
+      paintDuct();
+      table();
+      renderSweep();
+    }
+    sweepSel.addEventListener("change", () => {
+      const v = Number(sweepSel.value);
+      pick = v;
+      paintDuct();
+      table();
+      renderSweep();
+    });
+    if (runBtn) runBtn.addEventListener("click", run);
+    if (schemeSel) schemeSel.addEventListener("change", run);
+    if (hIn) {
+      hIn.addEventListener("change", run);
+      hIn.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); run(); } });
+    }
+    if (objSel) objSel.addEventListener("change", () => { check(); paint(); });
+    check();
+    (window.REPAINT = window.REPAINT || []).push(paint);
+    paint();
+  }
+
   /* The objective selectors of the page are linked: pick an objective in any
      panel and every panel follows, so "the objective of Section 6" means the
      same thing everywhere on the page. */
@@ -4324,7 +4819,13 @@ if (!Element.prototype.replaceChildren) {
     }));
   }
 
-  function boot() { fluxLab(); jacLab(); newtonLab(); jacobiLab(); linkObjectives(); numberFigures(); }
+  /* each lab on its own: one that throws must not take the figure numbers
+     (or the objective links) of the whole page down with it */
+  function boot() {
+    [fluxLab, jacLab, newtonLab, jacobiLab, fdLab, linkObjectives, numberFigures].forEach(fn => {
+      try { fn(); } catch (e) { if (window.console) console.error("[labs_q1d] " + fn.name, e); }
+    });
+  }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();
 })();
