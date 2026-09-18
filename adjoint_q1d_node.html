@@ -2595,12 +2595,22 @@ if (!Element.prototype.replaceChildren) {
       [lo + (hi - lo) * 0.5, hi - pad].forEach(v => {
         s.push(S("text", { x: o.padL - 8, y: Y(v) + 4, "text-anchor": "end",
           style: { fontSize: "10.5px", fill: "var(--muted)" },
-          /* small magnitudes (an adjoint field is ~1e-3) in exponent form, so
-             the label fits the margin instead of running off the left edge */
-          text: v !== 0 && Math.abs(v) < 1e-2 ? v.toExponential(2).replace("e-", "e−") : v.toPrecision(3) }));
+          /* small magnitudes (an adjoint field is ~1e-3) in exponent form,
+             two digits, so the label fits the margin instead of running off
+             the left edge; true minus signs, like the rest of the page */
+          text: (v !== 0 && Math.abs(v) < 1e-2 ? v.toExponential(1) : v.toPrecision(3)).replace(/-/g, "−") }));
       });
-      s.push(S("text", { x: (o.padL + o.W - o.padR) / 2, y: o.H - 8, "text-anchor": "middle",
-        style: { fontSize: "11px", fill: "var(--muted)" }, text: "x" }));
+      /* the horizontal axis is the position along the duct, x in [0, 1]:
+         ticks and values every quarter, the axis name under them */
+      [0, 0.25, 0.5, 0.75, 1].forEach(t => {
+        s.push(S("line", { x1: X(t), y1: o.H - o.padB, x2: X(t), y2: o.H - o.padB + 4,
+          stroke: col("muted"), "stroke-width": 1 }));
+        s.push(S("text", { x: X(t), y: o.H - o.padB + 16, "text-anchor": "middle",
+          style: { fontSize: "10.5px", fill: "var(--muted)" }, text: String(t) }));
+      });
+      s.push(S("text", { x: (o.padL + o.W - o.padR) / 2, y: o.H - 3, "text-anchor": "middle",
+        style: { fontSize: "11px", fill: "var(--muted)", fontStyle: "italic" }, text: "x" }));
+      const names = [];
       series.forEach(ser => {
         const pts = ser.x.map((x, k) => X(x) + "," + Y(ser.y[k])).join(" ");
         s.push(S("polyline", { points: pts, fill: "none", stroke: col(ser.role || "primal"),
@@ -2610,11 +2620,26 @@ if (!Element.prototype.replaceChildren) {
           ser.x.forEach((x, k) => s.push(S("circle", { cx: X(x), cy: Y(ser.y[k]), r: 2.6,
             fill: col(ser.role || "primal") })));
         }
-        if (ser.name) {
-          s.push(S("text", { x: o.W - o.padR, y: Y(ser.y[ser.y.length - 1]) - 8, "text-anchor": "end",
-            style: { fontSize: "11px", fill: col(ser.role || "primal") }, text: ser.name }));
-        }
+        if (ser.name) names.push({ text: ser.name, role: ser.role || "primal", y: Y(ser.y[ser.y.length - 1]) - 8 });
       });
+      /* each name sits at the right end, just above its series' last point.
+         Series that end close together (current and target pressure, the
+         total gradient and its state part) would print their names on top
+         of each other, so the names are stacked one line apart, moving only
+         UP, away from the points; the stack comes back down only if its
+         top would leave the picture. */
+      const GAP = 14, yMin = 11;
+      names.sort((a, b) => a.y - b.y);
+      for (let i = names.length - 2; i >= 0; i--) names[i].y = Math.min(names[i].y, names[i + 1].y - GAP);
+      if (names.length && names[0].y < yMin) {
+        const d = yMin - names[0].y;
+        names.forEach(nm => { nm.y += d; });
+      }
+      /* a halo in the background colour keeps a name legible where it
+         crosses a line or a point near the right end */
+      names.forEach(nm => s.push(S("text", { x: o.W - o.padR, y: nm.y, "text-anchor": "end",
+        style: { fontSize: "11px", fill: col(nm.role), paintOrder: "stroke", stroke: "var(--surface)",
+                 strokeWidth: "3px", strokeLinejoin: "round" }, text: nm.text })));
       this.svg.replaceChildren.apply(this.svg, s);
       return this;
     }
