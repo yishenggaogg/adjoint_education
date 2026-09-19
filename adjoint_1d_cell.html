@@ -290,6 +290,10 @@ table.kv thead th { white-space: normal; width: auto; }
    conservation readouts), so no table is held wider than the screen */
 @media (max-width: 600px) { table.kv th { white-space: normal; } }
 table.kv td.num { font-family: var(--font-mono); font-size: 13px; }
+/* the picked row of a lab table (fd-lab, bug-lab), and the pass/fail marks of bug-lab */
+table.kv tbody tr.picked > * { background: color-mix(in srgb, var(--violet) 14%, transparent); }
+.okmark { color: var(--tangent); font-weight: 700; }
+.badmark { color: var(--adjoint); font-weight: 700; }
 
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { font-size: 12.5px; border: 1px solid var(--rule); border-radius: 999px; padding: 1px 10px; color: var(--ink2); background: var(--surface); }
@@ -489,7 +493,8 @@ table.lsqtab td { padding-right: 8px; }
     <li><a href="#s11">11 <span lang="zh">设计导数</span><span lang="en">Design derivatives</span></a><span class="sep">→</span></li>
     <li><a href="#s12">12 <span lang="zh">差分验证</span><span lang="en">FD check</span></a><span class="sep">→</span></li>
     <li><a href="#s13">13 <span lang="zh">精度阶</span><span lang="en">Order of accuracy</span></a><span class="sep">→</span></li>
-    <li><a href="#s14">14 <span lang="zh">总结</span><span lang="en">Summary</span></a></li>
+    <li><a href="#s14">14 <span lang="zh">伴随一致性</span><span lang="en">Adjoint consistency</span></a><span class="sep">→</span></li>
+    <li><a href="#s15">15 <span lang="zh">总结</span><span lang="en">Summary</span></a></li>
   </ol>
 </header>
 
@@ -509,7 +514,8 @@ table.lsqtab td { padding-right: 8px; }
     <li><a href="#s11"><span class="num">11</span><span lang="zh">设计导数</span><span lang="en">Design derivatives</span></a></li>
     <li><a href="#s12"><span class="num">12</span><span lang="zh">差分验证</span><span lang="en">FD check</span></a></li>
     <li><a href="#s13"><span class="num">13</span><span lang="zh">精度阶</span><span lang="en">Order of accuracy</span></a></li>
-    <li><a href="#s14"><span class="num">14</span><span lang="zh">总结</span><span lang="en">Summary</span></a></li>
+    <li><a href="#s14"><span class="num">14</span><span lang="zh">伴随一致性</span><span lang="en">Adjoint consistency</span></a></li>
+    <li><a href="#s15"><span class="num">15</span><span lang="zh">总结</span><span lang="en">Summary</span></a></li>
   </ul>
 </nav>
 
@@ -796,7 +802,21 @@ table.lsqtab td { padding-right: 8px; }
 
   <div class="prose">
 
+    <h3 lang="zh">复步长</h3><h3 lang="en">The complex step</h3>
+    <p lang="zh">差分的两头都受限：截断误差要 <span class="eq"><i>h</i></span> 小，舍入误差要 <span class="eq"><i>h</i></span> 大。复步长把这个两难拿掉：把设计变量挪一个<b>虚数</b>步长 <span class="nw"><span class="eq">i<span class="spt"></span><i>h</i></span>，</span>整个 primal 求解都用复数算，<span class="eq"><i>J</i></span> 的虚部就是导数：</p><p lang="en">Both ends of a difference are limited: truncation wants a small <span class="nw"><span class="eq"><i>h</i></span>,</span> round-off a large one. The complex step removes the dilemma: move the design variable by an <b>imaginary</b> step <span class="nw"><span class="eq">i<span class="spt"></span><i>h</i></span>,</span> run the whole primal solve in complex arithmetic, and the imaginary part of <span class="eq"><i>J</i></span> is the derivative:</p>
+    <div class="eqwrap"><span class="eqd"><span class="frac"><span class="fcol"><span class="num">d<i>J</i></span><span class="den">d<i>p</i><sub>m</sub></span></span></span>=<span class="frac"><span class="fcol"><span class="num">Im<i>J</i>(<i>p</i>+i<span class="spt"></span><i>h</i><span class="spt"></span><i>e</i><sub>m</sub>)</span><span class="den"><i>h</i></span></span></span>+<i>O</i>(<i>h</i><sup><span class="dg">2</span></sup>)</span></div>
+    <p lang="zh">这里没有两个相近的数相减，也就没有相消，<span class="eq"><i>h</i>=<span class="dg">10</span><sup>−<span class="dg">30</span></sup></span> 也可以。Jacobi 迭代的虚部走的正是第 9 节的前向迭代：复步长就是用复数算出来的前向模式。每个分量一次复数求解，9 个分量与伴随梯度之差的最大值（除以梯度的最大分量）是 2.3e−15。在<a class="fref" href="#fd-lab"></a>里把格式选成复步长就能看到；步长扫描里它是绿线，<span class="eq"><i>σ</i><sub><span class="dg">1</span></sub></span> 的误差从步长 10⁻⁶ 起就一直停在舍入误差上。</p><p lang="en">No two nearly equal numbers are subtracted, so nothing cancels and <span class="eq"><i>h</i>=<span class="dg">10</span><sup>−<span class="dg">30</span></sup></span> is fine. The imaginary part of the Jacobi iterate follows exactly the forward iteration of Section 9: the complex step is forward mode computed in complex arithmetic. One complex solve per component; over the 9 components its largest difference from the adjoint gradient (over the gradient's largest component) is 2.3e−15. Choose the complex step among the schemes of <a class="fref" href="#fd-lab"></a> to see it; in the step sweep it is the green line, and for <span class="eq"><i>σ</i><sub><span class="dg">1</span></sub></span> it stays on the round-off level from a step of 10⁻⁶ down.</p>
     <p lang="zh">两个检验不含步长。一个是第 8 节的点积测试；另一个是第 6 节的目标：在 <span class="eq"><i>σ</i>=<i>σ&#772;</i></span> 处，<span class="eq"><i>J</i></span> 与 <span class="eq">d<i>J</i>/d<i>p</i></span> 都<b>逐比特为零</b>（J = 0, max|dJ/dp| = 0）。梯度在一个独立构造出来的最优点上归零，比任何差分对照都更有说服力。</p><p lang="en">Two checks have no step size in them. One is the dot-product test of Section 8; the other is the target of Section 6: at <span class="eq"><i>σ</i>=<i>σ&#772;</i></span> both <span class="eq"><i>J</i></span> and <span class="eq">d<i>J</i>/d<i>p</i></span> are <b>zero to the last bit</b> (J = 0, max|dJ/dp| = 0). A gradient vanishing at an independently constructed optimum is better evidence than any finite-difference comparison.</p>
+    <h3 lang="zh">哪一种检验抓哪一种错误</h3><h3 lang="en">Which check catches which bug</h3>
+    <p lang="zh">点积测试只查一件事：伴随循环是不是前向循环的转置。梯度检验（这里对复步长）查的是最后那个数对不对。两者各管一段，<a class="fref" href="#bug-lab"></a> 把几种常见的错误放进同一张表：</p><p lang="en">The dot test checks one thing: that the adjoint loop is the transpose of the forward loop. The gradient check (here against the complex step) checks whether the final number is right. Each covers its own stretch, and <a class="fref" href="#bug-lab"></a> puts some common bugs in one table:</p>
+    
+  </div>
+
+  <div id="bug-lab"></div>
+
+  <div class="prose">
+
+    <p lang="zh">分发的符号写反、漏掉一个面、<span class="eq"><i>c</i><sub>L</sub></span> 与 <span class="eq"><i>c</i><sub>R</sub></span> 对调，都是转置错误，点积测试一眼就能看出来：误差在 0.16 到 1.0 之间，而正确的循环是 1.1e−16。另外三种错误它看不出来。第一种是 flux() 里导数写错：前向与伴随调用的是同一个 flux()，伴随仍是那个（错的）前向的精确转置，点积测试照样通过（6.1e−17），梯度却差了 1.4e−2。第二种是伴随求解停得太早，梯度差 6.7e−3。第三种是组装梯度时符号写反，差 2.0。这三种只有梯度检验抓得到，可它又说不出错在哪里。所以两个都要做：先用点积测试把循环查干净，再用梯度检验查其余的一切。</p><p lang="en">A flipped scatter sign, a missed face, <span class="eq"><i>c</i><sub>L</sub></span> and <span class="eq"><i>c</i><sub>R</sub></span> swapped: these are transposition errors, and the dot test sees them at once, with errors between 0.16 and 1.0 against 1.1e−16 for the right loop. Three other bugs it cannot see. The first is a wrong derivative inside flux(): forward and adjoint mode call the same flux(), so the adjoint is still the exact transpose of a (wrong) forward mode and the dot test passes (6.1e−17) while the gradient is off by 1.4e−2. The second is an adjoint solve stopped too early, off by 6.7e−3. The third is a gradient assembled with the wrong sign, off by 2.0. Only the gradient check catches these three, and it cannot say where the bug is. So do both: the dot test first, to get the loops right, then the gradient check for everything else.</p>
   </div>
 </section>
 
@@ -841,6 +861,7 @@ table.lsqtab td { padding-right: 8px; }
   <div class="prose">
 
     <p lang="zh">这并不说明伴随算错了：第 12 节验证过，<span class="eq"><i>ψ</i></span> 给出的是<b>离散</b> <span class="eq"><i>J</i></span> 的精确梯度，优化器要的正是它。它说明的是另一件事：离散伴随不一定是连续伴随的好近似。离散格式在边界上怎么处理，会以转置的形式出现在伴随里。</p><p lang="en">This does not mean the adjoint is wrong: Section 12 verified that <span class="eq"><i>ψ</i></span> gives the exact gradient of the <b>discrete</b> <span class="nw"><span class="eq"><i>J</i></span>,</span> which is what an optimiser needs. It shows something else: a discrete adjoint need not be a good approximation of the continuous one. Whatever the scheme does at a boundary reappears, transposed, in its adjoint.</p>
+    <p lang="zh">第 14 节把这层边界层去掉，再看它在哪些地方会造成差别。</p><p lang="en">Section 14 removes this layer and looks at where it makes a difference.</p>
   </div>
 </section>
 
@@ -848,6 +869,59 @@ table.lsqtab td { padding-right: 8px; }
 <section class="sec" id="s14">
   <div class="prose">
     <div lang="zh" class="secnum">第 14 节</div><div class="secnum" lang="en">Section 14</div>
+<h2 lang="zh">伴随一致性与 <span class="eq"><i>J</i></span> 的误差估计</h2><h2 lang="en">Adjoint consistency, and estimating the error in <span class="eq"><i>J</i></span></h2>
+    <p lang="zh">第 13 节在入口旁找到一层伴随的边界层：第一个控制体里，离散伴随不收敛到连续伴随。这一节先把它去掉，再看它在两个地方造成的差别：连续伴随算出来的梯度，以及用伴随估计 <span class="eq"><i>J</i></span> 的误差。</p><p lang="en">Section 13 found a boundary layer in the adjoint next to the inflow: in the first control volume the discrete adjoint does not converge to the continuous one. This section removes it and then looks at two places where it makes a difference: the gradient a continuous adjoint gives, and the estimate of the error in <span class="eq"><i>J</i></span> that the adjoint provides.</p>
+    <h3 lang="zh">一个伴随一致的入口</h3><h3 lang="en">A dual-consistent inflow</h3>
+    <p lang="zh">根源在第 13 节的分析里：入口面的通量 <span class="eq"><i>h</i>(<i>u</i><sub>L</sub>,<i>u</i><sub><span class="dg">1</span></sub>)</span> 通过耗散项依赖第一个未知量，<span class="nw"><span class="eq"><i>c</i><sub>R</sub><span class="op">≠</span><span class="dg">0</span></span>；</span>于是第一个控制体的伴随方程少了上游那一项，相当于规定 <span class="nw"><span class="eq"><i>ψ</i><sub><span class="dg">0</span></sub>=<span class="dg">0</span></span>。</span>把这个面的通量换成迎风通量：</p><p lang="en">The root is in the analysis of Section 13: the flux on the inflow face, <span class="nw"><span class="eq"><i>h</i>(<i>u</i><sub>L</sub>,<i>u</i><sub><span class="dg">1</span></sub>)</span>,</span> depends on the first unknown through its dissipation, <span class="nw"><span class="eq"><i>c</i><sub>R</sub><span class="op">≠</span><span class="dg">0</span></span>,</span> so the first control volume's adjoint equation misses its upstream term, as if <span class="eq"><i>ψ</i><sub><span class="dg">0</span></sub>=<span class="dg">0</span></span> were prescribed. Give this face the upwind flux instead:</p>
+    <div class="eqwrap"><span class="eqd"><i>h</i>=<span class="frac"><span class="fcol"><span class="num"><span class="dg">1</span></span><span class="den"><span class="dg">2</span></span></span></span><i>u</i><sub>L</sub><sup><span class="dg">2</span></sup>,<span class="sp2"></span><i>c</i><sub>L</sub>=<i>u</i><sub>L</sub>,<span class="sp2"></span><i>c</i><sub>R</sub>=<span class="dg">0</span></span></div>
+    <p lang="zh">（这里 <span class="nw"><span class="eq"><i>u</i><sub>L</sub>=<i>u</i><sub>in</sub></span>，</span>就是入口处的物理通量。）流动处处向右<span class="nw">（<span class="eq"><i>u</i>&gt;<span class="dg">0</span></span>）</span>，迎风通量就是上游那一侧的物理通量，格式仍然守恒、仍是一阶。这个面不再依赖 <span class="nw"><span class="eq"><i>u</i><sub><span class="dg">1</span></sub></span>，</span>第一个控制体的伴随方程变成 <span class="nw"><span class="eq"><i>c</i><sub>L</sub><i>ψ</i><sub><span class="dg">1</span></sub>−<i>c</i><sub>L</sub><i>ψ</i><sub><span class="dg">2</span></sub>=−<i>g</i><sub><span class="dg">1</span></sub></span>，</span>内部方程的光滑解满足它；第 13 节里每个控制体乘一次 <span class="eq"><i>r</i></span> 的那个解不再被激发。第一个控制体里的误差<span class="nw">（<span class="eq"><i>N</i>=<span class="dg">8</span></span></span> 到 1024）：本页的入口 8.4e−4、2.3e−3、4.8e−3、6.3e−3、7.1e−3、7.6e−3、7.8e−3、7.9e−3，趋于 8.0e−3；迎风入口 4.6e−3、2.3e−3、1.1e−3、5.2e−4、2.5e−4、1.2e−4、6.1e−5、3.0e−5，逐层减半。伴随的 L2 阶从 0.5 升到 1.00（<a class="fref" href="#fig-cons"></a> 左）。在<a class="fref" href="#cons-lab"></a>里可以切换两种入口、换网格，看边界层出现和消失。</p><p lang="en">(Here <span class="nw"><span class="eq"><i>u</i><sub>L</sub>=<i>u</i><sub>in</sub></span>:</span> this is the physical flux at the inflow.) The flow runs to the right everywhere <span class="nw">(<span class="eq"><i>u</i>&gt;<span class="dg">0</span></span>)</span>, so the upwind flux is the physical flux of the upstream side; the scheme stays conservative and first order. The face no longer depends on <span class="nw"><span class="eq"><i>u</i><sub><span class="dg">1</span></sub></span>,</span> and the first control volume's adjoint equation becomes <span class="nw"><span class="eq"><i>c</i><sub>L</sub><i>ψ</i><sub><span class="dg">1</span></sub>−<i>c</i><sub>L</sub><i>ψ</i><sub><span class="dg">2</span></sub>=−<i>g</i><sub><span class="dg">1</span></sub></span>,</span> which the smooth solution of the interior satisfies: the solution of Section 13 that is multiplied by <span class="eq"><i>r</i></span> per control volume is no longer excited. The error in the first control volume <span class="nw">(<span class="eq"><i>N</i>=<span class="dg">8</span></span></span> to 1024): with this page's inflow 8.4e−4, 2.3e−3, 4.8e−3, 6.3e−3, 7.1e−3, 7.6e−3, 7.8e−3, 7.9e−3, tending to 8.0e−3; with the upwind inflow 4.6e−3, 2.3e−3, 1.1e−3, 5.2e−4, 2.5e−4, 1.2e−4, 6.1e−5, 3.0e−5, halving level by level. The adjoint's L2 order rises from 0.5 to 1.00 (<a class="fref" href="#fig-cons"></a>, left). Switch between the two inflows and change the grid in <a class="fref" href="#cons-lab"></a> to watch the layer come and go.</p>
+    
+  </div>
+
+  <div id="cons-lab"></div>
+
+  <div class="prose">
+
+    <h3 lang="zh">连续伴随给的梯度</h3><h3 lang="en">The gradient a continuous adjoint gives</h3>
+    <p lang="zh">另一条路是先对连续问题推导伴随（第 13 节的 <span class="nw"><span class="eq"><i>λ</i></span>）</span>，再把它离散：用网格上的 <span class="nw"><span class="eq"><i>u</i></span>、</span><span class="eq"><i>u&#772;</i></span> 从出口往回积分 <span class="nw"><span class="eq"><i>λ</i>'=−(<i>u</i>−<i>u&#772;</i>)/<i>u</i></span>，</span>然后</p><p lang="en">The other road derives the adjoint of the continuous problem first (the <span class="eq"><i>λ</i></span> of Section 13) and discretises it afterwards: integrate <span class="eq"><i>λ</i>'=−(<i>u</i>−<i>u&#772;</i>)/<i>u</i></span> back from the outflow with the grid's <span class="eq"><i>u</i></span> and <span class="nw"><span class="eq"><i>u&#772;</i></span>,</span> then</p>
+    <div class="eqwrap"><span class="eqd"><span class="frac"><span class="fcol"><span class="num">d<i>J</i></span><span class="den">d<i>σ</i><sub>k</sub></span></span></span><span class="op">≈</span><span class="op">∫</span><sub>I<sub>k</sub></sub><i>λ</i><span class="spt"></span>d<i>x</i>,<span class="sp2"></span><span class="frac"><span class="fcol"><span class="num">d<i>J</i></span><span class="den">d<i>u</i><sub>in</sub></span></span></span><span class="op">≈</span><i>u</i><sub>in</sub><span class="spt"></span><i>λ</i>(<span class="dg">0</span>)</span></div>
+    <p lang="zh"><span class="nw">（<span class="eq"><i>I</i><sub>k</sub></span></span> 是第 <span class="eq"><i>k</i></span> 个区间，积分用中点公式。）它近似的是连续 <span class="eq"><i>J</i></span> 的梯度，而优化器算的是离散 <span class="nw"><span class="eq"><i>J</i></span>，</span>两者之差就是离散误差。内部各分量的差是 <span class="nw"><span class="eq"><i>O</i>(<i>Δ</i><i>x</i>)</span>：</span>除以梯度的最大分量，<span class="eq"><i>N</i>=<span class="dg">8</span></span> 时 1.7e−2，<span class="eq"><i>N</i>=<span class="dg">128</span></span> 时 4.2e−4。<span class="eq"><i>σ</i><sub><span class="dg">1</span></sub></span> 却不一样（<a class="fref" href="#fig-cons"></a> 右）。本页的入口下，连续伴随给的 <span class="eq">d<i>J</i>/d<i>σ</i><sub><span class="dg">1</span></sub></span> 是离散伴随的 1.30 倍，加密也不变。这正是 <span class="nw"><span class="eq"><span class="dg">1</span>/(<span class="dg">1</span>−<i>r</i>)</span>：</span>第 13 节那层边界层直接写进了梯度。换成迎风入口，这个比值是 1.06<span class="nw">（<span class="eq"><i>N</i>=<span class="dg">8</span></span>）</span>，到 <span class="eq"><i>N</i>=<span class="dg">1024</span></span> 是 1.0001。</p><p lang="en"><span class="nw">(<span class="eq"><i>I</i><sub>k</sub></span></span> is the <span class="eq"><i>k</i></span>-th interval, integrated by the midpoint rule.) This approximates the gradient of the continuous <span class="nw"><span class="eq"><i>J</i></span>,</span> while the optimiser evaluates the discrete <span class="nw"><span class="eq"><i>J</i></span>;</span> the two differ by the discretisation error. In the interior the components differ by <span class="nw"><span class="eq"><i>O</i>(<i>Δ</i><i>x</i>)</span>:</span> over the gradient's largest component, 1.7e−2 at <span class="eq"><i>N</i>=<span class="dg">8</span></span> and 4.2e−4 at <span class="nw"><span class="eq"><i>N</i>=<span class="dg">128</span></span>.</span> <span class="eq"><i>σ</i><sub><span class="dg">1</span></sub></span> is another matter (<a class="fref" href="#fig-cons"></a>, right). With this page's inflow, the continuous adjoint's <span class="eq">d<i>J</i>/d<i>σ</i><sub><span class="dg">1</span></sub></span> is 1.30 times the discrete adjoint's, and refinement does not change that. It is exactly <span class="nw"><span class="eq"><span class="dg">1</span>/(<span class="dg">1</span>−<i>r</i>)</span>:</span> the boundary layer of Section 13 is written straight into the gradient. With the upwind inflow the ratio is 1.06 at <span class="eq"><i>N</i>=<span class="dg">8</span></span> and 1.0001 at <span class="nw"><span class="eq"><i>N</i>=<span class="dg">1024</span></span>.</span></p>
+    <p lang="zh">所以优化器要的是它实际计算的那个 <span class="eq"><i>J</i></span> 的梯度，也就是离散伴随给的梯度。连续伴随的梯度与它差一个离散误差；在格式不一致的边界上，差的是一个不随网格消失的量。</p><p lang="en">So an optimiser needs the gradient of the <span class="eq"><i>J</i></span> it actually evaluates, which is what the discrete adjoint gives. A continuous adjoint's gradient differs from it by a discretisation error, and at a boundary where the scheme is inconsistent by an amount that does not vanish with the grid.</p>
+    
+  </div>
+
+  <figure id="fig-cons">
+    <svg lang="zh" viewBox="0 0 680 330" role="img" aria-label="入口处理对伴随的影响：第一个控制体里的误差（左），dJ/dσ₁ 的连续与离散之比（右）" style="width:100%;height:auto"><defs><marker id="fig-cons-cell-primal" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" style="fill:var(--primal)"></path></marker><marker id="fig-cons-cell-tangent" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" style="fill:var(--tangent)"></path></marker><marker id="fig-cons-cell-adjoint" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" style="fill:var(--adjoint)"></path></marker><marker id="fig-cons-cell-amber" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" style="fill:var(--amber)"></path></marker><marker id="fig-cons-cell-violet" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" style="fill:var(--violet)"></path></marker><marker id="fig-cons-cell-ink" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" style="fill:var(--ink)"></path></marker><marker id="fig-cons-cell-muted" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" style="fill:var(--muted)"></path></marker></defs><line x1="62.0" y1="211.0" x2="312.0" y2="211.0" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="56.0" y="215.0" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">5e−5</text><line x1="62.0" y1="187.7" x2="312.0" y2="187.7" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="56.0" y="191.7" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">1e−4</text><line x1="62.0" y1="164.4" x2="312.0" y2="164.4" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="56.0" y="168.4" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">2e−4</text><line x1="62.0" y1="133.6" x2="312.0" y2="133.6" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="56.0" y="137.6" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">5e−4</text><line x1="62.0" y1="110.3" x2="312.0" y2="110.3" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="56.0" y="114.3" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">1e−3</text><line x1="62.0" y1="86.9" x2="312.0" y2="86.9" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="56.0" y="90.9" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">2e−3</text><line x1="62.0" y1="56.1" x2="312.0" y2="56.1" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="56.0" y="60.1" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">5e−3</text><text x="76.0" y="250.0" text-anchor="middle" style="fill:var(--muted);font-size:10.5px;font-family:var(--font-mono)">N = 8</text><text x="298.0" y="250.0" text-anchor="middle" style="fill:var(--muted);font-size:10.5px;font-family:var(--font-mono)">N = 1024</text><line x1="62.0" y1="40.2" x2="312.0" y2="40.2" style="stroke:var(--ink2);stroke-width:1.3;stroke-dasharray:2 3"></line><text x="308.0" y="34.2" text-anchor="end" style="fill:var(--muted);font-size:10.5px">−λ(0)r</text><polyline points="76.0,116.2 107.7,82.1 139.4,57.6 171.1,48.3 202.9,44.1 234.6,42.1 266.3,41.2 298.0,40.7" style="fill:none;stroke:var(--adjoint);stroke-width:2.2;stroke-dasharray:6 4"></polyline><rect x="72.8" y="113.0" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="104.5" y="78.9" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="136.2" y="54.4" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="167.9" y="45.1" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="199.7" y="40.9" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="231.4" y="38.9" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="263.1" y="38.0" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="294.8" y="37.5" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><polyline points="76.0,58.8 107.7,82.1 139.4,107.3 171.1,132.3 202.9,156.7 234.6,180.7 266.3,204.3 298.0,227.8" style="fill:none;stroke:var(--tangent);stroke-width:2.2;stroke-dasharray:none"></polyline><circle cx="76.0" cy="58.8" r="3.4" style="fill:var(--tangent)"></circle><circle cx="107.7" cy="82.1" r="3.4" style="fill:var(--tangent)"></circle><circle cx="139.4" cy="107.3" r="3.4" style="fill:var(--tangent)"></circle><circle cx="171.1" cy="132.3" r="3.4" style="fill:var(--tangent)"></circle><circle cx="202.9" cy="156.7" r="3.4" style="fill:var(--tangent)"></circle><circle cx="234.6" cy="180.7" r="3.4" style="fill:var(--tangent)"></circle><circle cx="266.3" cy="204.3" r="3.4" style="fill:var(--tangent)"></circle><circle cx="298.0" cy="227.8" r="3.4" style="fill:var(--tangent)"></circle><text x="62.0" y="20.0" text-anchor="start" style="fill:var(--ink);font-size:11.5px;font-weight:600">|−ψ − λ|，入口旁第一个控制体</text><line x1="408.0" y1="199.8" x2="658.0" y2="199.8" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="402.0" y="203.8" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">1.0</text><line x1="408.0" y1="157.1" x2="658.0" y2="157.1" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="402.0" y="161.1" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">1.1</text><line x1="408.0" y1="114.4" x2="658.0" y2="114.4" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="402.0" y="118.4" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">1.2</text><line x1="408.0" y1="71.7" x2="658.0" y2="71.7" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="402.0" y="75.7" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">1.3</text><text x="422.0" y="250.0" text-anchor="middle" style="fill:var(--muted);font-size:10.5px;font-family:var(--font-mono)">N = 8</text><text x="644.0" y="250.0" text-anchor="middle" style="fill:var(--muted);font-size:10.5px;font-family:var(--font-mono)">N = 1024</text><line x1="408.0" y1="199.8" x2="658.0" y2="199.8" style="stroke:var(--ink2);stroke-width:1.3;stroke-dasharray:2 3"></line><text x="654.0" y="193.8" text-anchor="end" style="fill:var(--muted);font-size:10.5px">1</text><line x1="408.0" y1="71.7" x2="658.0" y2="71.7" style="stroke:var(--ink2);stroke-width:1.3;stroke-dasharray:2 3"></line><text x="654.0" y="65.7" text-anchor="end" style="fill:var(--muted);font-size:10.5px">1/(1−r)</text><polyline points="422.0,68.2 453.7,71.3 485.4,73.1 517.1,73.1 548.9,72.6 580.6,72.2 612.3,72.0 644.0,71.9" style="fill:none;stroke:var(--adjoint);stroke-width:2.2;stroke-dasharray:6 4"></polyline><rect x="418.8" y="65.0" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="450.5" y="68.1" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="482.2" y="69.9" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="513.9" y="69.9" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="545.7" y="69.4" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="577.4" y="69.0" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="609.1" y="68.8" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="640.8" y="68.7" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><polyline points="422.0,173.7 453.7,187.3 485.4,195.0 517.1,198.1 548.9,199.1 580.6,199.5 612.3,199.7 644.0,199.8" style="fill:none;stroke:var(--tangent);stroke-width:2.2;stroke-dasharray:none"></polyline><circle cx="422.0" cy="173.7" r="3.4" style="fill:var(--tangent)"></circle><circle cx="453.7" cy="187.3" r="3.4" style="fill:var(--tangent)"></circle><circle cx="485.4" cy="195.0" r="3.4" style="fill:var(--tangent)"></circle><circle cx="517.1" cy="198.1" r="3.4" style="fill:var(--tangent)"></circle><circle cx="548.9" cy="199.1" r="3.4" style="fill:var(--tangent)"></circle><circle cx="580.6" cy="199.5" r="3.4" style="fill:var(--tangent)"></circle><circle cx="612.3" cy="199.7" r="3.4" style="fill:var(--tangent)"></circle><circle cx="644.0" cy="199.8" r="3.4" style="fill:var(--tangent)"></circle><text x="408.0" y="20.0" text-anchor="start" style="fill:var(--ink);font-size:11.5px;font-weight:600">dJ/dσ₁：连续伴随给的值 / 离散伴随给的值</text><line x1="70.0" y1="286.0" x2="96.0" y2="286.0" style="stroke:var(--adjoint);stroke-width:2.2;stroke-dasharray:6 4"></line><text x="102.0" y="290.0" text-anchor="start" style="fill:var(--ink);font-size:11.5px">入口面用耗散通量（本页）</text><line x1="390.0" y1="286.0" x2="416.0" y2="286.0" style="stroke:var(--tangent);stroke-width:2.2;stroke-dasharray:none"></line><text x="422.0" y="290.0" text-anchor="start" style="fill:var(--ink);font-size:11.5px">入口面用迎风通量</text></svg><svg lang="en" viewBox="0 0 680 330" role="img" aria-label="What the inflow treatment does to the adjoint: the error in the first control volume (left), the continuous-to-discrete ratio of dJ/dσ₁ (right)" style="width:100%;height:auto"><defs><marker id="fig-cons-cell-en-primal" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" style="fill:var(--primal)"></path></marker><marker id="fig-cons-cell-en-tangent" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" style="fill:var(--tangent)"></path></marker><marker id="fig-cons-cell-en-adjoint" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" style="fill:var(--adjoint)"></path></marker><marker id="fig-cons-cell-en-amber" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" style="fill:var(--amber)"></path></marker><marker id="fig-cons-cell-en-violet" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" style="fill:var(--violet)"></path></marker><marker id="fig-cons-cell-en-ink" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" style="fill:var(--ink)"></path></marker><marker id="fig-cons-cell-en-muted" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" style="fill:var(--muted)"></path></marker></defs><line x1="62.0" y1="211.0" x2="312.0" y2="211.0" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="56.0" y="215.0" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">5e−5</text><line x1="62.0" y1="187.7" x2="312.0" y2="187.7" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="56.0" y="191.7" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">1e−4</text><line x1="62.0" y1="164.4" x2="312.0" y2="164.4" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="56.0" y="168.4" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">2e−4</text><line x1="62.0" y1="133.6" x2="312.0" y2="133.6" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="56.0" y="137.6" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">5e−4</text><line x1="62.0" y1="110.3" x2="312.0" y2="110.3" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="56.0" y="114.3" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">1e−3</text><line x1="62.0" y1="86.9" x2="312.0" y2="86.9" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="56.0" y="90.9" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">2e−3</text><line x1="62.0" y1="56.1" x2="312.0" y2="56.1" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="56.0" y="60.1" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">5e−3</text><text x="76.0" y="250.0" text-anchor="middle" style="fill:var(--muted);font-size:10.5px;font-family:var(--font-mono)">N = 8</text><text x="298.0" y="250.0" text-anchor="middle" style="fill:var(--muted);font-size:10.5px;font-family:var(--font-mono)">N = 1024</text><line x1="62.0" y1="40.2" x2="312.0" y2="40.2" style="stroke:var(--ink2);stroke-width:1.3;stroke-dasharray:2 3"></line><text x="308.0" y="34.2" text-anchor="end" style="fill:var(--muted);font-size:10.5px">−λ(0)r</text><polyline points="76.0,116.2 107.7,82.1 139.4,57.6 171.1,48.3 202.9,44.1 234.6,42.1 266.3,41.2 298.0,40.7" style="fill:none;stroke:var(--adjoint);stroke-width:2.2;stroke-dasharray:6 4"></polyline><rect x="72.8" y="113.0" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="104.5" y="78.9" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="136.2" y="54.4" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="167.9" y="45.1" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="199.7" y="40.9" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="231.4" y="38.9" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="263.1" y="38.0" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="294.8" y="37.5" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><polyline points="76.0,58.8 107.7,82.1 139.4,107.3 171.1,132.3 202.9,156.7 234.6,180.7 266.3,204.3 298.0,227.8" style="fill:none;stroke:var(--tangent);stroke-width:2.2;stroke-dasharray:none"></polyline><circle cx="76.0" cy="58.8" r="3.4" style="fill:var(--tangent)"></circle><circle cx="107.7" cy="82.1" r="3.4" style="fill:var(--tangent)"></circle><circle cx="139.4" cy="107.3" r="3.4" style="fill:var(--tangent)"></circle><circle cx="171.1" cy="132.3" r="3.4" style="fill:var(--tangent)"></circle><circle cx="202.9" cy="156.7" r="3.4" style="fill:var(--tangent)"></circle><circle cx="234.6" cy="180.7" r="3.4" style="fill:var(--tangent)"></circle><circle cx="266.3" cy="204.3" r="3.4" style="fill:var(--tangent)"></circle><circle cx="298.0" cy="227.8" r="3.4" style="fill:var(--tangent)"></circle><text x="62.0" y="20.0" text-anchor="start" style="fill:var(--ink);font-size:11.5px;font-weight:600">|−ψ − λ| in the first control volume</text><line x1="408.0" y1="199.8" x2="658.0" y2="199.8" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="402.0" y="203.8" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">1.0</text><line x1="408.0" y1="157.1" x2="658.0" y2="157.1" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="402.0" y="161.1" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">1.1</text><line x1="408.0" y1="114.4" x2="658.0" y2="114.4" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="402.0" y="118.4" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">1.2</text><line x1="408.0" y1="71.7" x2="658.0" y2="71.7" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="402.0" y="75.7" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">1.3</text><text x="422.0" y="250.0" text-anchor="middle" style="fill:var(--muted);font-size:10.5px;font-family:var(--font-mono)">N = 8</text><text x="644.0" y="250.0" text-anchor="middle" style="fill:var(--muted);font-size:10.5px;font-family:var(--font-mono)">N = 1024</text><line x1="408.0" y1="199.8" x2="658.0" y2="199.8" style="stroke:var(--ink2);stroke-width:1.3;stroke-dasharray:2 3"></line><text x="654.0" y="193.8" text-anchor="end" style="fill:var(--muted);font-size:10.5px">1</text><line x1="408.0" y1="71.7" x2="658.0" y2="71.7" style="stroke:var(--ink2);stroke-width:1.3;stroke-dasharray:2 3"></line><text x="654.0" y="65.7" text-anchor="end" style="fill:var(--muted);font-size:10.5px">1/(1−r)</text><polyline points="422.0,68.2 453.7,71.3 485.4,73.1 517.1,73.1 548.9,72.6 580.6,72.2 612.3,72.0 644.0,71.9" style="fill:none;stroke:var(--adjoint);stroke-width:2.2;stroke-dasharray:6 4"></polyline><rect x="418.8" y="65.0" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="450.5" y="68.1" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="482.2" y="69.9" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="513.9" y="69.9" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="545.7" y="69.4" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="577.4" y="69.0" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="609.1" y="68.8" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="640.8" y="68.7" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><polyline points="422.0,173.7 453.7,187.3 485.4,195.0 517.1,198.1 548.9,199.1 580.6,199.5 612.3,199.7 644.0,199.8" style="fill:none;stroke:var(--tangent);stroke-width:2.2;stroke-dasharray:none"></polyline><circle cx="422.0" cy="173.7" r="3.4" style="fill:var(--tangent)"></circle><circle cx="453.7" cy="187.3" r="3.4" style="fill:var(--tangent)"></circle><circle cx="485.4" cy="195.0" r="3.4" style="fill:var(--tangent)"></circle><circle cx="517.1" cy="198.1" r="3.4" style="fill:var(--tangent)"></circle><circle cx="548.9" cy="199.1" r="3.4" style="fill:var(--tangent)"></circle><circle cx="580.6" cy="199.5" r="3.4" style="fill:var(--tangent)"></circle><circle cx="612.3" cy="199.7" r="3.4" style="fill:var(--tangent)"></circle><circle cx="644.0" cy="199.8" r="3.4" style="fill:var(--tangent)"></circle><text x="408.0" y="20.0" text-anchor="start" style="fill:var(--ink);font-size:11.5px;font-weight:600">dJ/dσ₁: continuous-adjoint value / discrete-adjoint value</text><line x1="70.0" y1="286.0" x2="96.0" y2="286.0" style="stroke:var(--adjoint);stroke-width:2.2;stroke-dasharray:6 4"></line><text x="102.0" y="290.0" text-anchor="start" style="fill:var(--ink);font-size:11.5px">dissipative inflow face (this page)</text><line x1="390.0" y1="286.0" x2="416.0" y2="286.0" style="stroke:var(--tangent);stroke-width:2.2;stroke-dasharray:none"></line><text x="422.0" y="290.0" text-anchor="start" style="fill:var(--ink);font-size:11.5px">upwind inflow face</text></svg>
+    <figcaption lang="zh">左：入口旁第一个控制体里 <span class="eq">|−<i>ψ</i>−<i>λ</i>|</span> 随 <span class="eq"><i>N</i></span> 的变化；本页的入口趋于 <span class="nw"><span class="eq">−<i>λ</i>(<span class="dg">0</span>)<span class="spt"></span><i>r</i></span>，</span>迎风入口一阶下降。右：连续伴随与离散伴随给出的 <span class="eq">d<i>J</i>/d<i>σ</i><sub><span class="dg">1</span></sub></span> 之比，本页的入口趋于 <span class="nw"><span class="eq"><span class="dg">1</span>/(<span class="dg">1</span>−<i>r</i>)</span>，</span>迎风入口趋于 1。</figcaption><figcaption lang="en">Left: <span class="eq">|−<i>ψ</i>−<i>λ</i>|</span> in the first control volume against <span class="nw"><span class="eq"><i>N</i></span>;</span> with this page's inflow it tends to <span class="nw"><span class="eq">−<i>λ</i>(<span class="dg">0</span>)<span class="spt"></span><i>r</i></span>,</span> with the upwind inflow it falls at first order. Right: the ratio of the continuous to the discrete adjoint's <span class="nw"><span class="eq">d<i>J</i>/d<i>σ</i><sub><span class="dg">1</span></sub></span>,</span> which tends to <span class="eq"><span class="dg">1</span>/(<span class="dg">1</span>−<i>r</i>)</span> with this page's inflow and to 1 with the upwind one.</figcaption>
+  </figure>
+
+  <div class="prose">
+
+    <h3 lang="zh">伴随的第二个用途：估计 <span class="eq"><i>J</i></span> 的误差</h3><h3 lang="en">The adjoint's second job: estimating the error in <span class="eq"><i>J</i></span></h3>
+    <p lang="zh">把网格加密一倍，<span class="eq"><i>J</i></span> 会变多少？不必在细网格上求解。把粗网格的解 <span class="eq"><i>u</i><sub>N</sub></span> 线性插值到细网格上，记作 <span class="nw"><span class="eq"><i>P</i><i>u</i><sub>N</sub></span>；</span>它在细网格上的残差不为零。由 <span class="eq"><i>R</i><sub><span class="dg">2</span>N</sub>(<i>u</i><sub><span class="dg">2</span>N</sub>)=<span class="dg">0</span></span> 与 <span class="nw"><span class="eq"><i>A</i><sup>T</sup><i>ψ</i>=−<i>g</i></span>，</span>把 <span class="eq"><i>J</i></span> 在 <span class="eq"><i>P</i><i>u</i><sub>N</sub></span> 处线性化：</p><p lang="en">How much does <span class="eq"><i>J</i></span> change when the grid is refined once? There is no need to solve on the fine grid. Interpolate the coarse solution <span class="eq"><i>u</i><sub>N</sub></span> linearly onto it, <span class="nw"><span class="eq"><i>P</i><i>u</i><sub>N</sub></span>;</span> its residual on the fine grid is not zero. With <span class="eq"><i>R</i><sub><span class="dg">2</span>N</sub>(<i>u</i><sub><span class="dg">2</span>N</sub>)=<span class="dg">0</span></span> and <span class="nw"><span class="eq"><i>A</i><sup>T</sup><i>ψ</i>=−<i>g</i></span>,</span> linearise <span class="eq"><i>J</i></span> about <span class="nw"><span class="eq"><i>P</i><i>u</i><sub>N</sub></span>:</span></p>
+    <div class="eqwrap"><span class="eqd"><i>J</i><sub><span class="dg">2</span>N</sub>(<i>u</i><sub><span class="dg">2</span>N</sub>)<span class="op">≈</span><i>J</i><sub><span class="dg">2</span>N</sub>(<i>P</i><i>u</i><sub>N</sub>)+<i>ψ</i><sup>T</sup><i>R</i><sub><span class="dg">2</span>N</sub>(<i>P</i><i>u</i><sub>N</sub>)</span></div>
+    <div class="eqwrap"><span class="eqd"><i>η</i><sub>i</sub>=<i>ψ</i><sub>i</sub><span class="spt"></span><i>R</i><sub><span class="dg">2</span>N,i</sub>(<i>P</i><i>u</i><sub>N</sub>)</span></div>
+    <p lang="zh">剩下的是二次小量。<span class="eq"><i>η</i><sub>i</sub></span> 是每个控制体对 <span class="eq"><i>J</i></span> 误差的贡献，网格自适应就按它决定在哪里加密。理想的 <span class="eq"><i>ψ</i></span> 是细网格上的伴随；实际代码把粗网格的伴随插值上去<span class="nw">（<span class="eq"><i>Q</i><i>ψ</i><sub>N</sub></span>）</span>，便宜得多。<a class="fref" href="#fig-est"></a> 左是 <span class="eq"><i>N</i>=<span class="dg">16</span><span class="op">→</span><span class="dg">32</span></span> 的 <span class="nw"><span class="eq">|<i>η</i><sub>i</sub>|</span>：</span>两种入口下都是入口那个单元最大。那里两个面上的耗散项不能互相抵消，截断误差是 <span class="nw"><span class="eq"><i>O</i>(<i>Δ</i><i>x</i>)</span>，</span>内部只有 <span class="nw"><span class="eq"><i>O</i>(<i>Δ</i><i>x</i><sup><span class="dg">2</span></sup>)</span>。</span></p><p lang="en">What is left is quadratic. <span class="eq"><i>η</i><sub>i</sub></span> is each control volume's contribution to the error in <span class="nw"><span class="eq"><i>J</i></span>,</span> and mesh adaptation refines where it is large. The ideal <span class="eq"><i>ψ</i></span> is the fine-grid adjoint; a real code interpolates the coarse one instead <span class="nw">(<span class="eq"><i>Q</i><i>ψ</i><sub>N</sub></span>)</span>, which costs far less. <a class="fref" href="#fig-est"></a>, left, shows <span class="eq">|<i>η</i><sub>i</sub>|</span> for <span class="nw"><span class="eq"><i>N</i>=<span class="dg">16</span><span class="op">→</span><span class="dg">32</span></span>:</span> with either inflow the inflow cell carries the most. The dissipation on its two faces does not cancel there, so its truncation error is <span class="nw"><span class="eq"><i>O</i>(<i>Δ</i><i>x</i>)</span>,</span> against <span class="eq"><i>O</i>(<i>Δ</i><i>x</i><sup><span class="dg">2</span></sup>)</span> inside.</p>
+    
+  </div>
+
+  <figure id="fig-est">
+    <svg lang="zh" viewBox="0 0 680 330" role="img" aria-label="伴随加权残差：各控制体的贡献（左），估计的剩余误差随网格的变化（右）" style="width:100%;height:auto"><defs><marker id="fig-est-cell-primal" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" style="fill:var(--primal)"></path></marker><marker id="fig-est-cell-tangent" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" style="fill:var(--tangent)"></path></marker><marker id="fig-est-cell-adjoint" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" style="fill:var(--adjoint)"></path></marker><marker id="fig-est-cell-amber" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" style="fill:var(--amber)"></path></marker><marker id="fig-est-cell-violet" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" style="fill:var(--violet)"></path></marker><marker id="fig-est-cell-ink" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" style="fill:var(--ink)"></path></marker><marker id="fig-est-cell-muted" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" style="fill:var(--muted)"></path></marker></defs><line x1="62.0" y1="186.9" x2="312.0" y2="186.9" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="56.0" y="190.9" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">1e−6</text><line x1="62.0" y1="130.8" x2="312.0" y2="130.8" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="56.0" y="134.8" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">1e−5</text><line x1="62.0" y1="74.7" x2="312.0" y2="74.7" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="56.0" y="78.7" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">1e−4</text><text x="62.0" y="250.0" text-anchor="start" style="fill:var(--muted);font-size:10.5px">入口</text><text x="312.0" y="250.0" text-anchor="end" style="fill:var(--muted);font-size:10.5px">出口</text><circle cx="70.0" cy="47.5" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="77.5" cy="121.7" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="85.1" cy="143.5" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="92.6" cy="143.7" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="100.2" cy="142.8" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="107.7" cy="143.8" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="115.3" cy="143.3" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="122.8" cy="144.5" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="130.4" cy="144.2" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="137.9" cy="145.6" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="145.5" cy="145.5" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="153.0" cy="147.1" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="160.6" cy="147.2" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="168.1" cy="149.0" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="175.7" cy="149.5" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="183.2" cy="151.6" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="190.8" cy="152.4" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="198.3" cy="154.8" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="205.9" cy="156.0" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="213.4" cy="158.7" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="221.0" cy="160.4" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="228.5" cy="163.6" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="236.1" cy="165.8" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="243.6" cy="169.5" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="251.2" cy="172.4" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="258.7" cy="176.4" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="266.3" cy="180.3" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="273.8" cy="178.4" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="281.4" cy="184.5" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="288.9" cy="150.2" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="296.5" cy="143.2" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="304.0" cy="228.0" r="3.2" style="fill:var(--adjoint)"></circle><rect x="67.4" y="35.9" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="74.9" y="117.7" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="82.5" y="141.7" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="90.0" y="143.1" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="97.6" y="142.4" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="105.1" y="143.6" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="112.7" y="143.0" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="120.2" y="144.2" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="127.8" y="143.7" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="135.3" y="145.0" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="142.9" y="144.8" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="150.4" y="146.3" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="158.0" y="146.4" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="165.5" y="148.2" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="173.1" y="148.6" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="180.6" y="150.6" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="188.2" y="151.4" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="195.7" y="153.7" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="203.3" y="154.9" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="210.8" y="157.6" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="218.4" y="159.3" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="225.9" y="162.4" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="233.5" y="164.6" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="241.0" y="168.4" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="248.6" y="171.3" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="256.1" y="175.3" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="263.7" y="179.2" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="271.2" y="177.7" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="278.8" y="183.8" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="286.3" y="149.6" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="293.9" y="142.7" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="301.4" y="226.9" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><text x="62.0" y="20.0" text-anchor="start" style="fill:var(--ink);font-size:11.5px;font-weight:600"><tspan>|η</tspan><tspan font-size="74%" dy="0.42em">i</tspan><tspan dy="-0.31em">|：32 个控制体，由 16 个控制体的解算出</tspan></text><line x1="408.0" y1="233.2" x2="658.0" y2="233.2" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="402.0" y="237.2" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">1e−8</text><line x1="408.0" y1="186.6" x2="658.0" y2="186.6" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="402.0" y="190.6" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">1e−7</text><line x1="408.0" y1="140.1" x2="658.0" y2="140.1" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="402.0" y="144.1" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">1e−6</text><line x1="408.0" y1="93.5" x2="658.0" y2="93.5" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="402.0" y="97.5" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">1e−5</text><line x1="408.0" y1="47.0" x2="658.0" y2="47.0" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="402.0" y="51.0" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">1e−4</text><text x="422.0" y="250.0" text-anchor="middle" style="fill:var(--muted);font-size:10.5px;font-family:var(--font-mono)">N = 8</text><text x="644.0" y="250.0" text-anchor="middle" style="fill:var(--muted);font-size:10.5px;font-family:var(--font-mono)">N = 512</text><polyline points="422.0,40.3 459.0,40.1 496.0,49.0 533.0,60.8 570.0,73.9 607.0,87.4 644.0,101.2" style="fill:none;stroke:var(--ink);stroke-width:2.2;stroke-dasharray:none"></polyline><circle cx="422.0" cy="40.3" r="3.4" style="fill:var(--ink)"></circle><circle cx="459.0" cy="40.1" r="3.4" style="fill:var(--ink)"></circle><circle cx="496.0" cy="49.0" r="3.4" style="fill:var(--ink)"></circle><circle cx="533.0" cy="60.8" r="3.4" style="fill:var(--ink)"></circle><circle cx="570.0" cy="73.9" r="3.4" style="fill:var(--ink)"></circle><circle cx="607.0" cy="87.4" r="3.4" style="fill:var(--ink)"></circle><circle cx="644.0" cy="101.2" r="3.4" style="fill:var(--ink)"></circle><polyline points="422.0,58.5 459.0,89.5 496.0,170.4 533.0,128.8 570.0,133.3 607.0,143.7 644.0,156.0" style="fill:none;stroke:var(--adjoint);stroke-width:2.2;stroke-dasharray:6 4"></polyline><rect x="418.8" y="55.3" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="455.8" y="86.3" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="492.8" y="167.2" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="529.8" y="125.6" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="566.8" y="130.1" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="603.8" y="140.5" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="640.8" y="152.8" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><polyline points="422.0,37.7 459.0,64.1 496.0,91.3 533.0,118.9 570.0,146.7 607.0,174.7 644.0,202.6" style="fill:none;stroke:var(--tangent);stroke-width:2.2;stroke-dasharray:none"></polyline><circle cx="422.0" cy="37.7" r="3.4" style="fill:var(--tangent)"></circle><circle cx="459.0" cy="64.1" r="3.4" style="fill:var(--tangent)"></circle><circle cx="496.0" cy="91.3" r="3.4" style="fill:var(--tangent)"></circle><circle cx="533.0" cy="118.9" r="3.4" style="fill:var(--tangent)"></circle><circle cx="570.0" cy="146.7" r="3.4" style="fill:var(--tangent)"></circle><circle cx="607.0" cy="174.7" r="3.4" style="fill:var(--tangent)"></circle><circle cx="644.0" cy="202.6" r="3.4" style="fill:var(--tangent)"></circle><polyline points="422.0,63.5 459.0,90.8 496.0,118.5 533.0,146.4 570.0,174.3 607.0,202.3 644.0,230.3" style="fill:none;stroke:var(--violet);stroke-width:2.2;stroke-dasharray:2 3"></polyline><circle cx="422.0" cy="63.5" r="3.4" style="fill:var(--violet)"></circle><circle cx="459.0" cy="90.8" r="3.4" style="fill:var(--violet)"></circle><circle cx="496.0" cy="118.5" r="3.4" style="fill:var(--violet)"></circle><circle cx="533.0" cy="146.4" r="3.4" style="fill:var(--violet)"></circle><circle cx="570.0" cy="174.3" r="3.4" style="fill:var(--violet)"></circle><circle cx="607.0" cy="202.3" r="3.4" style="fill:var(--violet)"></circle><circle cx="644.0" cy="230.3" r="3.4" style="fill:var(--violet)"></circle><text x="408.0" y="20.0" text-anchor="start" style="fill:var(--ink);font-size:11.5px;font-weight:600">与 2N 个控制体上的 J 之差</text><line x1="70.0" y1="278.0" x2="96.0" y2="278.0" style="stroke:var(--ink);stroke-width:2.2;stroke-dasharray:none"></line><text x="102.0" y="282.0" text-anchor="start" style="fill:var(--ink);font-size:11.5px"><tspan>J</tspan><tspan font-size="74%" dy="0.42em">N</tspan><tspan dy="-0.31em"> 本身（不校正）</tspan></text><line x1="70.0" y1="302.0" x2="96.0" y2="302.0" style="stroke:var(--violet);stroke-width:2.2;stroke-dasharray:2 3"></line><text x="102.0" y="306.0" text-anchor="start" style="fill:var(--ink);font-size:11.5px">校正，细网格伴随（本页入口）</text><line x1="390.0" y1="278.0" x2="416.0" y2="278.0" style="stroke:var(--adjoint);stroke-width:2.2;stroke-dasharray:6 4"></line><text x="422.0" y="282.0" text-anchor="start" style="fill:var(--ink);font-size:11.5px">校正，粗网格伴随，本页入口</text><line x1="390.0" y1="302.0" x2="416.0" y2="302.0" style="stroke:var(--tangent);stroke-width:2.2;stroke-dasharray:none"></line><text x="422.0" y="306.0" text-anchor="start" style="fill:var(--ink);font-size:11.5px">校正，粗网格伴随，迎风入口</text></svg><svg lang="en" viewBox="0 0 680 330" role="img" aria-label="The adjoint-weighted residual: the contribution of each control volume (left), the error left in the estimate under refinement (right)" style="width:100%;height:auto"><defs><marker id="fig-est-cell-en-primal" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" style="fill:var(--primal)"></path></marker><marker id="fig-est-cell-en-tangent" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" style="fill:var(--tangent)"></path></marker><marker id="fig-est-cell-en-adjoint" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" style="fill:var(--adjoint)"></path></marker><marker id="fig-est-cell-en-amber" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" style="fill:var(--amber)"></path></marker><marker id="fig-est-cell-en-violet" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" style="fill:var(--violet)"></path></marker><marker id="fig-est-cell-en-ink" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" style="fill:var(--ink)"></path></marker><marker id="fig-est-cell-en-muted" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" style="fill:var(--muted)"></path></marker></defs><line x1="62.0" y1="186.9" x2="312.0" y2="186.9" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="56.0" y="190.9" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">1e−6</text><line x1="62.0" y1="130.8" x2="312.0" y2="130.8" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="56.0" y="134.8" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">1e−5</text><line x1="62.0" y1="74.7" x2="312.0" y2="74.7" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="56.0" y="78.7" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">1e−4</text><text x="62.0" y="250.0" text-anchor="start" style="fill:var(--muted);font-size:10.5px">inflow</text><text x="312.0" y="250.0" text-anchor="end" style="fill:var(--muted);font-size:10.5px">outflow</text><circle cx="70.0" cy="47.5" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="77.5" cy="121.7" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="85.1" cy="143.5" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="92.6" cy="143.7" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="100.2" cy="142.8" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="107.7" cy="143.8" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="115.3" cy="143.3" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="122.8" cy="144.5" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="130.4" cy="144.2" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="137.9" cy="145.6" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="145.5" cy="145.5" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="153.0" cy="147.1" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="160.6" cy="147.2" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="168.1" cy="149.0" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="175.7" cy="149.5" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="183.2" cy="151.6" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="190.8" cy="152.4" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="198.3" cy="154.8" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="205.9" cy="156.0" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="213.4" cy="158.7" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="221.0" cy="160.4" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="228.5" cy="163.6" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="236.1" cy="165.8" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="243.6" cy="169.5" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="251.2" cy="172.4" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="258.7" cy="176.4" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="266.3" cy="180.3" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="273.8" cy="178.4" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="281.4" cy="184.5" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="288.9" cy="150.2" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="296.5" cy="143.2" r="3.2" style="fill:var(--adjoint)"></circle><circle cx="304.0" cy="228.0" r="3.2" style="fill:var(--adjoint)"></circle><rect x="67.4" y="35.9" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="74.9" y="117.7" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="82.5" y="141.7" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="90.0" y="143.1" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="97.6" y="142.4" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="105.1" y="143.6" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="112.7" y="143.0" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="120.2" y="144.2" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="127.8" y="143.7" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="135.3" y="145.0" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="142.9" y="144.8" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="150.4" y="146.3" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="158.0" y="146.4" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="165.5" y="148.2" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="173.1" y="148.6" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="180.6" y="150.6" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="188.2" y="151.4" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="195.7" y="153.7" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="203.3" y="154.9" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="210.8" y="157.6" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="218.4" y="159.3" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="225.9" y="162.4" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="233.5" y="164.6" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="241.0" y="168.4" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="248.6" y="171.3" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="256.1" y="175.3" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="263.7" y="179.2" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="271.2" y="177.7" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="278.8" y="183.8" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="286.3" y="149.6" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="293.9" y="142.7" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><rect x="301.4" y="226.9" width="5.2" height="5.2" style="fill:var(--tangent)"></rect><text x="62.0" y="20.0" text-anchor="start" style="fill:var(--ink);font-size:11.5px;font-weight:600"><tspan>|η</tspan><tspan font-size="74%" dy="0.42em">i</tspan><tspan dy="-0.31em">| on 32 volumes, from the 16-volume solution</tspan></text><line x1="408.0" y1="233.2" x2="658.0" y2="233.2" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="402.0" y="237.2" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">1e−8</text><line x1="408.0" y1="186.6" x2="658.0" y2="186.6" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="402.0" y="190.6" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">1e−7</text><line x1="408.0" y1="140.1" x2="658.0" y2="140.1" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="402.0" y="144.1" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">1e−6</text><line x1="408.0" y1="93.5" x2="658.0" y2="93.5" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="402.0" y="97.5" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">1e−5</text><line x1="408.0" y1="47.0" x2="658.0" y2="47.0" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:3 3"></line><text x="402.0" y="51.0" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--font-mono)">1e−4</text><text x="422.0" y="250.0" text-anchor="middle" style="fill:var(--muted);font-size:10.5px;font-family:var(--font-mono)">N = 8</text><text x="644.0" y="250.0" text-anchor="middle" style="fill:var(--muted);font-size:10.5px;font-family:var(--font-mono)">N = 512</text><polyline points="422.0,40.3 459.0,40.1 496.0,49.0 533.0,60.8 570.0,73.9 607.0,87.4 644.0,101.2" style="fill:none;stroke:var(--ink);stroke-width:2.2;stroke-dasharray:none"></polyline><circle cx="422.0" cy="40.3" r="3.4" style="fill:var(--ink)"></circle><circle cx="459.0" cy="40.1" r="3.4" style="fill:var(--ink)"></circle><circle cx="496.0" cy="49.0" r="3.4" style="fill:var(--ink)"></circle><circle cx="533.0" cy="60.8" r="3.4" style="fill:var(--ink)"></circle><circle cx="570.0" cy="73.9" r="3.4" style="fill:var(--ink)"></circle><circle cx="607.0" cy="87.4" r="3.4" style="fill:var(--ink)"></circle><circle cx="644.0" cy="101.2" r="3.4" style="fill:var(--ink)"></circle><polyline points="422.0,58.5 459.0,89.5 496.0,170.4 533.0,128.8 570.0,133.3 607.0,143.7 644.0,156.0" style="fill:none;stroke:var(--adjoint);stroke-width:2.2;stroke-dasharray:6 4"></polyline><rect x="418.8" y="55.3" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="455.8" y="86.3" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="492.8" y="167.2" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="529.8" y="125.6" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="566.8" y="130.1" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="603.8" y="140.5" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><rect x="640.8" y="152.8" width="6.4" height="6.4" style="fill:var(--adjoint)"></rect><polyline points="422.0,37.7 459.0,64.1 496.0,91.3 533.0,118.9 570.0,146.7 607.0,174.7 644.0,202.6" style="fill:none;stroke:var(--tangent);stroke-width:2.2;stroke-dasharray:none"></polyline><circle cx="422.0" cy="37.7" r="3.4" style="fill:var(--tangent)"></circle><circle cx="459.0" cy="64.1" r="3.4" style="fill:var(--tangent)"></circle><circle cx="496.0" cy="91.3" r="3.4" style="fill:var(--tangent)"></circle><circle cx="533.0" cy="118.9" r="3.4" style="fill:var(--tangent)"></circle><circle cx="570.0" cy="146.7" r="3.4" style="fill:var(--tangent)"></circle><circle cx="607.0" cy="174.7" r="3.4" style="fill:var(--tangent)"></circle><circle cx="644.0" cy="202.6" r="3.4" style="fill:var(--tangent)"></circle><polyline points="422.0,63.5 459.0,90.8 496.0,118.5 533.0,146.4 570.0,174.3 607.0,202.3 644.0,230.3" style="fill:none;stroke:var(--violet);stroke-width:2.2;stroke-dasharray:2 3"></polyline><circle cx="422.0" cy="63.5" r="3.4" style="fill:var(--violet)"></circle><circle cx="459.0" cy="90.8" r="3.4" style="fill:var(--violet)"></circle><circle cx="496.0" cy="118.5" r="3.4" style="fill:var(--violet)"></circle><circle cx="533.0" cy="146.4" r="3.4" style="fill:var(--violet)"></circle><circle cx="570.0" cy="174.3" r="3.4" style="fill:var(--violet)"></circle><circle cx="607.0" cy="202.3" r="3.4" style="fill:var(--violet)"></circle><circle cx="644.0" cy="230.3" r="3.4" style="fill:var(--violet)"></circle><text x="408.0" y="20.0" text-anchor="start" style="fill:var(--ink);font-size:11.5px;font-weight:600">difference from J on 2N volumes</text><line x1="70.0" y1="278.0" x2="96.0" y2="278.0" style="stroke:var(--ink);stroke-width:2.2;stroke-dasharray:none"></line><text x="102.0" y="282.0" text-anchor="start" style="fill:var(--ink);font-size:11.5px"><tspan>J</tspan><tspan font-size="74%" dy="0.42em">N</tspan><tspan dy="-0.31em"> itself (uncorrected)</tspan></text><line x1="70.0" y1="302.0" x2="96.0" y2="302.0" style="stroke:var(--violet);stroke-width:2.2;stroke-dasharray:2 3"></line><text x="102.0" y="306.0" text-anchor="start" style="fill:var(--ink);font-size:11.5px">corrected, fine-grid adjoint (this page's inflow)</text><line x1="390.0" y1="278.0" x2="416.0" y2="278.0" style="stroke:var(--adjoint);stroke-width:2.2;stroke-dasharray:6 4"></line><text x="422.0" y="282.0" text-anchor="start" style="fill:var(--ink);font-size:11.5px">corrected, coarse adjoint, this page's inflow</text><line x1="390.0" y1="302.0" x2="416.0" y2="302.0" style="stroke:var(--tangent);stroke-width:2.2;stroke-dasharray:none"></line><text x="422.0" y="306.0" text-anchor="start" style="fill:var(--ink);font-size:11.5px">corrected, coarse adjoint, upwind inflow</text></svg>
+    <figcaption lang="zh">左：各控制体的贡献 <span class="eq">|<i>η</i><sub>i</sub>|</span>（由 16 个控制体的解估计 32 个控制体上的 <span class="nw"><span class="eq"><i>J</i></span>）</span>。右：<span class="eq"><i>J</i><sub><span class="dg">2</span>N</sub></span> 与 <span class="eq"><i>J</i><sub>N</sub></span> 之差，以及三种校正之后剩下的误差。</figcaption><figcaption lang="en">Left: the contribution <span class="eq">|<i>η</i><sub>i</sub>|</span> of each control volume (the 16-volume solution estimating <span class="eq"><i>J</i></span> on 32 volumes). Right: the difference between <span class="eq"><i>J</i><sub><span class="dg">2</span>N</sub></span> and <span class="nw"><span class="eq"><i>J</i><sub>N</sub></span>,</span> and the error left after three corrections.</figcaption>
+  </figure>
+
+  <div class="prose">
+
+    <div class="scrollx"><table class="ordtab"><thead><tr><th>N</th><th>J<sub>2N</sub> − J<sub>N</sub></th><th>p</th><th lang="zh">剩余误差，本页入口</th><th lang="en">error left, this page’s inflow</th><th>p</th><th lang="zh">剩余误差，迎风入口</th><th lang="en">error left, upwind inflow</th><th>p</th></tr></thead><tbody><tr><td>8</td><td class="num">−1.39e−4</td><td class="ord">—</td><td class="num">−5.65e−5</td><td class="ord">—</td><td class="num">−1.58e−4</td><td class="ord">—</td></tr><tr><td>16</td><td class="num">−1.41e−4</td><td class="ord">-0.01</td><td class="num">−1.22e−5</td><td class="ord">2.21</td><td class="num">−4.29e−5</td><td class="ord">1.88</td></tr><tr><td>32</td><td class="num">−9.06e−5</td><td class="ord">0.63</td><td class="num">−2.23e−7</td><td class="ord">5.77</td><td class="num">−1.12e−5</td><td class="ord">1.94</td></tr><tr><td>64</td><td class="num">−5.04e−5</td><td class="ord">0.85</td><td class="num">1.75e−6</td><td class="ord">-2.97</td><td class="num">−2.85e−6</td><td class="ord">1.97</td></tr><tr><td>128</td><td class="num">−2.64e−5</td><td class="ord">0.93</td><td class="num">1.40e−6</td><td class="ord">0.32</td><td class="num">−7.19e−7</td><td class="ord">1.99</td></tr><tr><td>256</td><td class="num">−1.35e−5</td><td class="ord">0.97</td><td class="num">8.36e−7</td><td class="ord">0.74</td><td class="num">−1.81e−7</td><td class="ord">1.99</td></tr><tr><td>512</td><td class="num">−6.83e−6</td><td class="ord">0.98</td><td class="num">4.54e−7</td><td class="ord">0.88</td><td class="num">−4.53e−8</td><td class="ord">2.00</td></tr></tbody></table></div>
+    <p lang="zh"><span class="eq"><i>J</i><sub>N</sub></span> 与 <span class="eq"><i>J</i><sub><span class="dg">2</span>N</sub></span> 差 6.83e−6<span class="nw">（<span class="eq"><i>N</i>=<span class="dg">512</span></span>）</span>，一阶。用细网格伴随校正以后只剩 1.15e−8，二阶。用粗网格伴随：迎风入口时也是二阶（4.53e−8，最后一层的阶 2.00），本页的入口却只有一阶（4.54e−7，最后一层的阶 0.88）。原因还是那层边界层：入口单元的残差是 <span class="nw"><span class="eq"><i>O</i>(<i>Δ</i><i>x</i>)</span>，</span>而粗网格伴随在最前面几个单元里差一个不随网格消失的量（边界层按粗网格的宽度插值过来），乘起来是 <span class="nw"><span class="eq"><i>O</i>(<i>Δ</i><i>x</i>)</span>。</span></p><p lang="en"><span class="eq"><i>J</i><sub>N</sub></span> and <span class="eq"><i>J</i><sub><span class="dg">2</span>N</sub></span> differ by 6.83e−6 at <span class="nw"><span class="eq"><i>N</i>=<span class="dg">512</span></span>:</span> first order. Corrected with the fine-grid adjoint, 1.15e−8 is left: second order. With the coarse adjoint the upwind inflow is second order too (4.53e−8, order 2.00 at the last level), but this page's inflow is only first order (4.54e−7, order 0.88). The cause is the boundary layer again: the inflow cell's residual is <span class="nw"><span class="eq"><i>O</i>(<i>Δ</i><i>x</i>)</span>,</span> and in the first cells the coarse adjoint is off by an amount that does not vanish with the grid (the layer, interpolated at the coarse width), so the product is <span class="nw"><span class="eq"><i>O</i>(<i>Δ</i><i>x</i>)</span>.</span></p>
+    <p lang="zh">伴随一致性不是为了求梯度：第 12 节验证过，不论入口怎么处理，离散伴随给的都是离散 <span class="eq"><i>J</i></span> 的精确梯度。它关系到离散伴随能不能近似连续伴随，也就决定了连续伴随的梯度与伴随的误差估计是否可信。</p><p lang="en">Dual consistency is not what the gradient needs: Section 12 verified that whatever the inflow does, the discrete adjoint gives the exact gradient of the discrete <span class="nw"><span class="eq"><i>J</i></span>.</span> It decides whether the discrete adjoint approximates the continuous one, and with that whether a continuous adjoint's gradient and an adjoint-based error estimate can be trusted.</p>
+  </div>
+</section>
+
+<!-- ============================================================ 15 -->
+<section class="sec" id="s15">
+  <div class="prose">
+    <div lang="zh" class="secnum">第 15 节</div><div class="secnum" lang="en">Section 15</div>
 <h2 lang="zh">总结</h2><h2 lang="en">Summary</h2>
       </div>
   <div class="tablewrap">
@@ -869,14 +943,16 @@ table.lsqtab td { padding-right: 8px; }
       <li><b>前向与伴随是同一个循环</b>：前向把每一句换成它的导数；伴随把每个面的贡献转置，收集与分发对调，数据倒着流。谁都不形成矩阵。</li>
       <li><b>边界条件</b>：格心页的入口在通量里弱加；伴随里 ghost 状态的那一份丢掉。</li>
       <li><b>一次伴随求解给出全部梯度</b>：前向每个设计变量解一次，伴随只解一次，代价与设计变量个数无关。</li>
-      <li><b>检验</b>：点积测试检验转置，已知最优点上的零梯度与有限差分检验梯度；精确解检验格式的阶。</li>
+      <li><b>检验</b>：点积测试检验转置；已知最优点上的零梯度、有限差分与复步长检验梯度。转置错误点积测试抓得到，导数、求解与组装的错误只有梯度检验抓得到，两个都要做。精确解检验格式的阶。</li>
+      <li><b>伴随一致性</b>：入口面的耗散让离散伴随在第一个控制体里偏离连续伴随；换成迎风通量，偏差随网格消失。它不影响梯度对离散 <span class="eq"><i>J</i></span> 的正确性，但决定连续伴随的梯度与伴随的误差估计是否可信。</li>
     </ul>
     <ul lang="en">
       <li><b>The one-dimensional flux is the core</b>: the residual is "on every face, gather the two states, call the one-dimensional flux once, add on the left and subtract on the right", less the source.</li>
       <li><b>Forward and adjoint are the same loop</b>: forward mode replaces each statement by its derivative; adjoint mode transposes each face's contribution, swapping gather and scatter and running the data backwards. Neither forms a matrix.</li>
       <li><b>Boundary conditions</b>: on the cell-centred page the inflow is imposed weakly, in the flux; in the adjoint the ghost state's share is dropped.</li>
       <li><b>One adjoint solve gives the whole gradient</b>: forward mode needs one solve per design variable, adjoint mode one in all, whatever the number of design variables.</li>
-      <li><b>Checks</b>: the dot-product test checks the transpose, the zero gradient at a known optimum and finite differences check the gradient, and the exact solution checks the order of the scheme.</li>
+      <li><b>Checks</b>: the dot-product test checks the transpose; the zero gradient at a known optimum, finite differences and the complex step check the gradient. The dot test catches transposition errors, and only the gradient check catches wrong derivatives, loose solves and assembly errors, so both are needed. The exact solution checks the order of the scheme.</li>
+      <li><b>Adjoint consistency</b>: the dissipation on the inflow face pulls the discrete adjoint away from the continuous one in the first control volume; with the upwind flux the gap vanishes with the grid. The gradient of the discrete <span class="eq"><i>J</i></span> is exact either way, but whether a continuous adjoint's gradient and an adjoint-based error estimate can be trusted depends on it.</li>
     </ul>
     <p lang="zh">下一步：<a href="adjoint_cell.html">二维对流页</a>是同一个循环，只是面换成了非结构网格上的面、法向不再是 1；<a href="adjoint_ad_cell.html">二维对流扩散页</a>再加一个扩散项；<a href="adjoint_q1d_cell.html">拟一维 Euler 页</a>把标量换成方程组。</p><p lang="en">Where to go next: the <a href="adjoint_cell.html">two-dimensional advection page</a> runs the same loop over the faces of an unstructured mesh, where the normal is no longer 1; the <a href="adjoint_ad_cell.html">advection–diffusion page</a> adds a diffusion term; the <a href="adjoint_q1d_cell.html">quasi-one-dimensional Euler page</a> replaces the scalar by a system.</p>
     <p lang="zh" class="note">交互面板里的数字在页面加载时由页面自己的脚本现场计算；正文、表格与静态图里引用的数值事先用同一份模型代码算出。</p><p lang="en" class="note">The numbers in the interactive panels are computed live by the page's own scripts as it loads; the values quoted in the text, the tables and the static figures were computed in advance from the same model code.</p>
@@ -1046,7 +1122,14 @@ if (!Element.prototype.replaceChildren) {
    (the interval averages of sin(pi x)); the current design is sigma = 0.5.
 
    Every linear and nonlinear solve is a Jacobi iteration on the diagonal
-   of the Jacobian: no matrix is inverted anywhere.                        */
+   of the Jacobian: no matrix is inverted anywhere.
+
+   Option (Section 14): make(scheme, n, { inflow: "upwind" }) gives the face
+   next to the inflow the upwind flux 1/2 uL^2 (cell: the inflow face, whose
+   left state is u_in; node: the first dual face, whose left state is the
+   imposed u_0). That face then no longer depends on the first unknown, the
+   adjoint loses its spurious boundary layer, and the scheme becomes dual
+   consistent at the inflow. The default, "dissipative", is the page's.   */
 (function () {
   "use strict";
   const TR = (zh, en) => (typeof window !== "undefined" && window.t ? window.t(zh, en) : zh);
@@ -1078,9 +1161,12 @@ if (!Element.prototype.replaceChildren) {
   }
 
   /* ================================================================ make */
-  function make(scheme, nIn) {
+  function make(scheme, nIn, opts) {
     const NODE = scheme === "node";
     const n = nIn || N0;
+    const INFLOW = (opts && opts.inflow) || "dissipative";
+    if (INFLOW !== "dissipative" && INFLOW !== "upwind") throw new Error("make: inflow must be dissipative or upwind");
+    const UPWIND = INFLOW === "upwind";
     const dx = 1 / n;
     const NU = NODE ? n + 1 : n;                    // number of unknowns
     /* the points where the unknowns live, and the control-volume lengths */
@@ -1089,7 +1175,7 @@ if (!Element.prototype.replaceChildren) {
     /* faces, in loop order. L and R are 0-based unknown indices (-1: none) */
     const faces = [];
     if (NODE) {
-      for (let j = 0; j < n; j++) faces.push({ kind: "interior", L: j, R: j + 1, x: (j + 0.5) * dx });
+      for (let j = 0; j < n; j++) faces.push({ kind: "interior", L: j, R: j + 1, x: (j + 0.5) * dx, first: j === 0 });
       faces.push({ kind: "outflow", L: n, R: -1, x: 1 });
     } else {
       faces.push({ kind: "inflow", L: -1, R: 0, x: 0 });
@@ -1108,11 +1194,17 @@ if (!Element.prototype.replaceChildren) {
     const dSdSigma = (i, k) => (NODE ? ((k === i - 1 || k === i) ? 0.5 * dx : 0) : (i === k ? dx : 0));
 
     /* the local state of one face at state u: left and right values, the
-       flux and the two derivatives that land in A */
+       flux and the two derivatives that land in A (cin: dh/du_in on the
+       cell page's inflow face, where the left state is the ghost u_in) */
     function local(u, f) {
       if (f.kind === "inflow") {                   // cell page: ghost u_in on the left
         const uL = uin, uR = u[f.R];
-        return { uL, uR, h: flux(uL, uR), cL: 0, cR: cRof(uR), cLs: cLof(uL), cRs: cRof(uR), mode: "inflow" };
+        if (UPWIND) return { uL, uR, h: 0.5 * uL * uL, cL: 0, cR: 0, cin: uL, cLs: uL, cRs: 0, mode: "inflow" };
+        return { uL, uR, h: flux(uL, uR), cL: 0, cR: cRof(uR), cin: cLof(uL), cLs: cLof(uL), cRs: cRof(uR), mode: "inflow" };
+      }
+      if (UPWIND && f.first) {                     // node page, option: the first dual face upwind
+        const uL = u[f.L], uR = u[f.R];
+        return { uL, uR, h: 0.5 * uL * uL, cL: uL, cR: 0, cLs: uL, cRs: 0, mode: "interior" };
       }
       if (f.kind === "outflow") {                  // cell: uR = uL; node: the physical flux; both 1/2 u^2
         const uL = u[f.L];
@@ -1238,7 +1330,7 @@ if (!Element.prototype.replaceChildren) {
       } else if (NODE) {                            // u_in: only the replaced row, u_0 - u_in
         c[0] = -1;
       } else {                                      // u_in: the ghost state of face 0, -dh_0/du_in in row 1
-        c[0] = -cLof(uin);
+        c[0] = -local(u, faces[0]).cin;
       }
       return c;
     }
@@ -1397,18 +1489,218 @@ if (!Element.prototype.replaceChildren) {
       return acc;
     }
 
+    /* ---- the complex step (Section 12): the whole primal solve in complex
+       arithmetic, the design component m moved by i*hc. Im J / hc is dJ/dp_m
+       with no subtraction, so no cancellation: hc = 1e-30 is fine. The
+       imaginary part of the Jacobi iterate is the tangent Jacobi iterate. */
+    function complexStep(p, m, hc) {
+      const sr = p.slice(0, n), si = zeros(n);
+      const uinC = [p[n], 0];
+      if (m < n) si[m] = hc; else uinC[1] = hc;
+      const Sr = NODE ? X.map((_, j) => 0.5 * dx * ((j >= 1 ? sr[j - 1] : 0) + (j < n ? sr[j] : 0))) : sr.map(v => v * dx);
+      const Si = NODE ? X.map((_, j) => 0.5 * dx * ((j >= 1 ? si[j - 1] : 0) + (j < n ? si[j] : 0))) : si.map(v => v * dx);
+      const sq = (a, b) => [a * a - b * b, 2 * a * b];
+      /* one face: the flux and the two local derivatives, all complex */
+      function cface(ur, ui, f) {
+        let L, R;
+        if (f.kind === "inflow") { L = uinC; R = [ur[f.R], ui[f.R]]; }
+        else if (f.kind === "outflow") { L = [ur[f.L], ui[f.L]]; R = L; }
+        else { L = [ur[f.L], ui[f.L]]; R = [ur[f.R], ui[f.R]]; }
+        const L2 = sq(L[0], L[1]), R2 = sq(R[0], R[1]);
+        if (f.kind === "outflow") return { h: [0.5 * L2[0], 0.5 * L2[1]], cL: L, cR: [0, 0] };
+        if (UPWIND && (f.kind === "inflow" || f.first)) return { h: [0.5 * L2[0], 0.5 * L2[1]], cL: f.kind === "inflow" ? [0, 0] : L, cR: [0, 0] };
+        const h = [0.25 * (L2[0] + R2[0]) - EPS * (R[0] - L[0]), 0.25 * (L2[1] + R2[1]) - EPS * (R[1] - L[1])];
+        return { h, cL: f.kind === "inflow" ? [0, 0] : [0.5 * L[0] + EPS, 0.5 * L[1]], cR: [0.5 * R[0] - EPS, 0.5 * R[1]] };
+      }
+      let ur = new Array(NU).fill(uinC[0]), ui = new Array(NU).fill(uinC[1]);
+      let hit = -1;
+      for (let k = 0; ; k++) {
+        const rr = zeros(NU), ri = zeros(NU), dr = zeros(NU), di = zeros(NU);
+        for (const f of faces) {
+          const q = cface(ur, ui, f);
+          if (f.L >= 0) { rr[f.L] += q.h[0]; ri[f.L] += q.h[1]; dr[f.L] += q.cL[0]; di[f.L] += q.cL[1]; }
+          if (f.R >= 0) { rr[f.R] -= q.h[0]; ri[f.R] -= q.h[1]; dr[f.R] -= q.cR[0]; di[f.R] -= q.cR[1]; }
+        }
+        for (let i = 0; i < NU; i++) { rr[i] -= Sr[i]; ri[i] -= Si[i]; }
+        if (NODE) { rr[0] = ur[0] - uinC[0]; ri[0] = ui[0] - uinC[1]; dr[0] = 1; di[0] = 0; }
+        if (hit < 0 && rms(rr) < TOL && rms(ri) / hc < TOL) hit = k;
+        if (hit >= 0 && k === 2 * hit) break;
+        if (k > 1000000) throw new Error("complexStep: no convergence");
+        for (let i = 0; i < NU; i++) {
+          const den = dr[i] * dr[i] + di[i] * di[i];
+          const qr = (rr[i] * dr[i] + ri[i] * di[i]) / den, qi = (ri[i] * dr[i] - rr[i] * di[i]) / den;
+          ur[i] -= qr;
+          ui[i] -= qi;
+        }
+      }
+      /* the target is computed at the page's own design; it is real */
+      let Jr = 0, Ji = 0;
+      for (let i = 0; i < NU; i++) { const a = ur[i] - ubar[i]; Jr += 0.5 * W[i] * (a * a - ui[i] * ui[i]); Ji += W[i] * a * ui[i]; }
+      return { J: Jr, dJ: Ji / hc, hit };
+    }
+
+    /* the gradient by complex steps, one primal solve per design variable */
+    const complexGradient = (p, hc) => Array.from({ length: NP }, (_, m) => complexStep(p || getDesign(), m, hc || 1e-30).dJ);
+
+    /* ---- Section 12: common adjoint bugs, and which check catches them.
+       Each variant replaces one piece of the correct code: the tangent op T,
+       the adjoint op B, the Jacobi diagonal D, the gradient assembly G or
+       the adjoint solve's tolerance. The listing edits are in codes_1d.js. */
+    function bugVariants() {
+      const wrongState = (u, f) => {                  // c_R taken at the LEFT state in the flux routine
+        const q = local(u, f);
+        return f.kind === "outflow" ? q : Object.assign({}, q, { cR: cRof(q.uL) });
+      };
+      const tangentWith = loc => (u, v) => {
+        const rd = zeros(NU);
+        for (const f of faces) {
+          const q = loc(u, f);
+          const hd = (f.L >= 0 ? q.cL * v[f.L] : 0) + (f.R >= 0 ? q.cR * v[f.R] : 0);
+          if (f.L >= 0) rd[f.L] += hd;
+          if (f.R >= 0) rd[f.R] -= hd;
+        }
+        if (NODE) rd[0] = v[0];
+        return rd;
+      };
+      const adjointWith = (loc, o) => (u, w) => {
+        const y = zeros(NU), wt = w.slice();
+        if (NODE && !o.overwrite) wt[0] = 0;
+        for (const f of faces) {
+          if (o.skipOut && f.kind === "outflow") continue;
+          const q = loc(u, f);
+          const hb = (f.L >= 0 ? wt[f.L] : 0) - (f.R >= 0 ? wt[f.R] : 0);
+          const aL = o.swap ? q.cR : q.cL, aR = o.swap ? q.cL : q.cR;
+          if (f.L >= 0) y[f.L] += aL * hb;
+          if (f.R >= 0) y[f.R] += (o.sign ? -1 : 1) * aR * hb;
+        }
+        if (NODE) { if (o.overwrite) y[0] = w[0]; else y[0] += w[0]; }
+        return y;
+      };
+      const diagWith = loc => u => {
+        const d = zeros(NU);
+        for (const f of faces) { const q = loc(u, f); if (f.L >= 0) d[f.L] += q.cL; if (f.R >= 0) d[f.R] -= q.cR; }
+        if (NODE) d[0] = 1;
+        return d;
+      };
+      const V = [
+        { id: "none" },
+        { id: "adj-sign", B: adjointWith(local, { sign: true }) },
+        { id: "adj-outflow", B: adjointWith(local, { skipOut: true }) },
+        { id: "adj-swap", B: adjointWith(local, { swap: true }) },
+        { id: "flux-deriv", T: tangentWith(wrongState), B: adjointWith(wrongState, {}), D: diagWith(wrongState) },
+        { id: "loose", tol: 1e-4 },
+        { id: "grad-sign", G: (u, psi) => gradient(u, psi).map(x => -x) },
+      ];
+      if (NODE) V.push({ id: "overwrite", B: adjointWith(local, { overwrite: true }) });
+      return V.map(v => Object.assign({ T: residualD, B: residualB, D: diagonal, G: gradient, tol: TOL }, v));
+    }
+    /* the two checks on one variant: the dot test (5 random pairs, error
+       relative to |w| |T v|), and the gradient from its adjoint solve against
+       a reference gradient (relative to the largest component) */
+    function checkBug(v, ref, maxSweeps) {
+      const U = F.U;
+      let s = 777, worst = 0;
+      const rnd = () => { s = (s * 1103515245 + 12345) % 2147483648; return s / 2147483648 * 2 - 1; };
+      for (let t = 0; t < 5; t++) {
+        const a = Array.from({ length: NU }, rnd), w = Array.from({ length: NU }, rnd);
+        const Ta = v.T(U, a);
+        worst = Math.max(worst, Math.abs(dot(w, Ta) - dot(v.B(U, w), a)) / (Math.sqrt(dot(w, w)) * Math.sqrt(dot(Ta, Ta))));
+      }
+      const g = dJdu(U), d = v.D(U), cap = maxSweeps || 20 * SWEEPS;
+      let psi = zeros(NU), hit = -1, status = "converged", k;
+      for (k = 0; k < cap; k++) {
+        const r = v.B(U, psi).map((y, i) => y + g[i]);
+        const rr = rms(r);
+        if (!isFinite(rr) || rr > 1e30) { status = "diverges"; break; }
+        if (hit < 0 && rr < v.tol) { hit = k; if (v.tol > TOL) break; }
+        if (hit >= 0 && k === 2 * hit) break;
+        psi = psi.map((y, i) => y - r[i] / d[i]);
+      }
+      if (hit < 0 && status === "converged") status = "stalls";
+      const gr = status === "diverges" ? null : v.G(U, psi);
+      const gm = Math.max(...ref.map(Math.abs));
+      const gerr = gr ? Math.max(...gr.map((x, m) => Math.abs(x - ref[m]))) / gm : Infinity;
+      return { dot: worst, status, sweeps: hit >= 0 ? hit : k, gerr };
+    }
+
     const F = {
       scheme, NODE, n, NU, NP, dx, X, W, faces, EPS, TOL, SWEEPS, INFO,
       flux, cLof, cRof, local, residual, jacobian, diagonal, residualD, residualB,
       primalJacobi, solvePrimal, tangentJacobi, adjointJacobi, dRdp, sources,
       objective, dJdu, gradient, getDesign, setDesign, baseDesign, targetDesign, objectiveAt, optimizer,
       get ubar() { return ubar; }, get uin() { return uin; }, get sigma() { return sigma.slice(); },
-      trace, accumulate, fmt, rms, maxAbs, dot, lab, idx,
+      trace, accumulate, fmt, rms, maxAbs, dot, lab, idx, complexStep, complexGradient, bugVariants, checkBug, INFLOW,
     };
     /* the page's grid: the page's fixed, checked sweep count; any other grid
        (the order study): to the criterion and as many sweeps again */
     F.U = n === N0 ? solvePrimal(null) : primalJacobi(null, 10000000, false, true).u;
     return F;
+  }
+
+  /* ---- Section 14 ------------------------------------------------------
+     the continuous adjoint of J = 1/2 int (u - ubar)^2 at the current design,
+     lambda(x) = int_x^1 (u - ubar)/u dt, with the exact u and ubar
+     (composite 5-point Gauss-Legendre, 200 panels on [x, 1]) */
+  const GLN = [[0, 128 / 225], [Math.sqrt(5 - 2 * Math.sqrt(10 / 7)) / 3, (322 + 13 * Math.sqrt(70)) / 900], [-Math.sqrt(5 - 2 * Math.sqrt(10 / 7)) / 3, (322 + 13 * Math.sqrt(70)) / 900],
+    [Math.sqrt(5 + 2 * Math.sqrt(10 / 7)) / 3, (322 - 13 * Math.sqrt(70)) / 900], [-Math.sqrt(5 + 2 * Math.sqrt(10 / 7)) / 3, (322 - 13 * Math.sqrt(70)) / 900]];
+  function integrate(g, a, b, m) {
+    let t = 0;
+    const h = (b - a) / m;
+    for (let i = 0; i < m; i++) { const c = a + (i + 0.5) * h; for (const [x, w] of GLN) t += w * g(c + 0.5 * h * x) * 0.5 * h; }
+    return t;
+  }
+  const lamExact = x => integrate(t => (exact("base", t) - exact("target", t)) / exact("base", t), x, 1, 200);
+
+  /* the continuous adjoint approach on the grid: lambda from the discrete
+     u and ubar, integrated from the outflow over the control volumes, and
+     the gradient it gives: dJ/dsigma_k = int over interval k of lambda
+     (cell: midpoint, node: trapezoid), dJ/du_in = u_in lambda(0) */
+  function contAdjoint(F, u) {
+    const q = u.map((x, i) => (x - F.ubar[i]) / x);
+    const lam = new Array(F.NU).fill(0);
+    let tail = 0;
+    for (let i = F.NU - 1; i >= 0; i--) {
+      lam[i] = tail + (F.NODE ? (i < F.n ? 0.5 * F.dx * q[i] : 0) : 0.5 * F.W[i] * q[i]);
+      tail += F.W[i] * q[i];
+    }
+    return { lam, lam0: tail };
+  }
+  function contGradient(F, u) {
+    const { lam, lam0 } = contAdjoint(F, u);
+    const g = [];
+    for (let k = 0; k < F.n; k++) g.push(F.NODE ? 0.5 * F.dx * (lam[k] + lam[k + 1]) : F.dx * lam[k]);
+    g.push(F.uin * lam0);
+    return g;
+  }
+
+  /* the two-level estimate of J on the grid with twice the cells, from the
+     coarse solution: J_h(u_h) ~ J_h(P u_H) + (Q psi_H)^T R_h(P u_H).
+     P, Q: linear interpolation between the coarse points (extrapolated at
+     the ends); on the node grid Q takes the field from nodes 1..N and keeps
+     node 0's multiplier, because row 0 is a constraint, not a balance. */
+  function interpolate(xc, vc, xf) {
+    return xf.map(x => {
+      let k = 0;
+      while (k < xc.length - 2 && x > xc[k + 1]) k++;
+      const t = (x - xc[k]) / (xc[k + 1] - xc[k]);
+      return vc[k] + t * (vc[k + 1] - vc[k]);
+    });
+  }
+  function prolong(Fc, Ff, v, adjoint) {
+    if (!Fc.NODE || !adjoint) return interpolate(Fc.X, v, Ff.X);
+    const out = interpolate(Fc.X.slice(1), v.slice(1), Ff.X);
+    out[0] = v[0];
+    return out;
+  }
+  function twoLevel(Fc, Ff) {
+    const uH = Fc.U, psiH = Fc.adjointJacobi(uH, Fc.dJdu(uH), 10000000, false, true).x;
+    const Pu = prolong(Fc, Ff, uH, false), Qpsi = prolong(Fc, Ff, psiH, true);
+    const R = Ff.residual(Pu), JhP = Ff.objective(Pu);
+    const eta = R.map((r, i) => Qpsi[i] * r);
+    const psiF = Ff.adjointJacobi(Pu, Ff.dJdu(Pu), 10000000, false, true).x;
+    const est = JhP + eta.reduce((a, b) => a + b, 0);
+    const estFine = JhP + psiF.reduce((a, p, i) => a + p * R[i], 0);
+    return { JH: Fc.objective(uH), Jh: Ff.objective(Ff.U), JhP, est, estFine, eta, R };
   }
 
   /* the listing rows each trace step points at (codes_1d.js prints them) */
@@ -1425,7 +1717,8 @@ if (!Element.prototype.replaceChildren) {
     },
   };
 
-  const API = { make, flux, cLof, cRof, EPS, UIN, N0, TOL, SRC, exact, avg, LINES, fmt };
+  const API = { make, flux, cLof, cRof, EPS, UIN, N0, TOL, SRC, exact, avg, LINES, fmt,
+    integrate, lamExact, contAdjoint, contGradient, interpolate, prolong, twoLevel };
   if (typeof window !== "undefined") window.FV1 = API;
   if (typeof module !== "undefined") module.exports = API;
 })();
@@ -2671,6 +2964,34 @@ window.FV = window.FV1.make("cell");
       ["    dJ/dp[m] ← ψ · dR/dp[m]", TR("dR/dp 的一列：源项或入口", "a column of dR/dp: the source, or the inflow")],
       ["  return dJ/dp", TR("一次伴随求解，全部 N+1 个导数", "one adjoint solve, all N+1 derivatives")],
     ];
+    /* Section 12, "which check catches which bug": each variant of
+       core_1d.js bugVariants() edits these rows of one listing (1-based,
+       as V.Code numbers them); check_trace_1d.js checks the edited rows
+       still hold the statements named here. */
+    const bug = TR("← 错在这里", "← the bug");
+    C.bugs = {
+      "none": { listing: "adjoint", edits: [], text: TR("没有错误", "no bug") },
+      "adj-sign": { listing: "adjoint", edits: [[NODE ? 6 : 5, "    y[L] += uL_b;  y[R] −= uR_b", "y[R] += uR_b"]],
+        text: TR("伴随分发时 y[R] 的符号写反", "the sign of the scatter into y[R] flipped in the adjoint") },
+      "adj-outflow": { listing: "adjoint", edits: [NODE ? [3, "  for each dual face (j, j+1):", "then the outflow"] : [2, "  for each face f = 0 … N−1:", "f = 0 … N:"]],
+        text: TR("伴随循环漏掉了出口面", "the adjoint loop misses the outflow face") },
+      "adj-swap": { listing: "adjoint", edits: [[NODE ? 5 : 4, "    (uL_b, uR_b) ← (cR·h_b, cL·h_b)", "(cL·h_b, cR·h_b)"]],
+        text: TR("伴随里 c_L 与 c_R 用反了", "c_L and c_R swapped in the adjoint") },
+      "flux-deriv": { listing: "flux", edits: [[3, "  cL ← ½uL + ε;  cR ← ½uL − ε", "cR ← ½uR − ε"]],
+        text: TR("flux() 把 c_R 取在左侧状态上（前向与伴随都调用它）", "flux() takes c_R at the left state (both loops call it)") },
+      "loose": { listing: "solve", edits: [[6, "  until rms(r) < 1e-4", "until rms(r) < 1e-13"]],
+        text: TR("伴随求解只收敛到 10⁻⁴", "the adjoint solve stopped at 10⁻⁴") },
+      "grad-sign": { listing: "gradient", edits: [[3, "    dJ/dp[m] ← −ψ · dR/dp[m]", "dJ/dp[m] ← ψ · dR/dp[m]"]],
+        text: TR("组装梯度时符号写反", "the gradient assembled with the wrong sign") },
+    };
+    if (NODE) C.bugs["overwrite"] = { listing: "adjoint", edits: [[2, "  w̃ ← w", "w̃[0] ← 0"], [7, "  y[0] ← w[0]", "y[0] += w[0]"]],
+      text: TR("被替换的那一行：循环前不清零，循环后直接覆盖 y[0] ← w[0]", "the replaced row: not zeroed before the loop, y[0] ← w[0] overwritten after it") };
+    C.bugListing = id => {
+      const b = C.bugs[id];
+      const rows = C[b.listing].map(r => r.slice());
+      b.edits.forEach(([ln, code]) => { rows[ln - 1] = [code, bug]; });
+      return { rows, lines: b.edits.map(e => e[0]) };
+    };
     return C;
   }
   window.CODES1D = { build };
@@ -2689,7 +3010,11 @@ window.FV = window.FV1.make("cell");
      tan-lab       the forward solve: A v = -dR/dp_m, one design variable
      adj-lab       the adjoint solve: A^T psi = -dJ/du, all of them at once
      opt-lab       what the gradient is for: an optimiser recovers the target
-     fd-lab        the difference check, and the step-size sweep          */
+     fd-lab        the difference check (central, forward, complex step), and
+                   the step-size sweep
+     bug-lab       which check catches which adjoint bug
+     cons-lab      Section 14: the discrete and the continuous adjoint, with
+                   the page's inflow or the upwind one                     */
 (function () {
   "use strict";
   const V = window.VIZ, Q = window.VIZQ;
@@ -3161,6 +3486,7 @@ window.FV = window.FV1.make("cell");
     const sch = V.H("select", { id: "fd-scheme", "aria-label": TR("差分格式", "difference scheme") }, row);
     V.H("option", { value: "central", text: TR("中心", "central") }, sch);
     V.H("option", { value: "forward", text: TR("前向", "forward") }, sch);
+    V.H("option", { value: "complex", text: TR("复步长", "complex step") }, sch);
     V.H("span", { class: "lab-sub", text: "  h = " }, row);
     const hIn = V.H("input", { type: "text", value: "1e-6", id: "fd-h", class: "numinput", "aria-label": TR("步长", "step") }, row);
     const go = V.H("button", { class: "btn primary", type: "button", text: TR("计算", "compute") }, row);
@@ -3178,27 +3504,122 @@ window.FV = window.FV1.make("cell");
     function table() {
       let h = Number(hIn.value);
       if (!(h > 0)) { h = 1e-6; hIn.value = "1e-6"; }
-      const fw = sch.value === "forward";
+      const fw = sch.value === "forward", cx = sch.value === "complex";
       let worst = 0;
       const rows = gr.map((a, m) => {
-        const d = fd(m, h, fw), rel = Math.abs(d - a) / Math.abs(a);
+        const d = cx ? FV.complexStep(p0, m, h).dJ : fd(m, h, fw), rel = Math.abs(d - a) / Math.abs(a);
         worst = Math.max(worst, rel);
         return '<tr data-m="' + m + '"' + (m === pick ? ' class="picked"' : "") + ' style="cursor:pointer"><td>' + pnameH(m) + '</td><td class="num">' + sci2(a) + '</td><td class="num">' + sci2(d) + '</td><td class="num">' + sci(rel) + "</td></tr>";
       }).join("");
-      out.innerHTML = '<table class="kv"><thead><tr><th></th><th>' + TR("伴随（一次求解）", "adjoint (one solve)") + "</th><th>" + TR("差分", "difference") + "</th><th>" + TR("相对误差", "relative error") +
-        "</th></tr></thead><tbody>" + rows + "</tbody></table><p class=\"lab-sub\">" + TR("最大相对误差 ", "largest relative error ") + sci(worst) + TR("（", " (") + (fw ? TR("前向", "forward") : TR("中心", "central")) + ", h = " + sci(h) + TR("；差分共做了 ", "; the differences took ") + (fw ? NP + 1 : 2 * NP) + TR(" 次非线性求解）", " nonlinear solves)") + "</p>";
+      out.innerHTML = '<table class="kv"><thead><tr><th></th><th>' + TR("伴随（一次求解）", "adjoint (one solve)") + "</th><th>" + (cx ? TR("复步长", "complex step") : TR("差分", "difference")) + "</th><th>" + TR("相对误差", "relative error") +
+        "</th></tr></thead><tbody>" + rows + "</tbody></table><p class=\"lab-sub\">" + TR("最大相对误差 ", "largest relative error ") + sci(worst) + TR("（", " (") + (cx ? TR("复步长", "complex step") : fw ? TR("前向", "forward") : TR("中心", "central")) + ", h = " + sci(h) +
+        (cx ? TR("；共做了 ", "; it took ") + NP + TR(" 次复数运算的非线性求解）", " nonlinear solves in complex arithmetic)") : TR("；差分共做了 ", "; the differences took ") + (fw ? NP + 1 : 2 * NP) + TR(" 次非线性求解）", " nonlinear solves)")) + "</p>";
       out.querySelectorAll("tr[data-m]").forEach(tr => tr.addEventListener("click", () => { pick = Number(tr.getAttribute("data-m")); table(); sweep(); }));
     }
     function sweep() {
-      const hs = [], ec = [], ef = [];
-      for (let k = 1; k <= 12; k++) { const h = Math.pow(10, -k); hs.push(h); ec.push(Math.abs(fd(pick, h, false) - gr[pick]) / Math.abs(gr[pick])); ef.push(Math.abs(fd(pick, h, true) - gr[pick]) / Math.abs(gr[pick])); }
+      const hs = [], ec = [], ef = [], es = [];
+      for (let k = 1; k <= 12; k++) {
+        const h = Math.pow(10, -k);
+        hs.push(h);
+        ec.push(Math.abs(fd(pick, h, false) - gr[pick]) / Math.abs(gr[pick]));
+        ef.push(Math.abs(fd(pick, h, true) - gr[pick]) / Math.abs(gr[pick]));
+        es.push(Math.abs(FV.complexStep(p0, pick, h).dJ - gr[pick]) / Math.abs(gr[pick]));
+      }
       new Q.LogPlot(sweepBox, { W: 680, label: TR("相对误差随步长的变化", "the relative error against the step") }).draw(ec.map(x => Math.max(x, 1e-17)), {
         role: "violet", xlabel: TR("步长 h = 10⁻¹ … 10⁻¹²（" + pname(pick) + "）", "step h = 10⁻¹ … 10⁻¹² (" + pname(pick) + ")"),
-        others: [{ hist: ef.map(x => Math.max(x, 1e-17)), role: "muted" }], legend: [{ role: "violet", text: TR("中心", "central") }, { role: "muted", text: TR("前向", "forward") }] });
+        others: [{ hist: ef.map(x => Math.max(x, 1e-17)), role: "muted" }, { hist: es.map(x => Math.max(x, 1e-17)), role: "tangent" }],
+        legend: [{ role: "violet", text: TR("中心", "central") }, { role: "muted", text: TR("前向", "forward") }, { role: "tangent", text: TR("复步长", "complex step") }] });
     }
+    /* the complex step wants a tiny step, the differences a moderate one */
+    sch.addEventListener("change", () => {
+      const h = Number(hIn.value);
+      if (sch.value === "complex" && !(h < 1e-8)) hIn.value = "1e-30";
+      if (sch.value !== "complex" && !(h > 1e-12)) hIn.value = "1e-6";
+      table();
+    });
     go.addEventListener("click", table);
     table();
     sweep();
+  }
+
+  /* ------------------------------------------------------------ bug-lab */
+  function bugLab() {
+    const host = $("bug-lab");
+    if (!host) return;
+    const { lab } = shell(host, TR("交互：哪一种检验抓哪一种错误", "Interactive: which check catches which bug"),
+      TR("每一行是一个常见的伴随错误，两个检验都在页面上现场计算；点一行，看它改了哪一句代码", "each row is a common adjoint bug, and both checks are computed on the page; click a row to see which statement it changes"));
+    const foot = V.H("div", { class: "lab-foot" }, lab);
+    const tableBox = V.H("div", { class: "scrollx" }, foot);
+    const codeBox = V.H("div", { style: "margin-top:12px" }, foot);
+    const note = V.H("p", { class: "lab-sub", style: "margin-top:8px" }, foot);
+    const ref = FV.complexGradient();
+    const vars = FV.bugVariants();
+    const res = vars.map(v => FV.checkBug(v, ref));
+    let pick = 0;
+    const mark = (pass, text) => '<td class="num"><span class="' + (pass ? "okmark" : "badmark") + '">' + (pass ? "✓" : "✗") + "</span> " + text + "</td>";
+    /* the same format as the text: 2.0 and 0.16 rather than 2.0e+0 and 1.6e−1 */
+    const nice = x => (x >= 10 ? sci(x).replace("e+", "e") : x >= 1 ? x.toFixed(1) : x >= 0.1 ? x.toFixed(2) : sci(x));
+    function draw() {
+      const rows = vars.map((v, i) => {
+        const b = CODES.bugs[v.id], r = res[i];
+        const dotPass = r.dot < 1e-12, gradPass = r.status === "converged" && r.gerr < 1e-12;
+        const solve = r.status === "diverges" ? TR("伴随求解发散", "the adjoint solve diverges") : r.status === "stalls" ? TR("，伴随求解不收敛", ", the adjoint solve does not converge") : "";
+        return '<tr data-i="' + i + '"' + (i === pick ? ' class="picked"' : "") + ' style="cursor:pointer"><td>' + b.text + "</td>" + mark(dotPass, nice(r.dot)) +
+          mark(gradPass, (isFinite(r.gerr) ? nice(r.gerr) : "") + solve) + "</tr>";
+      }).join("");
+      tableBox.innerHTML = '<table class="kv"><thead><tr><th>' + TR("错误", "bug") + "</th><th>" + TR("点积测试", "dot test") + "</th><th>" + TR("梯度对复步长", "gradient against the complex step") + "</th></tr></thead><tbody>" + rows + "</tbody></table>";
+      tableBox.querySelectorAll("tr[data-i]").forEach(tr => tr.addEventListener("click", () => { pick = Number(tr.getAttribute("data-i")); draw(); }));
+      const L = CODES.bugListing(vars[pick].id);
+      codeBox.replaceChildren();
+      const code = new V.Code(codeBox, L.rows, "code-static");
+      L.lines.forEach(k => code.rows[k - 1].classList.add("active"));
+      note.innerHTML = TR("点积测试：5 对随机向量里最坏的 |⟨w, Av⟩ − ⟨Aᵀw, v⟩| / (|w| |Av|)；梯度：伴随梯度与复步长梯度之差的最大值，除以梯度的最大分量。两栏都以 10⁻¹² 为界。",
+        "dot test: the worst |⟨w, Av⟩ − ⟨Aᵀw, v⟩| / (|w| |Av|) over 5 random pairs; gradient: the largest difference between the adjoint gradient and the complex-step gradient, over the largest component. Both columns pass below 10⁻¹².");
+    }
+    draw();
+  }
+
+  /* ------------------------------------------------------------ cons-lab */
+  function consLab() {
+    const host = $("cons-lab");
+    if (!host) return;
+    const { lab } = shell(host, TR("交互：离散伴随与连续伴随，两种入口处理", "Interactive: the discrete and the continuous adjoint, with either inflow"),
+      TR("选入口的处理与网格，primal 与伴随当场重新求解", "pick the inflow treatment and the grid; primal and adjoint are solved again on the spot"));
+    const foot = V.H("div", { class: "lab-foot" }, lab);
+    const row = V.H("div", { class: "controls" }, foot);
+    V.H("span", { class: "lab-sub", text: TR("入口：", "inflow: ") }, row);
+    const inf = V.H("select", { id: "cons-inflow", "aria-label": TR("入口处理", "inflow treatment") }, row);
+    V.H("option", { value: "dissipative", text: NODE ? TR("第一个对偶面用耗散通量（本页）", "dissipative first dual face (this page)") : TR("入口面用耗散通量（本页）", "dissipative inflow face (this page)") }, inf);
+    V.H("option", { value: "upwind", text: NODE ? TR("第一个对偶面用迎风通量 ½u₀²", "upwind first dual face, ½u₀²") : TR("入口面用迎风通量 ½u_in²", "upwind inflow face, ½u_in²") }, inf);
+    V.H("span", { class: "lab-sub", text: TR("  单元数 N：", "  cells N: ") }, row);
+    const ns = V.H("select", { id: "cons-n", "aria-label": TR("单元数", "number of cells") }, row);
+    [8, 16, 32, 64].forEach(k => V.H("option", { value: String(k), text: String(k) }, ns));
+    const plotBox = V.H("div", { class: "svgbox", style: "margin-top:10px" }, foot);
+    const out = V.H("div", { style: "margin-top:10px" }, foot);
+    const xs = Array.from({ length: 101 }, (_, k) => k / 100);
+    const lam = xs.map(x => window.FV1.lamExact(x));
+    function draw() {
+      const G = window.FV1.make(FV.scheme, Number(ns.value), { inflow: inf.value });
+      const U = G.U, psi = G.adjointJacobi(U, G.dJdu(U), 10000000, false, true).x;
+      const i0 = NODE ? 1 : 0;
+      const xp = G.X.slice(i0), mp = psi.slice(i0).map(p => -p);
+      new Q.Plot(plotBox, { W: 680, H: 240, label: TR("−ψ 与连续伴随 λ(x)", "−ψ and the continuous adjoint λ(x)") }).draw([
+        { x: xs, y: lam, role: "ink", dots: false, width: 1.6, name: "λ(x)" },
+        { x: xp, y: mp, role: "adjoint", width: 1.2, name: "−ψ" }]);
+      const gd = G.gradient(U, psi), gc = window.FV1.contGradient(G, U), gm = Math.max(...gd.map(Math.abs));
+      let inner = 0;
+      for (let m = 1; m < G.n; m++) inner = Math.max(inner, Math.abs(gc[m] - gd[m]) / gm);
+      const e1 = -psi[i0] - window.FV1.lamExact(G.X[i0]);
+      const r3 = x => fmt(x, 3);
+      out.innerHTML = '<table class="kv"><tbody>' +
+        "<tr><th>" + TR("第一个控制体", "first control volume") + "</th><td class=\"num\">−ψ − λ = " + sci2(e1) + "</td></tr>" +
+        "<tr><th>dJ/dσ₁</th><td class=\"num\">" + TR("离散 ", "discrete ") + sci2(gd[0]) + TR("，连续 ", ", continuous ") + sci2(gc[0]) + TR("，比值 ", ", ratio ") + r3(gc[0] / gd[0]) + "</td></tr>" +
+        "<tr><th>dJ/du<sub>in</sub></th><td class=\"num\">" + TR("离散 ", "discrete ") + sci2(gd[G.n]) + TR("，连续 ", ", continuous ") + sci2(gc[G.n]) + TR("，比值 ", ", ratio ") + r3(gc[G.n] / gd[G.n]) + "</td></tr>" +
+        "<tr><th>σ₂ … σ<sub>N</sub></th><td class=\"num\">" + TR("最大差 / 最大分量 = ", "largest difference / largest component = ") + sci2(inner) + "</td></tr></tbody></table>";
+    }
+    inf.addEventListener("change", draw);
+    ns.addEventListener("change", draw);
+    draw();
   }
 
   /* ------------------------------------------------------------ numbering */
@@ -3226,7 +3647,7 @@ window.FV = window.FV1.make("cell");
     if (window.console && console.error) console.error("[demo]", name, e);
   }
   const guard = (name, fn) => { try { fn(); } catch (e) { fail(name, e); } };
-  const HOSTS = ["flux-lab", "loop-primal", "loop-tangent", "loop-adjoint", "jacobi-lab", "dot-lab", "tan-lab", "adj-lab", "opt-lab", "fd-lab"];
+  const HOSTS = ["flux-lab", "loop-primal", "loop-tangent", "loop-adjoint", "jacobi-lab", "dot-lab", "tan-lab", "adj-lab", "opt-lab", "fd-lab", "bug-lab", "cons-lab"];
 
   function boot() {
     HOSTS.forEach(id => { const el = $(id); if (el) el.replaceChildren(); });
@@ -3251,6 +3672,8 @@ window.FV = window.FV1.make("cell");
     guard(TR("伴随求解", "adjoint solve"), () => solveLab("adjoint"));
     guard(TR("优化器", "optimiser"), optLab);
     guard(TR("差分验证", "difference check"), fdLab);
+    guard(TR("哪一种检验抓哪一种错误", "which check catches which bug"), bugLab);
+    guard(TR("离散伴随与连续伴随", "the discrete and the continuous adjoint"), consLab);
     guard(TR("图号", "figure numbering"), numberFigures);
   }
   window.bootDemos = boot;

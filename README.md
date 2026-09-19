@@ -18,8 +18,8 @@ version. If the discrete adjoint is new to you, start with the one-dimensional p
 
 | 文件 / File | 算例 / Problem | 格式 / Scheme | 大小 / Size |
 |---|---|---|---|
-| [`adjoint_1d_cell.html`](adjoint_1d_cell.html) | 一维 Burgers（入门）/ 1-D Burgers (introductory) | **格心** / cell-centred | 404 KB |
-| [`adjoint_1d_node.html`](adjoint_1d_node.html) | 一维 Burgers（入门）/ 1-D Burgers (introductory) | **格点** / node-centred | 417 KB |
+| [`adjoint_1d_cell.html`](adjoint_1d_cell.html) | 一维 Burgers（入门）/ 1-D Burgers (introductory) | **格心** / cell-centred | 500 KB |
+| [`adjoint_1d_node.html`](adjoint_1d_node.html) | 一维 Burgers（入门）/ 1-D Burgers (introductory) | **格点** / node-centred | 515 KB |
 | [`adjoint_cell.html`](adjoint_cell.html) | 二维对流 / 2-D advection | **格心** / cell-centred | 600 KB |
 | [`adjoint_node.html`](adjoint_node.html) | 二维对流 / 2-D advection | **格点** / node-centred | 671 KB |
 | [`adjoint_ad_cell.html`](adjoint_ad_cell.html) | 二维对流扩散 / 2-D advection–diffusion | **格心** / cell-centred | 557 KB |
@@ -41,16 +41,18 @@ no server. Each page has a 中文 / English toggle in the top-right corner.
 
 ## 八个页面怎么排布 / How the eight pages are arranged
 
-四组算例，每组两种离散。**八页结构完全平行**：14 节一一对应，第 13 节是精度阶，第 14 节是总结；
-只有第 11 节在一维那一对里是对源项与入口值的设计导数，其余三对是几何导数。所以任意两页都能
-并排对照：横着比是**两种格式**；竖着比是**方程**——从一维，到二维纯对流，到加上扩散，再到方程组。
+四组算例，每组两种离散。**八页结构完全平行**：前 13 节一一对应，第 13 节是精度阶，总结都在最后一节；
+第 11 节在一维那一对里是对源项与入口值的设计导数，其余三对是几何导数；一维那一对还多一节
+（第 14 节：伴随一致性与 $J$ 的误差估计），所以它的总结是第 15 节。任意两页都能并排对照：
+横着比是**两种格式**；竖着比是**方程**——从一维，到二维纯对流，到加上扩散，再到方程组。
 
-Four model problems, each discretised two ways. All eight are **strictly parallel**: their 14
-sections match one to one, Section 13 being the order of accuracy and Section 14 the summary;
-only Section 11 differs, giving design derivatives with respect to the sources and the inflow
-value on the one-dimensional pair and geometric derivatives on the other three. So any two can
-be read side by side: across, the **two schemes**; down, **the equation** — one dimension, then
-pure advection in two, then diffusion added, then a system.
+Four model problems, each discretised two ways. All eight are **strictly parallel**: their first
+13 sections match one to one, Section 13 being the order of accuracy, and the summary always comes
+last. Section 11 gives design derivatives with respect to the sources and the inflow value on the
+one-dimensional pair and geometric derivatives on the other three, and the one-dimensional pair
+adds a section (Section 14: adjoint consistency and estimating the error in $J$), so its summary
+is Section 15. Any two can be read side by side: across, the **two schemes**; down, **the
+equation** — one dimension, then pure advection in two, then diffusion added, then a system.
 
 | | 格心 / cell-centred | 格点 / node-centred |
 |---|---|---|
@@ -202,9 +204,11 @@ them together.
 9. 前向求解：切线方程 / The forward solve: the tangent equation
 10. 伴随求解：伴随方程 / The adjoint solve: the adjoint equation
 11. 几何导数（一维页：设计导数）/ Geometric derivatives (the 1-D pages: design derivatives)
-12. 验证：对有限差分 / Verification against finite differences
+12. 验证：对有限差分（一维页还有复步长，以及「哪一种检验抓哪一种错误」）/ Verification against finite
+    differences (the 1-D pages add the complex step and "which check catches which bug")
 13. 精度阶：构造解检验 / Order of accuracy: a manufactured solution
-14. 总结 / Summary
+14. 总结；一维页的第 14 节是伴随一致性与 $J$ 的误差估计，总结是第 15 节 / Summary; on the 1-D pages
+    Section 14 is adjoint consistency and estimating the error in $J$, and the summary is Section 15
 
 ## 可以动手的地方 / What is interactive
 
@@ -232,7 +236,12 @@ them together.
 - **梯度面板**：拟一维格点页把「忘记清零 $\Psi$」的后果和正确结果画在一起
 - **BFGS 反设计**（一维页）：每一步一次 primal、一次伴随求解，看 8 个源项逐步回到目标值、$J$ 降到
   $10^{-20}$ 以下；入口值不动，因为它和第一个区间的源项几乎可以互相替代
-- **差分验证与步长扫描**：自选差分格式（中心／前向）与步长 $h$，逐分量用全链路差分对照伴随梯度；
+- **哪一种检验抓哪一种错误**（一维页）：几种常见的伴随错误放在一张表里，点积测试与梯度检验（对复步长）
+  都在页面上现场算。转置错误点积测试一眼就能看出；flux() 里的导数错误、没收敛的伴随求解、组装梯度的符号
+  错误都能通过点积测试，只有梯度检验抓得到
+- **两种入口下的离散伴随与连续伴随**（一维页）：切换入口处理与网格，看入口旁那层伴随边界层出现、消失，
+  以及 $\mathrm dJ/\mathrm d\sigma_1$ 的连续与离散之比
+- **差分验证与步长扫描**：自选差分格式（中心／前向；一维页还有复步长）与步长 $h$，逐分量用全链路差分对照伴随梯度；
   底部扫描相对误差随步长的变化，截断与舍入怎样围出最优步长一目了然。拟一维页把梯度画成流道壁上的箭头，
   点一个面（或节点）就扫描那个分量
 
@@ -250,7 +259,10 @@ face by wall face, or wall node by wall node against the one-sided formula; and 
 gradient can be checked against full-chain differences at any step and scheme, with its error
 swept against the step size, component by component. On the one-dimensional pages the adjoint
 gradient drives a BFGS inverse design, one primal and one adjoint solve per step, and the eight
-sources can be watched returning to their target values.
+sources can be watched returning to their target values; the gradient can also be checked by the
+complex step, which needs no compromise on the step size; a table shows which of several common
+adjoint bugs the dot test catches and which only the gradient check does; and a panel switches
+the inflow treatment and the grid to show the adjoint's boundary layer at the inflow come and go.
 
 ## 页面上的数字都是实测的 / Every number is measured
 
@@ -312,6 +324,10 @@ $y_0\leftarrow w_0$ after the adjoint loop: the dot test's relative error (same 
   $\lambda(x)=\int_x^1(u-\bar u)/u\,\mathrm dt$：内部一阶；入口第一个控制体里的误差却不随网格减小，趋于
   $-\lambda(0)\,r=8.0\times10^{-3}$，$r=-c_R/c_L=0.23$——入口面的耗散项转置之后，相当于在伴随的出口多加了
   一个条件 $\psi_0=0$。这层边界层每往里一个控制体误差乘一次 $r$，所以伴随的 $L_2$ 阶趋于 ½。
+  第 14 节把入口旁的那个面换成迎风通量 $\tfrac12u_L^2$：边界层消失，伴随的 $L_2$ 阶回到 1.00；连续伴随给的
+  $\mathrm dJ/\mathrm d\sigma_1$ 与离散伴随之比从 1.30（$=1/(1-r)$，加密不变）回到 1（格点页回到 2：被替换的
+  那一行丢掉了半个区间上的源项）。用粗网格伴随估计 $J$ 的误差，格心页换成迎风入口才是二阶，本页的入口只有
+  一阶；格点页两种入口都是二阶。复步长与伴随梯度之差 2.3e−15（格心）／1.2e−16（格点）。
 - **二维对流**：一阶，但来得很慢——七层网格上 $L_2$ 阶格心从 0.42 爬到 0.87，格点从 0.47 爬到
   0.82。在这张不规则网格上，格心格式的截断误差根本不随网格减小，解的误差靠相邻单元之间的抵消
   （超收敛）照样减小。构造解问题的物面按特征方向处理；若照搬本页在每个壁面面上规定通量的做法，
@@ -332,7 +348,14 @@ decides how far that derivative is from the continuous problem's:
   the first control volume at the inflow does not shrink: it tends to $-\lambda(0)\,r=8.0\times10^{-3}$,
   $r=-c_R/c_L=0.23$. Transposed, the dissipation on the inflow face adds a condition, $\psi_0=0$, at
   the adjoint's outflow. The error in this boundary layer is multiplied by $r$ with every control
-  volume inwards, so the adjoint's $L_2$ order tends to ½.
+  volume inwards, so the adjoint's $L_2$ order tends to ½. Section 14 gives the face next to the
+  inflow the upwind flux $\tfrac12u_L^2$: the layer disappears and the adjoint's $L_2$ order returns
+  to 1.00; the ratio of the continuous to the discrete adjoint's $\mathrm dJ/\mathrm d\sigma_1$ goes
+  from 1.30 ($=1/(1-r)$, whatever the grid) back to 1 (to 2 on the node-centred page, whose replaced
+  row drops the source on half an interval). Estimating the error in $J$ with the coarse-grid
+  adjoint is second order on the cell-centred page only with the upwind inflow, first order with
+  the page's own; the node-centred page is second order with either. The complex step agrees with
+  the adjoint gradient to 2.3e−15 (cell-centred) and 1.2e−16 (node-centred).
 - **2-D advection**: first order, reached slowly — over seven meshes the $L_2$ order climbs from
   0.42 to 0.87 cell-centred and from 0.47 to 0.82 node-centred. On this irregular mesh the
   cell-centred truncation error does not fall at all; the solution error falls anyway, through
