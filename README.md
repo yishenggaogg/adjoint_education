@@ -38,12 +38,14 @@ no server. Each page has a 中文 / English toggle in the top-right corner.
 
 ## 六个页面怎么排布 / How the six pages are arranged
 
-三组算例，每组两种离散。**六页结构完全平行**（都是 12 节），所以任意两页都能并排对照：
+三组算例，每组两种离散。**六页结构平行**：前 11 节一一对应，对流扩散那一对多一节精度阶
+（第 12 节），总结总在最后一节。所以任意两页都能并排对照：
 横着比是**两种格式**；竖着比是**方程**——从纯对流，到加上扩散，再到方程组。
 
-Three model problems, each discretised two ways. All six are **strictly parallel** — 12 sections
-each — so any two can be read side by side: across, the **two schemes**; down, **the equation**
-— pure advection, then diffusion added, then a system.
+Three model problems, each discretised two ways. All six are **parallel**: the first 11 sections
+match one to one, the advection–diffusion pair adds an order-of-accuracy section as Section 12,
+and the summary always comes last. So any two can be read side by side: across, the **two
+schemes**; down, **the equation** — pure advection, then diffusion added, then a system.
 
 | | 格心 / cell-centred | 格点 / node-centred |
 |---|---|---|
@@ -144,7 +146,7 @@ advection–diffusion pages give the solver only the first-order Jacobian (adjac
 only), which turns Newton into a linearly converging defect correction, and iterate the adjoint
 equation with the transpose of the same matrix, at the same rate as the primal.
 
-## 每页的 12 节 / The twelve sections
+## 每页的各节 / The sections
 
 1. 网格（或流道）/ Mesh, or the duct
 2. 方程与面上的一维通量 / The equations and the one-dimensional flux
@@ -158,7 +160,9 @@ equation with the transpose of the same matrix, at the same rate as the primal.
 9. 求解伴随方程 / Solving the adjoint equation
 10. 几何导数 / Geometric derivatives
 11. 验证：对有限差分 / Verification against finite differences
-12. 总结 / Summary
+12. 精度阶：构造解检验（只有对流扩散页）/ Order of accuracy: a manufactured solution
+    (advection–diffusion pages only)
+13. 总结（其余四页是第 12 节）/ Summary (Section 12 on the other four pages)
 
 ## 可以动手的地方 / What is interactive
 
