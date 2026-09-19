@@ -1336,6 +1336,11 @@ if (!Element.prototype.replaceChildren) {
     "loop-primal", "loop-tangent", "loop-adjoint", "dot-out",
     "jacobi-mesh", "jacobi-lanes", "jacobi-plot", "jacobi-status",
     "jacobi-info", "jacobi-code", "jacobi-face-ctl", "jacobi-ctl",
+    /* the forward solve of Section 9 is the same demo in tangent mode and
+       appends into the same kinds of host; without these a switch stacked a
+       second panel under the first, the first in the old language */
+    "tan-mesh", "tan-lanes", "tan-plot", "tan-status", "tan-info",
+    "tan-code", "tan-face-ctl", "tan-ctl",
     "grad-mesh", "grad-out",
     /* the merged step-size sweep: both are appended into, so a
        language switch would otherwise stack a second plot and a
@@ -4475,6 +4480,46 @@ if (!Element.prototype.replaceChildren) {
   window.bootDemos = boot;
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();
+})();
+
+/* Display equations on narrow screens. A display equation (.eqwrap > .eqd)
+   wider than its column scrolls sideways inside its box; on a phone many of
+   them do. fit() scales each such equation down through its font size (the
+   TeX renderer sets every length in em, so the whole formula scales with
+   it) until it fits, but not below MIN of its size: a wider one keeps its
+   scroll, at the smaller size. Runs when the page loads, when the web fonts
+   arrive, on resize, and after a language switch (window.REPAINT). Every
+   build of the series includes it; it does nothing where equations fit. */
+(function () {
+  "use strict";
+  if (typeof document === "undefined" || !document.querySelectorAll) return;
+  var MIN = 0.62;
+  function fit() {
+    var ws = document.querySelectorAll(".eqwrap");
+    Array.prototype.forEach.call(ws, function (w) {
+      var eq = w.querySelector(".eqd");
+      if (!eq) return;
+      eq.style.fontSize = "";
+      var have = w.clientWidth, need = w.scrollWidth;
+      if (!have || need <= have + 1) return;
+      var base = parseFloat(window.getComputedStyle(eq).fontSize);
+      if (!(base > 0)) return;
+      var s = Math.max(MIN, have / need);
+      eq.style.fontSize = (base * s * 0.99).toFixed(2) + "px";
+    });
+  }
+  var timer = null;
+  function later() {
+    clearTimeout(timer);
+    timer = setTimeout(fit, 150);
+  }
+  (window.REPAINT = window.REPAINT || []).push(fit);
+  window.addEventListener("resize", later);
+  window.addEventListener("load", fit);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", fit);
+  else fit();
+  window.EQFIT = fit;
 })();
 
 /* ---- side-nav collapse + current-section highlight ---- */

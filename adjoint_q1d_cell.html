@@ -1433,6 +1433,11 @@ if (!Element.prototype.replaceChildren) {
     "loop-primal", "loop-tangent", "loop-adjoint", "dot-out",
     "jacobi-mesh", "jacobi-lanes", "jacobi-plot", "jacobi-status",
     "jacobi-info", "jacobi-code", "jacobi-face-ctl", "jacobi-ctl",
+    /* the forward solve of Section 9 is the same demo in tangent mode and
+       appends into the same kinds of host; without these a switch stacked a
+       second panel under the first, the first in the old language */
+    "tan-mesh", "tan-lanes", "tan-plot", "tan-status", "tan-info",
+    "tan-code", "tan-face-ctl", "tan-ctl",
     "grad-mesh", "grad-out",
     /* the merged step-size sweep: both are appended into, so a
        language switch would otherwise stack a second plot and a
@@ -4920,9 +4925,10 @@ if (!Element.prototype.replaceChildren) {
       });
       return out;
     }
-    const blocks = NODE ? TR(NB + " 块，含约束行，与 primal 同一组", NB + " blocks with the constraint rows, the primal's")
-                        : TR(NB + " 块，每个单元一块，与 primal 同一组", NB + " blocks, one per cell, the primal's");
-    const listing = () => (ADJ ? [
+    /* evaluated with the listing, so a language switch (REPAINT) sees the new language */
+    const blocksText = () => (NODE ? TR(NB + " 块，含约束行，与 primal 同一组", NB + " blocks with the constraint rows, the primal's")
+                                   : TR(NB + " 块，每个单元一块，与 primal 同一组", NB + " blocks, one per cell, the primal's"));
+    const listing = () => { const blocks = blocksText(); return (ADJ ? [
       ["function solve_adjoint(u, A)", TR("解 (∂R/∂u)ᵀ ψ = −g", "solve (∂R/∂u)ᵀ ψ = −g")],
       ["    g ← ∂L/∂u", TR("第 6 节的目标函数", "the objective of Section 6")],
       [TR("    D ← ∂R/∂u 的 3×3 对角块", "    D ← the 3×3 diagonal blocks of ∂R/∂u"), blocks],
@@ -4944,7 +4950,7 @@ if (!Element.prototype.replaceChildren) {
       ["        v[i] ← v[i] − D[i]⁻¹ res[i]", TR("块 Jacobi 更新", "the block-Jacobi update")],
       ["    until max|res| < 10⁻¹³", TR("演示越过判据，一直跑到舍入误差平台", "the demo runs on to the round-off floor")],
       ["    return v", ""]
-    ]);
+    ]); };
 
     function faceText(f) {
       const u = (x => x + 1);                   /* volumes are numbered from 1 on the figure */
@@ -5600,6 +5606,46 @@ if (!Element.prototype.replaceChildren) {
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();
+})();
+
+/* Display equations on narrow screens. A display equation (.eqwrap > .eqd)
+   wider than its column scrolls sideways inside its box; on a phone many of
+   them do. fit() scales each such equation down through its font size (the
+   TeX renderer sets every length in em, so the whole formula scales with
+   it) until it fits, but not below MIN of its size: a wider one keeps its
+   scroll, at the smaller size. Runs when the page loads, when the web fonts
+   arrive, on resize, and after a language switch (window.REPAINT). Every
+   build of the series includes it; it does nothing where equations fit. */
+(function () {
+  "use strict";
+  if (typeof document === "undefined" || !document.querySelectorAll) return;
+  var MIN = 0.62;
+  function fit() {
+    var ws = document.querySelectorAll(".eqwrap");
+    Array.prototype.forEach.call(ws, function (w) {
+      var eq = w.querySelector(".eqd");
+      if (!eq) return;
+      eq.style.fontSize = "";
+      var have = w.clientWidth, need = w.scrollWidth;
+      if (!have || need <= have + 1) return;
+      var base = parseFloat(window.getComputedStyle(eq).fontSize);
+      if (!(base > 0)) return;
+      var s = Math.max(MIN, have / need);
+      eq.style.fontSize = (base * s * 0.99).toFixed(2) + "px";
+    });
+  }
+  var timer = null;
+  function later() {
+    clearTimeout(timer);
+    timer = setTimeout(fit, 150);
+  }
+  (window.REPAINT = window.REPAINT || []).push(fit);
+  window.addEventListener("resize", later);
+  window.addEventListener("load", fit);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", fit);
+  else fit();
+  window.EQFIT = fit;
 })();
 
 /* ---- side-nav collapse + current-section highlight ---- */

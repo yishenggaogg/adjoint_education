@@ -1315,7 +1315,7 @@ S=<span class="pmat"><span class="pstrut">&#8203;</span><span class="lp"></span>
         </tbody>
       </table>
     </div>
-    <p lang="zh">六个页面讲的其实是同一件事：<b>离散伴随就是把 primal 的那个循环逐句转置</b>。换方程、换格式、换边界条件，变的只是每一步里那个局部导数长什么样，以及循环之外要不要补一步。</p><p lang="en">All six pages tell one story: <b>a discrete adjoint is the primal's own loop, transposed statement by statement</b>. Change the equations, the scheme or the boundary conditions, and all that changes is what the local derivative looks like at each step, and whether anything has to be done outside the loop.</p>
+    <p lang="zh">八个页面讲的其实是同一件事：<b>离散伴随就是把 primal 的那个循环逐句转置</b>。换方程、换格式、换边界条件，变的只是每一步里那个局部导数长什么样，以及循环之外要不要补一步。</p><p lang="en">All eight pages tell one story: <b>a discrete adjoint is the primal's own loop, transposed statement by statement</b>. Change the equations, the scheme or the boundary conditions, and all that changes is what the local derivative looks like at each step, and whether anything has to be done outside the loop.</p>
   </div>
 </section>
 
@@ -1360,6 +1360,11 @@ if (!Element.prototype.replaceChildren) {
     "loop-primal", "loop-tangent", "loop-adjoint", "dot-out",
     "jacobi-mesh", "jacobi-lanes", "jacobi-plot", "jacobi-status",
     "jacobi-info", "jacobi-code", "jacobi-face-ctl", "jacobi-ctl",
+    /* the forward solve of Section 9 is the same demo in tangent mode and
+       appends into the same kinds of host; without these a switch stacked a
+       second panel under the first, the first in the old language */
+    "tan-mesh", "tan-lanes", "tan-plot", "tan-status", "tan-info",
+    "tan-code", "tan-face-ctl", "tan-ctl",
     "grad-mesh", "grad-out",
     /* the merged step-size sweep: both are appended into, so a
        language switch would otherwise stack a second plot and a
@@ -3482,7 +3487,7 @@ if (!Element.prototype.replaceChildren) {
                   TR(" 行 → ", " → ") + c.kind,
                   "<span class=\"mono\">[" + g.map(x => (x >= 0 ? " " : "") + x.toFixed(4)).join(", ") + "]</span>" +
                   (unit ? TR("（单位行）", " (a unit row)")
-                        : TR("　← <b>一般行向量</b>", "　← <b>a general row</b>")));
+                        : TR("　← <b>一般行向量</b>", " ← <b>a general row</b>")));
       }).join("");
       out.innerHTML = "<table class=\"kv\">" +
         rw(TR("受约束的行数", "constrained rows"), "<b>" + F.WROWS.length + "</b>" +
@@ -3641,7 +3646,7 @@ if (!Element.prototype.replaceChildren) {
         rw(TR("约束行上的 Ψ", "Ψ on the constrained rows"),
            F.WROWS.map((c, k) => c.kind + " " + onW[k].toExponential(2)).join(SEP()) +
            TR("　← p₀、p_b 行不为零，所以第 10 节必须清零；T₀ 行为零（第 10 节解释原因）",
-              "　← non-zero on the p₀ and p_b rows, so Section 10 must zero them; zero on the T₀ row (Section 10 says why)")) +
+              " ← non-zero on the p₀ and p_b rows, so Section 10 must zero them; zero on the T₀ row (Section 10 says why)")) +
         "</table>";
     };
     if (sel) sel.addEventListener("change", draw);
@@ -3684,7 +3689,7 @@ if (!Element.prototype.replaceChildren) {
         rw("max |dL/dA|", Math.max.apply(null, tot.map(Math.abs)).toExponential(3)) +
         rw(TR("忘记清零 Ψ 的后果", "cost of forgetting to zero Ψ"),
            "<b>" + (relerr * 100).toFixed(0) + "%</b>" +
-           TR("　相对误差——梯度是错的", "　relative error &mdash; the gradient is wrong")) +
+           TR("　相对误差——梯度是错的", " relative error &mdash; the gradient is wrong")) +
         rw(TR("几何点积测试", "geometric dot test"), sci(gw / gs) +
            TR("（两个方向都是解析的，不含步长）", " (both directions analytic, no step size)")) +
         "</table>";
@@ -4534,9 +4539,10 @@ if (!Element.prototype.replaceChildren) {
       });
       return out;
     }
-    const blocks = NODE ? TR(NB + " 块，含约束行，与 primal 同一组", NB + " blocks with the constraint rows, the primal's")
-                        : TR(NB + " 块，每个单元一块，与 primal 同一组", NB + " blocks, one per cell, the primal's");
-    const listing = () => (ADJ ? [
+    /* evaluated with the listing, so a language switch (REPAINT) sees the new language */
+    const blocksText = () => (NODE ? TR(NB + " 块，含约束行，与 primal 同一组", NB + " blocks with the constraint rows, the primal's")
+                                   : TR(NB + " 块，每个单元一块，与 primal 同一组", NB + " blocks, one per cell, the primal's"));
+    const listing = () => { const blocks = blocksText(); return (ADJ ? [
       ["function solve_adjoint(u, A)", TR("解 (∂R/∂u)ᵀ ψ = −g", "solve (∂R/∂u)ᵀ ψ = −g")],
       ["    g ← ∂L/∂u", TR("第 6 节的目标函数", "the objective of Section 6")],
       [TR("    D ← ∂R/∂u 的 3×3 对角块", "    D ← the 3×3 diagonal blocks of ∂R/∂u"), blocks],
@@ -4558,7 +4564,7 @@ if (!Element.prototype.replaceChildren) {
       ["        v[i] ← v[i] − D[i]⁻¹ res[i]", TR("块 Jacobi 更新", "the block-Jacobi update")],
       ["    until max|res| < 10⁻¹³", TR("演示越过判据，一直跑到舍入误差平台", "the demo runs on to the round-off floor")],
       ["    return v", ""]
-    ]);
+    ]); };
 
     function faceText(f) {
       const u = (x => x + 1);                   /* volumes are numbered from 1 on the figure */
@@ -5214,6 +5220,46 @@ if (!Element.prototype.replaceChildren) {
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();
+})();
+
+/* Display equations on narrow screens. A display equation (.eqwrap > .eqd)
+   wider than its column scrolls sideways inside its box; on a phone many of
+   them do. fit() scales each such equation down through its font size (the
+   TeX renderer sets every length in em, so the whole formula scales with
+   it) until it fits, but not below MIN of its size: a wider one keeps its
+   scroll, at the smaller size. Runs when the page loads, when the web fonts
+   arrive, on resize, and after a language switch (window.REPAINT). Every
+   build of the series includes it; it does nothing where equations fit. */
+(function () {
+  "use strict";
+  if (typeof document === "undefined" || !document.querySelectorAll) return;
+  var MIN = 0.62;
+  function fit() {
+    var ws = document.querySelectorAll(".eqwrap");
+    Array.prototype.forEach.call(ws, function (w) {
+      var eq = w.querySelector(".eqd");
+      if (!eq) return;
+      eq.style.fontSize = "";
+      var have = w.clientWidth, need = w.scrollWidth;
+      if (!have || need <= have + 1) return;
+      var base = parseFloat(window.getComputedStyle(eq).fontSize);
+      if (!(base > 0)) return;
+      var s = Math.max(MIN, have / need);
+      eq.style.fontSize = (base * s * 0.99).toFixed(2) + "px";
+    });
+  }
+  var timer = null;
+  function later() {
+    clearTimeout(timer);
+    timer = setTimeout(fit, 150);
+  }
+  (window.REPAINT = window.REPAINT || []).push(fit);
+  window.addEventListener("resize", later);
+  window.addEventListener("load", fit);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", fit);
+  else fit();
+  window.EQFIT = fit;
 })();
 
 /* ---- side-nav collapse + current-section highlight ---- */
