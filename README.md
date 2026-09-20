@@ -22,8 +22,8 @@ version. If the discrete adjoint is new to you, start with the one-dimensional p
 
 | 文件 / File | 算例 / Problem | 格式 / Scheme | 大小 / Size |
 |---|---|---|---|
-| [`adjoint_1d_cell.html`](adjoint_1d_cell.html) | 一维 Burgers/ 1-D Burgers | **格心** / cell-centred | 735 KB |
-| [`adjoint_1d_node.html`](adjoint_1d_node.html) | 一维 Burgers/ 1-D Burgers | **格点** / node-centred | 738 KB |
+| [`adjoint_1d_cell.html`](adjoint_1d_cell.html) | 一维 Burgers/ 1-D Burgers | **格心** / cell-centred | 817 KB |
+| [`adjoint_1d_node.html`](adjoint_1d_node.html) | 一维 Burgers/ 1-D Burgers | **格点** / node-centred | 821 KB |
 | [`adjoint_cell.html`](adjoint_cell.html) | 二维对流 / 2-D advection | **格心** / cell-centred | 875 KB |
 | [`adjoint_node.html`](adjoint_node.html) | 二维对流 / 2-D advection | **格点** / node-centred | 917 KB |
 | [`adjoint_ad_cell.html`](adjoint_ad_cell.html) | 二维对流扩散 / 2-D advection–diffusion | **格心** / cell-centred | 830 KB |
@@ -42,6 +42,12 @@ no server. Each page has a 中文 / English toggle in the top-right corner.
 [Gitee](https://gitee.com/gaoyishenggg/adjoint_education) — 内容相同 / identical content
 
 ---
+
+### Burgers 附录 B / Appendix B
+
+两种 1D 页面新增同页中英文[附录 B：间断与激波伴随](adjoint_1d_cell.html#appendix-shocks)。独立的单元平均 Riemann 实验包含移动激波、驻定激波和稀疏波，一阶／minmod 重构、SSP-RK2、matrix-free tangent 和反向时间 adjoint；可查看网格、时间层、限幅分支、完整重算差分及网格加密结果。详细推导激波位移、连续伴随平台和稳态位置不唯一性，并区分离散求导正确与连续伴随一致性。格点页附录采用相同参考有限体积实现，不改变正文格式。
+
+Both 1D pages include bilingual [Appendix B: discontinuities and shock adjoints](adjoint_1d_node.html#appendix-shocks). An independent cell-average Riemann experiment implements moving/stationary shocks and rarefactions, first-order/minmod reconstruction, SSP-RK2, matrix-free tangents and reverse-time adjoints. Mesh/time/limiter inspection, full-rerun finite differences and refinement studies accompany derivations of shock displacement, continuous-adjoint plateaux and steady nonuniqueness. Discrete derivative correctness is explicitly separated from continuous consistency.
 
 ### Burgers 一阶／二阶与 GS / Burgers reconstruction and GS
 
