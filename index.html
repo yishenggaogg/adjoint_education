@@ -75,28 +75,28 @@ code { font-family:var(--font-mono); font-size:.86em; }
     从一个面上的一维通量开始，把同一个循环依次改写成 primal、matrix-free 前向与 matrix-free 伴随，
     再做前向与伴随求解、几何导数，最后用有限差分与复数步长逐项校验。
     四组算例（<b>一维 Burgers</b>、<b>二维标量对流</b>、<b>二维标量对流扩散</b>与<b>拟一维 Euler</b>）各有<b>格心</b>与<b>格点</b>两版，
-    <b>八页结构完全平行</b>，可以任意两两并排对照。第一次接触离散伴随，请从一维 Burgers 那一对读起。
+    <b>八页教学主题相互对应</b>，可以任意两两并排对照。第一次接触离散伴随，请从一维 Burgers 那一对读起。
   </p>
 
   <h3 style="margin-top:30px">一维 Burgers 方程/ The one-dimensional Burgers equation</h3>
   <p style="margin:0 0 14px;color:var(--muted);font-size:.93rem">
-    带源项的定常 Burgers 方程，面通量就是二维页的那个通量取 n = 1。8 个单元或 9 个节点，每个数组、整个 Jacobian 都能完整摆在页面上。设计变量是 8 个区间上的源项与入口值 u<sub>in</sub>：一次伴随求解给出全部 9 个导数，再用它们驱动 BFGS 反设计。<br>
-    The steady Burgers equation with a source, its face flux that of the two-dimensional pages taken at n = 1. Eight cells or nine
-    nodes, so every array and the whole Jacobian fit on the page. The design variables are the sources on eight intervals and the
-    inflow value u<sub>in</sub>: one adjoint solve gives all nine derivatives, which then drive a BFGS inverse design.
+    带源项的定常 Burgers 方程，支持<b>一阶／二阶空间精度切换</b>。二阶线性重构的完整 tangent 与 adjoint 包含斜率和边界导数。
+    原始方程用 GS 预估矫正，线性方程可选 GS 固定点或 <b>GS 预处理 GMRES</b>，并比较网格收敛、求解成本与连续伴随一致性。<br>
+    Steady Burgers with a source, selectable <b>first-/second-order space</b>, exact reconstruction derivatives, GS predictor–corrector and <b>GS-preconditioned GMRES</b>.
+    Interactive studies compare mesh convergence, solver work and continuous-adjoint consistency.
   </p>
   <div class="cards">
     <a class="card" href="adjoint_1d_cell.html">
       <h2>格心格式</h2>
       <p class="en">Cell-centred finite volume</p>
       <p>未知量是单元平均值。入口值 u<sub>in</sub> 是入口面左侧的 ghost 状态，在通量里<b>弱</b>加。</p>
-      <p class="facts">8 个单元 &middot; 9 个面 &middot; nnz(A) = 22<br>adjoint_1d_cell.html</p>
+      <p class="facts">8 / 16 / 32 个单元 &middot; 一阶 / 二阶 &middot; GS / GMRES<br>adjoint_1d_cell.html</p>
     </a>
     <a class="card node" href="adjoint_1d_node.html">
       <h2>格点格式</h2>
       <p class="en">Node-centred, dual volumes</p>
       <p>入口节点的整行换成 u<sub>0</sub> &minus; u<sub>in</sub>，<b>强</b>加；伴随里「循环前清零、循环后加回」，顺序不能反。</p>
-      <p class="facts">9 个节点 &middot; 9 个面 &middot; nnz(A) = 24<br>adjoint_1d_node.html</p>
+      <p class="facts">9 / 17 / 33 个节点 &middot; 一阶 / 二阶 &middot; GS / GMRES<br>adjoint_1d_node.html</p>
     </a>
   </div>
 
@@ -179,12 +179,12 @@ code { font-family:var(--font-mono); font-size:.86em; }
     <li>网格、一维通量与边界条件 &mdash; mesh, the one-dimensional flux, boundary conditions</li>
     <li>残差 = 一个循环：收集、计算、分发 &mdash; the residual as one gather&ndash;compute&ndash;scatter loop</li>
     <li>同一个循环改写成 matrix-free 前向 <code>Av</code> 与伴随 <code>A&#8288;<sup>T</sup>w</code>，每一行都能逐句播放</li>
-    <li>前向与伴随求解（与 primal 同一个 Jacobi 迭代，三条收敛曲线画在一起）、几何导数 <code>dR/dX</code> 与 <code>dL/dX</code>（一维页是对源项与入口值的设计导数）&mdash; the forward and the adjoint solve (the primal's Jacobi iteration, the three convergence curves drawn together), and the geometric derivatives (on the 1-D pages, the design derivatives with respect to the sources and the inflow value)</li>
+    <li>前向与伴随求解（Burgers 使用 GS／GS 预处理 GMRES，其余六页保留 Jacobi）、几何导数 <code>dR/dX</code> 与 <code>dL/dX</code>（一维页是对源项与入口值的设计导数）&mdash; the forward and the adjoint solve (GS / GS-preconditioned GMRES for Burgers; Jacobi on the other six pages), and the geometric derivatives (on the 1-D pages, the design derivatives with respect to the sources and the inflow value)</li>
     <li>点积测试与有限差分校验，以及差分校验本身的陷阱 &mdash; the dot-product test, and where finite differences mislead</li>
     <li>复数步长：公式与实现；从收敛流场出发，复数迭代每一轮都等于前向迭代；用它验证梯度 &mdash; the complex step: the formula and how to implement it; started from the converged flow, the complex iteration is the forward iteration at every sweep; the gradient checked by it</li>
     <li>精度阶：构造解、一致加密的网格族、观测阶 &mdash; the order of accuracy: a manufactured solution, a uniformly refined family, the observed order</li>
     <li>（一维）源项作设计变量、伴随梯度驱动的 BFGS 反设计、离散伴随与连续伴随的对照 &mdash; (1-D) sources as design variables, a BFGS inverse design driven by the adjoint gradient, the discrete adjoint against the continuous one</li>
-    <li>（一维）哪一种检验抓哪一种错误、伴随一致的入口与用伴随估计 <code>J</code> 的误差 &mdash; (1-D) which check catches which bug, an adjoint-consistent inflow and an adjoint-based estimate of the error in <code>J</code></li>
+    <li>（一维）哪一种检验抓哪一种错误、入口一致性对照与用伴随估计 <code>J</code> 的误差 &mdash; (1-D) which check catches which bug, an inflow-consistency comparison and an adjoint-based estimate of the error in <code>J</code></li>
     <li>（全部页面，第 15 节）伴随一致性；连续方程、边界条件与网格加密对照。二维纯对流另设特征边界对照，并说明原零通量内壁的限制。<a href="CONTINUOUS_ADJOINT.html" lang="zh">完整推导（中文）</a> / <a href="CONTINUOUS_ADJOINT_en.html" lang="en">Full derivation (English)</a> &mdash; continuous dual equations, boundary conditions and refinement; a separate characteristic-boundary contrast for 2-D advection.</li>
     <li>（对流扩散）最小二乘梯度、两遍循环、伸到邻居的邻居的精确 Jacobian、强加的 Dirichlet 壁面 &mdash; (advection&ndash;diffusion) least-squares gradients, two loops, an exact Jacobian reaching the neighbours of neighbours, a strongly imposed Dirichlet wall</li>
     <li>（拟一维）源项、特征边界条件、3×3 块 &mdash; (quasi-1-D) the source term, characteristic boundary conditions, 3&times;3 blocks</li>
@@ -193,14 +193,15 @@ code { font-family:var(--font-mono); font-size:.86em; }
   <h3>页面上的数字都是实测的 / Every number is measured</h3>
   <p class="lede" style="font-size:.95rem;margin-bottom:0">
     原有交互面板在浏览器现场计算；新增连续伴随面板浏览独立求解后内嵌的离线结果。正文数值均来自实际计算。
-    梯度对全链路中心差分（h = 10<sup>&minus;6</sup>，相对最大分量）：一维 Burgers 1.9e&minus;10（格心）／1.9e&minus;10（格点），二维对流 4.0e&minus;10／3.6e&minus;10，
+    梯度对全链路中心差分（h = 10<sup>&minus;6</sup>，相对最大分量）：二维对流 4.0e&minus;10／3.6e&minus;10，
     二维对流扩散 3.7e&minus;9／3.4e&minus;9，拟一维 Euler 3.6e&minus;9／2.0e&minus;9。
     拟一维的几何点积测试 1.95e&minus;16／4.48e&minus;16（两个方向都解析，不含步长），
-    反设计目标在<b>已知最优流道</b>上 L 与 dL/dA 逐比特为零，一维页的反设计在目标源项上 J 与 dJ/dp 同样逐比特为零；
-    复数步长梯度与伴随梯度之差（相对最大分量）：一维 Burgers 2.9e&minus;16／1.2e&minus;16，二维对流 2.0e&minus;16／2.2e&minus;16，
+    反设计目标在<b>已知最优流道</b>上 L 与 dL/dA 逐比特为零，一维页在各自固定目标源项上检查 J 与 dJ/dp 归零；
+    复数步长梯度与伴随梯度之差（相对最大分量）：二维对流 2.0e&minus;16／2.2e&minus;16，
     二维对流扩散 6.7e&minus;16／3.0e&minus;16，拟一维 Euler（推力）2.0e&minus;15／7.2e&minus;16；从收敛流场出发，复数迭代与前向迭代逐轮之差
-    （相对 max|v|）在八页上都不超过 2.1e&minus;14。
-    每一对页面的第 14 节都测了精度阶：一维 Burgers 直接对照精确解，一阶；二维对流一阶但来得很慢，
+    （相对 max|v|）在其余六页上都不超过 2.1e&minus;14。
+    Burgers 新版另外检查重构导数、GS 转置、GS／GMRES 同一系统解及独立复数残差；一阶／二阶的完整结果见各页。
+    每一对页面的第 14 节都测了精度阶：一维 Burgers 对照精确平均值／节点值，一阶与二阶均实测验证；二维对流一阶但来得很慢，
     对流扩散只有扩散时二阶、完整方程一阶，拟一维很快就是一阶。
   </p>
 
