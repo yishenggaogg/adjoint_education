@@ -22,14 +22,14 @@ version. If the discrete adjoint is new to you, start with the one-dimensional p
 
 | 文件 / File | 算例 / Problem | 格式 / Scheme | 大小 / Size |
 |---|---|---|---|
-| [`adjoint_1d_cell.html`](adjoint_1d_cell.html) | 一维 Burgers/ 1-D Burgers | **格心** / cell-centred | 817 KB |
-| [`adjoint_1d_node.html`](adjoint_1d_node.html) | 一维 Burgers/ 1-D Burgers | **格点** / node-centred | 821 KB |
+| [`adjoint_1d_cell.html`](adjoint_1d_cell.html) | 一维 Burgers/ 1-D Burgers | **格心** / cell-centred | 835 KB |
+| [`adjoint_1d_node.html`](adjoint_1d_node.html) | 一维 Burgers/ 1-D Burgers | **格点** / node-centred | 839 KB |
 | [`adjoint_cell.html`](adjoint_cell.html) | 二维对流 / 2-D advection | **格心** / cell-centred | 875 KB |
 | [`adjoint_node.html`](adjoint_node.html) | 二维对流 / 2-D advection | **格点** / node-centred | 917 KB |
 | [`adjoint_ad_cell.html`](adjoint_ad_cell.html) | 二维对流扩散 / 2-D advection–diffusion | **格心** / cell-centred | 830 KB |
 | [`adjoint_ad_node.html`](adjoint_ad_node.html) | 二维对流扩散 / 2-D advection–diffusion | **格点** / node-centred | 966 KB |
-| [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | 拟一维 Euler / quasi-1-D Euler | **格心** / cell-centred | 211 KB |
-| [`adjoint_q1d_node.html`](adjoint_q1d_node.html) | 拟一维 Euler / quasi-1-D Euler | **格点** / node-centred | 211 KB |
+| [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | 拟一维 Euler / quasi-1-D Euler | **格心** / cell-centred | 212 KB |
+| [`adjoint_q1d_node.html`](adjoint_q1d_node.html) | 拟一维 Euler / quasi-1-D Euler | **格点** / node-centred | 212 KB |
 | [`adjoint_euler_cell.html`](adjoint_euler_cell.html) | 二维 Euler / 2-D Euler | **格心** / cell-centred | 146 KB |
 | [`adjoint_euler_node.html`](adjoint_euler_node.html) | 二维 Euler / 2-D Euler | **格点** / node-centred | 146 KB |
 
@@ -112,11 +112,17 @@ equation** — one dimension, then pure advection in two, then diffusion added, 
 | **拟一维 Euler** / quasi-1-D Euler | [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | [`adjoint_q1d_node.html`](adjoint_q1d_node.html) |
 | **二维 Euler** / 2-D Euler | [`adjoint_euler_cell.html`](adjoint_euler_cell.html) | [`adjoint_euler_node.html`](adjoint_euler_node.html) |
 
-### 拟一维直接伴随 / Direct quasi-1-D adjoints
+### 一维直接伴随 / Direct one-dimensional adjoints
 
-[附录 C（格心）](adjoint_q1d_cell.html#appendix-c) / [Appendix C (node)](adjoint_q1d_node.html#appendix-c) 针对当前 36／39 个未知量，显式组装所选阶数的精确 Jacobian，采用带部分主元的 LU 分解解伴随方程；展示矩阵、消元步骤、前代／回代结果及梯度，并实测包含矩阵组装的直接法、GS、GMRES 总耗时。正文 matrix-free 路径保留。204 项新增检查通过，直接解真残差最大 4.67×10⁻¹⁶。
+Burgers：[格心附录 C](adjoint_1d_cell.html#appendix-c) / [格点附录 C](adjoint_1d_node.html#appendix-c)。拟一维 Euler：[格心附录 C](adjoint_q1d_cell.html#appendix-c) / [格点附录 C](adjoint_q1d_node.html#appendix-c)。
 
-For the current 36/39 unknowns, Appendix C assembles the exact selected-order Jacobian and solves the adjoint using partial-pivot LU. Inspect the matrix, elimination steps and triangular solves, and benchmark direct, GS and GMRES timings including matrix setup. The main matrix-free path remains available. All 204 additional checks passed; the maximum direct true residual was 4.67×10⁻¹⁶. Timings are measured live rather than assumed to rank identically on every device.
+四页的一阶、二阶均提供**显式矩阵＋带主元 LU 直接求解**，这里不采用 matrix-free 求解。Burgers 按面解析组装完整 Jacobian，Euler 通过精确导数列显式组装；随后存储转置矩阵并做 LU、前代和回代。matrix-free 算子只在直接解完成后用于独立残差验证，正文原有迭代路径保留。交互展示完整矩阵、消元步骤、网格伴随值及包含组装的实测耗时。
+
+All four pages offer **explicit matrices and pivoted-LU direct solves** for both spatial orders. This appendix does not use a matrix-free solve. Burgers assembles the complete Jacobian analytically face by face; Euler assembles exact derivative columns. Both store the transpose and use LU plus triangular substitution. Matrix-free products independently verify the final residual only; the main iterative path remains available. Inspect matrices, elimination stages, adjoint mesh values and timings including assembly.
+
+Burgers 新增 168 项检查通过，覆盖两种网格、两种阶数、8／16／32 区间及两种入口闭合，最大直接残差 4.81×10⁻¹⁷。Euler 的 204 项直接法检查通过，最大残差 4.67×10⁻¹⁶。小网格通常适合直接法；计时现场测量，不预设所有设备上的速度排名。
+
+The 168 Burgers checks span both grids/orders, 8/16/32 intervals and both inlet closures (maximum direct residual 4.81×10⁻¹⁷). Euler passed 204 direct-solver checks (maximum residual 4.67×10⁻¹⁶). Small grids favour direct methods; live timings determine the actual ranking.
 
 ### 连续伴随与一致性 / Continuous adjoints and consistency
 

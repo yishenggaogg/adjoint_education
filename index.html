@@ -91,13 +91,13 @@ code { font-family:var(--font-mono); font-size:.86em; }
       <h2>格心格式</h2>
       <p class="en">Cell-centred finite volume</p>
       <p>未知量是单元平均值。入口值 u<sub>in</sub> 是入口面左侧的 ghost 状态，在通量里<b>弱</b>加。</p>
-      <p class="facts">8 / 16 / 32 个单元 &middot; 一阶 / 二阶 &middot; GS / GMRES<br>adjoint_1d_cell.html</p>
+      <p class="facts">8 / 16 / 32 个单元 &middot; 一阶 / 二阶 &middot; GS / GMRES / LU（附录 C）<br>adjoint_1d_cell.html</p>
     </a>
     <a class="card node" href="adjoint_1d_node.html">
       <h2>格点格式</h2>
       <p class="en">Node-centred, dual volumes</p>
       <p>入口节点的整行换成 u<sub>0</sub> &minus; u<sub>in</sub>，<b>强</b>加；伴随里「循环前清零、循环后加回」，顺序不能反。</p>
-      <p class="facts">9 / 17 / 33 个节点 &middot; 一阶 / 二阶 &middot; GS / GMRES<br>adjoint_1d_node.html</p>
+      <p class="facts">9 / 17 / 33 个节点 &middot; 一阶 / 二阶 &middot; GS / GMRES / LU（附录 C）<br>adjoint_1d_node.html</p>
     </a>
   </div>
 
