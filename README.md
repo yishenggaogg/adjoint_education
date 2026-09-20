@@ -20,12 +20,12 @@ version. If the discrete adjoint is new to you, start with the one-dimensional p
 |---|---|---|---|
 | [`adjoint_1d_cell.html`](adjoint_1d_cell.html) | 一维 Burgers/ 1-D Burgers | **格心** / cell-centred | 532 KB |
 | [`adjoint_1d_node.html`](adjoint_1d_node.html) | 一维 Burgers/ 1-D Burgers | **格点** / node-centred | 549 KB |
-| [`adjoint_cell.html`](adjoint_cell.html) | 二维对流 / 2-D advection | **格心** / cell-centred | 676 KB |
-| [`adjoint_node.html`](adjoint_node.html) | 二维对流 / 2-D advection | **格点** / node-centred | 748 KB |
-| [`adjoint_ad_cell.html`](adjoint_ad_cell.html) | 二维对流扩散 / 2-D advection–diffusion | **格心** / cell-centred | 610 KB |
-| [`adjoint_ad_node.html`](adjoint_ad_node.html) | 二维对流扩散 / 2-D advection–diffusion | **格点** / node-centred | 775 KB |
-| [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | 拟一维 Euler / quasi-1-D Euler | **格心** / cell-centred | 558 KB |
-| [`adjoint_q1d_node.html`](adjoint_q1d_node.html) | 拟一维 Euler / quasi-1-D Euler | **格点** / node-centred | 542 KB |
+| [`adjoint_cell.html`](adjoint_cell.html) | 二维对流 / 2-D advection | **格心** / cell-centred | 801 KB |
+| [`adjoint_node.html`](adjoint_node.html) | 二维对流 / 2-D advection | **格点** / node-centred | 843 KB |
+| [`adjoint_ad_cell.html`](adjoint_ad_cell.html) | 二维对流扩散 / 2-D advection–diffusion | **格心** / cell-centred | 738 KB |
+| [`adjoint_ad_node.html`](adjoint_ad_node.html) | 二维对流扩散 / 2-D advection–diffusion | **格点** / node-centred | 874 KB |
+| [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | 拟一维 Euler / quasi-1-D Euler | **格心** / cell-centred | 740 KB |
+| [`adjoint_q1d_node.html`](adjoint_q1d_node.html) | 拟一维 Euler / quasi-1-D Euler | **格点** / node-centred | 725 KB |
 
 直接用浏览器打开即可：**没有任何外部依赖**，不联网、不需要构建、不需要服务器。
 Just open any of them in a browser — **no external dependencies**, no network, no build step,
@@ -43,15 +43,15 @@ no server. Each page has a 中文 / English toggle in the top-right corner.
 
 四组算例，每组两种离散。**八页结构完全平行**：前 14 节一一对应，第 12 节是差分验证，第 13 节是复数步长，
 第 14 节是精度阶，总结都在最后一节；第 11 节在一维那一对里是对源项与入口值的设计导数，其余三对是几何导数；
-一维那一对还多一节（第 15 节：伴随一致性与 $J$ 的误差估计），所以它的总结是第 16 节。任意两页都能并排对照：
+八页第 15 节均讨论伴随一致性，总结统一为第 16 节；一维还包含 $J$ 的误差估计。任意两页都能并排对照：
 横着比是**两种格式**；竖着比是**方程**——从一维，到二维纯对流，到加上扩散，再到方程组。
 
 Four model problems, each discretised two ways. All eight are **strictly parallel**: their first
 14 sections match one to one, Section 12 being the finite-difference check, Section 13 the complex
 step and Section 14 the order of accuracy, and the summary always comes last. Section 11 gives
 design derivatives with respect to the sources and the inflow value on the one-dimensional pair
-and geometric derivatives on the other three, and the one-dimensional pair adds a section
-(Section 15: adjoint consistency and estimating the error in $J$), so its summary is Section 16. Any two can be read side by side: across, the **two schemes**; down, **the
+and geometric derivatives on the other three. All eight now discuss adjoint consistency in
+Section 15 and conclude in Section 16; the one-dimensional pair also estimates the error in $J$. Any two can be read side by side: across, the **two schemes**; down, **the
 equation** — one dimension, then pure advection in two, then diffusion added, then a system.
 
 | | 格心 / cell-centred | 格点 / node-centred |
@@ -60,6 +60,20 @@ equation** — one dimension, then pure advection in two, then diffusion added, 
 | **二维对流** / 2-D advection | [`adjoint_cell.html`](adjoint_cell.html) | [`adjoint_node.html`](adjoint_node.html) |
 | **二维对流扩散** / 2-D advection–diffusion | [`adjoint_ad_cell.html`](adjoint_ad_cell.html) | [`adjoint_ad_node.html`](adjoint_ad_node.html) |
 | **拟一维 Euler** / quasi-1-D Euler | [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | [`adjoint_q1d_node.html`](adjoint_q1d_node.html) |
+
+### 连续伴随与一致性 / Continuous adjoints and consistency
+
+第 15 节给出分部积分、目标对应的伴随边界条件，以及独立连续解和原离散伴随的加密比较。完整推导见 [CONTINUOUS_ADJOINT.md](CONTINUOUS_ADJOINT.md)。
+
+- **对流扩散**：独立有限元连续参考，壁面伴随值为 1，远场按原数值总通量解释为 Robin 条件；验证远场值导数。
+- **拟一维 Euler**：等熵原始解与连续伴随边值 ODE，分别检验反设计和推力目标；保留形状导数的端点项。
+- **二维纯对流**：原零通量内壁缺少光滑正值连续参考；明确说明限制，并另外计算特征边界对照的解析伴随，不能把对照当成原边界的验证。
+
+Section 15 derives the Green identities and objective-dependent boundary conditions, then compares independent continuous references with refined discrete adjoints. The [full derivation](CONTINUOUS_ADJOINT.md) records assumptions and evidence limits. Advection–diffusion uses an independent FEM reference with wall dual value one and the implemented total-flux Robin far field; quasi-1-D uses an isentropic primal and a continuous dual boundary-value ODE for both objectives. The original scalar zero-flux body has no smooth positive reference of this kind, so its characteristic-boundary contrast is explicitly separate.
+
+六个新面板浏览内嵌的**离线计算结果**，不在浏览器中重新求解连续 PDE。它们不引入外部运行依赖。加密误差下降是所测网格族的证据，不是任意网格、激波或边界最大范数的收敛证明。
+
+The six new viewers contain **offline-computed results**, not browser PDE solves, and add no runtime dependencies. Refinement trends are evidence for the tested families, not convergence proofs for arbitrary grids, shocks or boundary maximum norms.
 
 ### 横着比：两种格式的边界条件 / Across: what the two schemes do at a boundary
 
@@ -71,7 +85,7 @@ equation** — one dimension, then pure advection in two, then diffusion added, 
 - **一维 Burgers**：只有入口一个条件 $u(0)=u_{\mathrm{in}}$，出口的通量就是物理通量。格心页把 $u_{\mathrm{in}}$
   当作入口面左侧的 ghost 状态（弱加）；格点页把节点 0 的整行换成 $u_0-u_{\mathrm{in}}$（强加）。
   照搬前向的写法、在伴随循环之后直接覆盖 $y_0\leftarrow w_0$，点积测试就失败。
-- **二维对流**：纯对流方程只能在特征线进入区域的地方给边界数据。物面是无粘壁面（通量为零），
+- **二维对流**：纯对流方程只能在特征线进入区域的地方给边界数据。物面采用零数值通量闭合（不是相容的光滑连续滑移壁面），
   远场按特征方向取来流值或外推——两页都在通量里弱加，**没有**强加，也**没有** Dirichlet 壁面：
   在特征线离开区域的那部分物面上，它会多出一个条件。
 - **二维对流扩散**：扩散项让 Dirichlet 壁面 $u=u_w$ 在整条物面上都适定。格心页把 $u_w$
@@ -92,7 +106,7 @@ loop, add back after", in that order and no other. The four rows go through this
   (strong). Copying the forward code and overwriting $y_0\leftarrow w_0$ after the adjoint loop
   fails the dot test.
 - **2-D advection**: a purely convective equation takes boundary data only where characteristics
-  enter. The body is an inviscid wall (zero flux) and the far field takes the free stream or
+  enter. The body uses a zero numerical flux (not a compatible smooth continuum slip wall) and the far field takes the free stream or
   extrapolates, by the characteristic direction — both pages impose everything weakly, through
   the flux. There is **no** strong imposition and **no** Dirichlet wall, which would be one
   condition too many where characteristics leave the body.
@@ -152,13 +166,13 @@ $J=\tfrac12\sum_iw_i(u_i-\bar u_i)^2$，$\bar u$ 是源项取 $\sin\pi x$ 的区
 
 **二维对流 / 2-D advection** — 标量守恒律 $F(u)=\tfrac12u^2\beta$，$\beta=(1,\,0.5)$，常数耗散
 $\varepsilon=0.8$；环形 O 型混合网格（8 个四边形 + 16 个三角形，24 个未知量）；内圈物面是
-无粘壁面（通量为零）、外圈远场特征边界；目标是类似阻力的物面积分；设计变量是全部 48 个
+零数值通量闭合（连续相容性限制见第 15 节）、外圈远场特征边界；目标是类似阻力的物面积分；设计变量是全部 48 个
 节点坐标。
 
 **二维对流扩散 / 2-D advection–diffusion** — 同一个对流通量（同样的 $\beta$ 与 $\varepsilon$），
 加上常数扩散 $\nu=0.5$：$\nabla\cdot(\tfrac12u^2\beta)-\nabla\cdot(\nu\nabla u)=0$；扩散通量是
 沿两侧连线的两点差，加上两侧最小二乘梯度（不加权）平均后的非正交修正；网格同上；物面
-$u=u_w=0$，远场 $u_\infty=1$、扩散通量为零；目标是流进物面的总通量；设计变量同样是 48 个
+$u=u_w=0$，远场数值通量使用 $u_\infty=1$、不另加扩散面通量（连续极限按总通量 Robin 条件解释，见第 15 节）；目标是流进物面的总通量；设计变量同样是 48 个
 节点坐标。
 
 **拟一维 Euler / quasi-1-D Euler** — 变截面流道 $A(x)=1-0.3\sin^2(\pi x)$，两端为 1、喉部 0.7；
@@ -210,8 +224,8 @@ them together.
     converged flow, the complex iteration is the forward iteration at every sweep; the gradient checked
     by it (the 1-D pages add "which check catches which bug")
 14. 精度阶：构造解检验 / Order of accuracy: a manufactured solution
-15. 总结；一维页的第 15 节是伴随一致性与 $J$ 的误差估计，总结是第 16 节 / Summary; on the 1-D pages
-    Section 15 is adjoint consistency and estimating the error in $J$, and the summary is Section 16
+15. 连续伴随与伴随一致性；一维还含 $J$ 的误差估计 / Continuous adjoints and adjoint consistency; the 1-D pair also estimates the error in $J$
+16. 总结 / Summary
 
 拟一维页把 Jacobian 记作 $J$（那里 $A$ 是截面积），所以第 7、8 节在那两页算的是 $Jv$ 与 $J^{\mathsf T}w$。
 The quasi-one-dimensional pages write the Jacobian $J$, because $A$ is the duct area there, so Sections 7
@@ -279,12 +293,9 @@ the inflow treatment and the grid to show the adjoint's boundary layer at the in
 
 ## 页面上的数字都是实测的 / Every number is measured
 
-交互面板里的数字在页面加载时由页面自己的脚本现场计算；正文、表格与静态图里引用的数值，
-事先用同一份模型代码算出。各页的校验结果：
+原有交互面板在页面加载时现场计算；新增连续伴随面板浏览独立求解后内嵌的离线结果。正文、表格与静态图的数值来自实际计算。原离散模型的校验结果：
 
-The numbers in the interactive panels are computed live by each page's own scripts as it loads;
-the values quoted in the text, the tables and the static figures were computed in advance from
-the same model code. The checks, page by page:
+The original panels compute live in the browser. The new continuous-adjoint viewers display embedded results from independent offline solves. Text, tables and static figures use measured results. Checks of the original discrete models, page by page:
 
 | 页面 / Page | 点积测试 / dot test | 几何点积测试 / geometric dot test | 梯度对全链路差分 / gradient vs full-chain FD | 漏掉一步的后果 / cost of one missing step |
 |---|---|---|---|---|
@@ -490,11 +501,11 @@ discard whatever was committed through the web UI.
 
 © 2026 Yisheng Gao
 
-本仓库的八个页面与本 README 以 **知识共享 署名 4.0 国际（CC BY 4.0）** 许可发布：
+本仓库的八个页面、连续伴随推导与本 README 以 **知识共享 署名 4.0 国际（CC BY 4.0）** 许可发布：
 您可以自由地共享与改编，包括用于商业目的，只要给出**适当署名**、提供许可协议的链接，
 并说明是否作了修改。完整条款见 [`LICENSE`](LICENSE)。
 
-The eight pages in this repository and this README are licensed under a
+The eight pages, continuous-adjoint derivation and this README are licensed under a
 **Creative Commons Attribution 4.0 International License (CC BY 4.0)**. You are free to share
 and adapt the material, including for commercial purposes, so long as you give appropriate
 credit, provide a link to the licence, and indicate if changes were made. Full terms in
