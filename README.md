@@ -22,8 +22,8 @@ version. If the discrete adjoint is new to you, start with the one-dimensional p
 
 | 文件 / File | 算例 / Problem | 格式 / Scheme | 大小 / Size |
 |---|---|---|---|
-| [`adjoint_1d_cell.html`](adjoint_1d_cell.html) | 一维 Burgers/ 1-D Burgers | **格心** / cell-centred | 723 KB |
-| [`adjoint_1d_node.html`](adjoint_1d_node.html) | 一维 Burgers/ 1-D Burgers | **格点** / node-centred | 727 KB |
+| [`adjoint_1d_cell.html`](adjoint_1d_cell.html) | 一维 Burgers/ 1-D Burgers | **格心** / cell-centred | 735 KB |
+| [`adjoint_1d_node.html`](adjoint_1d_node.html) | 一维 Burgers/ 1-D Burgers | **格点** / node-centred | 738 KB |
 | [`adjoint_cell.html`](adjoint_cell.html) | 二维对流 / 2-D advection | **格心** / cell-centred | 875 KB |
 | [`adjoint_node.html`](adjoint_node.html) | 二维对流 / 2-D advection | **格点** / node-centred | 917 KB |
 | [`adjoint_ad_cell.html`](adjoint_ad_cell.html) | 二维对流扩散 / 2-D advection–diffusion | **格心** / cell-centred | 830 KB |
@@ -46,6 +46,11 @@ no server. Each page has a 中文 / English toggle in the top-right corner.
 ### Burgers 一阶／二阶与 GS / Burgers reconstruction and GS
 
 两页默认 N=8，可切换 8、16、32 个区间；一阶／二阶按钮同步改变完整残差、重构、精确 Jacobian、tangent、adjoint 与固定的离散目标。高级选项提供两种入口闭合、每次 1/2/4 次 GS 扫描、GMRES 重启长度和固定点松弛系数。
+
+Burgers 第 12 节可直接选择每个源项、入口或全部变量，对比前向／中心差分，扫描 10⁻¹ 至 10⁻¹² 并自定义步长。支持绝对／分量相对误差、全部分量最大误差、目标值与原始求解残差表、扰动解及网格上的状态差分。所有扰动使用固定目标场并重解完整离散方程。
+
+Burgers Section 12 provides local source/inlet/all-variable selection, forward/central differences, a 10⁻¹–10⁻¹² sweep and custom steps. Inspect absolute/component-relative errors, all-component maxima, objective values, primal residuals, perturbed solutions and state differences on the mesh. Every perturbation re-solves the full discrete equations with the target frozen.
+
 
 Both pages default to N=8, with 8/16/32 intervals selectable. Spatial-order changes update the full residual, reconstruction, exact Jacobian, tangent, adjoint and frozen discrete target. Advanced controls select inlet closure, 1/2/4 GS sweeps per application, GMRES restart length and fixed-point relaxation.
 
