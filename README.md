@@ -20,12 +20,12 @@ version. If the discrete adjoint is new to you, start with the one-dimensional p
 |---|---|---|---|
 | [`adjoint_1d_cell.html`](adjoint_1d_cell.html) | 一维 Burgers/ 1-D Burgers | **格心** / cell-centred | 532 KB |
 | [`adjoint_1d_node.html`](adjoint_1d_node.html) | 一维 Burgers/ 1-D Burgers | **格点** / node-centred | 549 KB |
-| [`adjoint_cell.html`](adjoint_cell.html) | 二维对流 / 2-D advection | **格心** / cell-centred | 801 KB |
-| [`adjoint_node.html`](adjoint_node.html) | 二维对流 / 2-D advection | **格点** / node-centred | 843 KB |
-| [`adjoint_ad_cell.html`](adjoint_ad_cell.html) | 二维对流扩散 / 2-D advection–diffusion | **格心** / cell-centred | 738 KB |
-| [`adjoint_ad_node.html`](adjoint_ad_node.html) | 二维对流扩散 / 2-D advection–diffusion | **格点** / node-centred | 874 KB |
-| [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | 拟一维 Euler / quasi-1-D Euler | **格心** / cell-centred | 740 KB |
-| [`adjoint_q1d_node.html`](adjoint_q1d_node.html) | 拟一维 Euler / quasi-1-D Euler | **格点** / node-centred | 725 KB |
+| [`adjoint_cell.html`](adjoint_cell.html) | 二维对流 / 2-D advection | **格心** / cell-centred | 814 KB |
+| [`adjoint_node.html`](adjoint_node.html) | 二维对流 / 2-D advection | **格点** / node-centred | 856 KB |
+| [`adjoint_ad_cell.html`](adjoint_ad_cell.html) | 二维对流扩散 / 2-D advection–diffusion | **格心** / cell-centred | 745 KB |
+| [`adjoint_ad_node.html`](adjoint_ad_node.html) | 二维对流扩散 / 2-D advection–diffusion | **格点** / node-centred | 881 KB |
+| [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | 拟一维 Euler / quasi-1-D Euler | **格心** / cell-centred | 747 KB |
+| [`adjoint_q1d_node.html`](adjoint_q1d_node.html) | 拟一维 Euler / quasi-1-D Euler | **格点** / node-centred | 732 KB |
 
 直接用浏览器打开即可：**没有任何外部依赖**，不联网、不需要构建、不需要服务器。
 Just open any of them in a browser — **no external dependencies**, no network, no build step,
@@ -63,13 +63,13 @@ equation** — one dimension, then pure advection in two, then diffusion added, 
 
 ### 连续伴随与一致性 / Continuous adjoints and consistency
 
-第 15 节给出分部积分、目标对应的伴随边界条件，以及独立连续解和原离散伴随的加密比较。完整推导见 [CONTINUOUS_ADJOINT.md](CONTINUOUS_ADJOINT.md)。
+第 15 节给出分部积分、目标对应的伴随边界条件，以及独立连续解和原离散伴随的加密比较；并区分不一致、无解、不唯一和不稳定，用特征线反例解释边界条件的适定性。完整推导见 [CONTINUOUS_ADJOINT.md](CONTINUOUS_ADJOINT.md)。
 
 - **对流扩散**：独立有限元连续参考，壁面伴随值为 1，远场按原数值总通量解释为 Robin 条件；验证远场值导数。
 - **拟一维 Euler**：等熵原始解与连续伴随边值 ODE，分别检验反设计和推力目标；保留形状导数的端点项。
 - **二维纯对流**：原零通量内壁缺少光滑正值连续参考；明确说明限制，并另外计算特征边界对照的解析伴随，不能把对照当成原边界的验证。
 
-Section 15 derives the Green identities and objective-dependent boundary conditions, then compares independent continuous references with refined discrete adjoints. The [full derivation](CONTINUOUS_ADJOINT.md) records assumptions and evidence limits. Advection–diffusion uses an independent FEM reference with wall dual value one and the implemented total-flux Robin far field; quasi-1-D uses an isentropic primal and a continuous dual boundary-value ODE for both objectives. The original scalar zero-flux body has no smooth positive reference of this kind, so its characteristic-boundary contrast is explicitly separate.
+Section 15 derives the Green identities and objective-dependent boundary conditions, then compares independent continuous references with refined discrete adjoints. It distinguishes inconsistency from nonexistence, nonuniqueness and instability through explicit characteristic examples. The [full derivation](CONTINUOUS_ADJOINT.md) records assumptions and evidence limits. Advection–diffusion uses an independent FEM reference with wall dual value one and the implemented total-flux Robin far field; quasi-1-D uses an isentropic primal and a continuous dual boundary-value ODE for both objectives. The original scalar zero-flux body has no smooth positive reference of this kind, so its characteristic-boundary contrast is explicitly separate.
 
 六个新面板浏览内嵌的**离线计算结果**，不在浏览器中重新求解连续 PDE。它们不引入外部运行依赖。加密误差下降是所测网格族的证据，不是任意网格、激波或边界最大范数的收敛证明。
 

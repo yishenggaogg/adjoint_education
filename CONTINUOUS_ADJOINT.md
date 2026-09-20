@@ -20,7 +20,60 @@ Three tests answer different questions:
 
 A decreasing error on finitely many meshes is numerical evidence, not a theorem of convergence. Boundary layers or characteristic jumps can prevent maximum-norm convergence even when an integral norm decreases.
 
-## 2. Nonlinear scalar transport: a formal adjoint is not enough
+## 2. Well-posedness is not the same as adjoint consistency
+
+A discrepancy is a diagnostic opportunity, not by itself proof of ill-posedness. Specify the state and trace spaces, admissible data, functional, and norms first. Hadamard well-posedness requires existence, uniqueness and continuous dependence. A correctly derived continuous dual can be well posed while a discrete boundary closure is inconsistent; a well-posed equation with the wrong objective boundary data is simply the wrong dual. Constraint multipliers, limited regularity and finite reference error are other sources of apparent disagreement.
+
+### Linearization, kernels and stability
+
+Include the homogeneous linearized primal boundary constraints in the domain `X` of the operator `D:X→Y`. If this is a bounded isomorphism between suitable spaces, its Banach adjoint is also a bounded isomorphism between the dual spaces. This is a sufficient local framework, not a conclusion obtained merely by writing a formal differential expression. An unbounded PDE operator must first be given a domain/graph norm or a suitable weak realization. For a nonlinear primal, existence and uniqueness alone do not guarantee a differentiable solution map; the local smoothness and invertibility hypotheses must be checked on the chosen branch.
+
+For `D*λ=g`, a primal null mode implies the necessary compatibility condition
+
+$$
+ Dv=0\quad\Longrightarrow\quad g[v]=\langle\lambda,Dv\rangle=0.
+$$
+
+A nonzero element of `ker D*` makes a solvable dual nonunique. Orthogonality to the primal kernel alone is not a general infinite-dimensional existence theorem: closed range and stability still matter. The required estimate has the form
+
+$$
+ \|\lambda\|_{Y^*}\le C\|g\|_{X^*}
+$$
+
+for homogeneous dual boundary data; inhomogeneous boundary data contribute their appropriate trace norm. A bounded inverse at every mesh size is not enough either: the stability bound must be uniform in the properly weighted discrete norms. Raw Euclidean condition numbers without accounting for integrated residuals and control-volume weights are not themselves a continuum diagnosis.
+
+### An explicit transport example
+
+For `c>0`, fixed primal inflow and objective variation `∫₀¹g v dx+b v(1)`, the Green identity for the primal linearization `c v'` gives
+
+$$
+ -c\lambda'=g,\qquad c\lambda(1)=b,\qquad
+ \lambda(x)=\frac{b}{c}+\frac1c\int_x^1g(s)\,ds.
+$$
+
+- **Missing outlet data:** an arbitrary additive constant remains, so uniqueness fails.
+- **An extra copied primal inlet datum `λ(0)=0`:** existence requires `b+∫g=0`. With `g=1,b=0`, the correct solution is `(1−x)/c`; the extra inlet condition makes the problem unsolvable.
+- **Loss of uniform stability:** `‖λ‖∞≤(|b|+‖g‖₁)/c`. Taking `g=1,b=0` attains the `1/c` amplification. Each fixed `c>0` is well posed, but there is no bound uniform as `c→0` for this data class. At zero speed the original operator degenerates.
+
+In the original 2-D body example, normals point out of the **fluid** domain: the upwind body is therefore primal outflow. A characteristic already carrying `u=1` cannot satisfy zero physical flux there. This is first a failure of the assumed smooth positive primal problem, not merely a poor discrete approximation to an otherwise established dual. At a putative wall state `u=0`,
+
+$$
+ \delta(\tfrac12u^2\beta\cdot n)=u(\beta\cdot n)v=0
+$$
+
+for every variation `v`: the flux constraint loses its first-order information while the characteristic speed degenerates. Copying the wall condition onto a formal dual cannot restore a valid smooth solution branch. Weak/entropy formulations would need separate trace and differentiability analysis.
+
+For the characteristic-boundary contrast, every interior ray reaches outflow in finite distance. Boundary data determine the field almost everywhere; tangency/corner jumps are compatible with a nonsmooth solution space and do not by themselves imply ill-posedness. The ratio `b_u/(a·n)` requires compatibility at characteristic boundaries: in this particular body objective its numerator and denominator contain a cancelling normal factor. One must not infer blow-up from the denominator alone.
+
+### What the other cases demonstrate
+
+**Advection–diffusion.** Positive diffusion provides an elliptic principal part, not a universal invertibility proof for arbitrary lower-order and Robin coefficients. Homogeneous kernels and the assumptions of applicable energy or maximum-principle estimates still need attention. The independent solves support this parameter set; they do not prove a theorem for all parameters. Setting the wall dual to zero instead of the objective-required one can define a different well-posed problem, but yields the wrong functional sensitivity. Imposing both state and normal derivative at the far field is generally an overconstraint. Treating a replaced-row multiplier as a wall field sample is yet another, algebraic interpretation error.
+
+**Quasi-1-D Euler.** The speeds `u−c,u,u+c` explain the two inlet/one outlet primal conditions and reversed dual counts for the stated positive subsonic branch. Counts are necessary, not sufficient: propagation and the boundary constraints together must yield an invertible boundary-value operator. At a sonic point `B` is singular, so the current representation using `(Bᵀ)⁻¹` fails; throat compatibility/regularity analysis is required. This does not imply that all transonic adjoints fail to exist. Shocks require shock-position variations and internal conditions. These phenomena are outside the current numerical evidence; see the [continuous nozzle analysis of Giles and Pierce](https://authors.library.caltech.edu/records/p4y1e-z6x26). The distinct effects of strong/weak boundary treatment on numerical duals are discussed by [Duivesteijn et al.](https://ir.cwi.nl/pub/10851).
+
+The teaching sequence is therefore: identify the continuous primal and chosen branch; derive the dual **including its boundary domain**; examine existence, uniqueness and stability; only then test consistent, stable approximation of that problem. A counterexample should retain its failed premise visibly, rather than silently substituting another model and declaring success.
+
+## 3. Nonlinear scalar transport: a formal adjoint is not enough
 
 The actual flux is nonlinear:
 
@@ -80,7 +133,7 @@ $$
 
 At an interior point, follow the ray in direction `+β` to its first boundary intersection. The value is `1/|β|` if that intersection is the body, and zero otherwise. This is an exact characteristic calculation, not a transpose solve. It has jumps along rays from body tangencies/corners. The comparison uses volume-weighted L2 error; boundary nodes are excluded from the node-centred norm. No smooth maximum-norm convergence is claimed. This contrast does not validate continuous consistency of the original zero-flux wall.
 
-## 3. Advection–diffusion: keep the total boundary flux
+## 4. Advection–diffusion: keep the total boundary flux
 
 Here
 
@@ -210,7 +263,7 @@ $$
 
 with `λ=1` on the wall. It does not call the finite-volume transpose. Triangle and edge quadrature integrate the polynomial integrands. References on 1,088, 4,224 and 16,640 vertices check reference resolution. The final reference is still a numerical approximation. FV state and dual equations use the original page cores, solved to tight algebraic residuals with sparse direct Newton/linear solves for this offline study. This changes the verification solver, not the finite-volume equations or the page's Jacobi demonstrations.
 
-## 4. Quasi-one-dimensional Euler
+## 5. Quasi-one-dimensional Euler
 
 This note denotes the continuous objective by `J`; the quasi-1-D pages call it `L`, reserving `J_h` for the discrete Jacobian and `Ψ` for its discrete adjoint. The equations are otherwise identical.
 
@@ -309,7 +362,7 @@ An instructive special case is thrust: integration of the momentum equation give
 
 This calculation excludes shocks, sonic throats, characteristic sign changes and nonunique branches. Those need additional analysis; a successful smooth subsonic test does not establish their adjoint consistency.
 
-## 5. Evidence and references
+## 6. Evidence and references
 
 The new page tables and interactive field plots contain offline-computed results from the local `adjoint_edu_src/consistency` implementation. Reproduce locally with `python3 numerics.py ad`, `python3 numerics.py q1d`, and `python3 numerics.py transport`; `check_consistency.py` checks the stored numerical contracts. These intermediate implementation files are deliberately not published or committed in `adjoint_edu`.
 
