@@ -4,20 +4,20 @@
 
 The teaching path develops discrete adjoints for undergraduates with calculus, linear algebra and numerical-methods background, toward a complete industrial unstructured-grid RANS implementation (not yet implemented). Continuous adjoints are independent checks for simple cases. Main chapters retain conclusions; bilingual same-page Appendix A in the original eight pages and the new 1-D N–S pair contains full derivations, runnable reference code, figures and interaction. Formal continuous RANS adjoints do not automatically supply a strict reference for the full implemented industrial algorithm.
 
-**十二个**单文件、可交互的网页，把有限体积法的**全离散伴随**从头到尾讲一遍：
+**十四个**单文件、可交互的网页，把有限体积法的**全离散伴随**从头到尾讲一遍：
 从一个面上的一维通量开始，把同一个循环依次改写成 primal、matrix-free 前向（$Av$）与
 matrix-free 伴随（$A^{\mathsf T}w$），再做前向与伴随求解、几何导数，最后用有限差分逐项校验。
-六组算例——**一维 Burgers 方程**、**二维标量对流方程**、**二维标量对流扩散方程**与
-**拟一维 Euler 方程**与**二维 Euler 方程**、**一维层流 Navier–Stokes 方程**——各有**格心**与**格点**两版。第一次接触离散伴随，请从一维那一对读起。
+七组算例——**一维 Burgers 方程**、**二维标量对流方程**、**二维标量对流扩散方程**与
+**拟一维 Euler 方程**与**二维 Euler 方程**、**一维层流 Navier–Stokes 方程**与**二维层流 Navier–Stokes 方程**——各有**格心**与**格点**两版。第一次接触离散伴随，请从一维那一对读起。
 
-**Twelve** self-contained, interactive web pages that develop the **fully discrete adjoint**
+**Fourteen** self-contained, interactive web pages that develop the **fully discrete adjoint**
 of a finite-volume scheme end to end: starting from the one-dimensional flux on a single
 face, the same loop is rewritten as the primal, as matrix-free forward mode ($Av$) and as
 matrix-free adjoint mode ($A^{\mathsf T}w$), followed by the forward and the adjoint solve, the
-geometric derivatives and a term-by-term finite-difference verification. Six model problems &mdash;
+geometric derivatives and a term-by-term finite-difference verification. Seven model problems &mdash;
 the **one-dimensional Burgers equation**, a **two-dimensional scalar advection
 equation**, a **two-dimensional scalar advection&ndash;diffusion equation** and the
-**quasi-one-dimensional Euler equations** and **two-dimensional Euler equations** and **one-dimensional laminar Navier–Stokes equations** &mdash; each in a **cell-centred** and a **node-centred**
+**quasi-one-dimensional Euler equations** and **two-dimensional Euler equations** and **one-dimensional laminar Navier–Stokes equations**, and **two-dimensional laminar Navier–Stokes equations** &mdash; each in a **cell-centred** and a **node-centred**
 version. If the discrete adjoint is new to you, start with the one-dimensional pair.
 
 | 文件 / File | 算例 / Problem | 格式 / Scheme | 大小 / Size |
@@ -34,6 +34,8 @@ version. If the discrete adjoint is new to you, start with the one-dimensional p
 | [`adjoint_euler_node.html`](adjoint_euler_node.html) | 二维 Euler / 2-D Euler | **格点** / node-centred | 177 KB |
 | [`adjoint_ns1d_cell.html`](adjoint_ns1d_cell.html) | 一维层流 N–S / 1-D laminar N–S | **格心** / cell-centred | 422 KB |
 | [`adjoint_ns1d_node.html`](adjoint_ns1d_node.html) | 一维层流 N–S / 1-D laminar N–S | **格点** / node-centred | 409 KB |
+| [`adjoint_ns2d_cell.html`](adjoint_ns2d_cell.html) | 二维层流 N–S / 2-D laminar N–S | **格心** / cell-centred | 561 KB |
+| [`adjoint_ns2d_node.html`](adjoint_ns2d_node.html) | 二维层流 N–S / 2-D laminar N–S | **格点** / node-centred | 579 KB |
 
 直接用浏览器打开即可：**没有任何外部依赖**，不联网、不需要构建、不需要服务器。
 Just open any of them in a browser — **no external dependencies**, no network, no build step,
@@ -46,6 +48,16 @@ no server. Each page has a 中文 / English toggle in the top-right corner.
 [Gitee](https://gitee.com/gaoyishenggg/adjoint_education) — 内容相同 / identical content
 
 ---
+
+### 二维层流 N–S / 2-D laminar N–S
+
+[格心](adjoint_ns2d_cell.html)与[格点](adjoint_ns2d_node.html)保持二维标量的基础混合网格、配色和双语目录。四个守恒量、完整二维应力与 Fourier 热流，支持一阶／二阶对流和保守二次黏性重构。矩阵乘积使用精确计算图 JVP/VJP；GS 预处理显式组装一阶近似矩阵，附录 C 则组装完整矩阵并做 LU。新增每页 12 幅双语教学示意图，并逐步展开控制体收支、最小二乘、局部链式法则、伴随消元、GS 与 LU 手算。17 节正文与 A/B/C 附录提供推导、网格、执行回放、参数及全部坐标导数、多步长差分、独立复数残差与固定多边形域加密结果。
+
+The [cell](adjoint_ns2d_cell.html) and [node](adjoint_ns2d_node.html) lessons preserve the scalar mesh, colours and bilingual navigation. They implement four conserved variables, full viscous stress and Fourier conduction, first/second-order convection and conservative quadratic viscous reconstruction. Exact graph products supply JVP/VJP; GS explicitly assembles a first-order preconditioner, and Appendix C assembles the full matrix for LU. Each page adds 12 bilingual teaching diagrams and step-by-step control-volume, least-squares, chain-rule, adjoint-elimination, GS and LU explanations. The 17 chapters and three appendices include derivations, mesh/assembly traces, all coordinate gradients, finite-difference sweeps, independent complex residuals and fixed-domain refinement.
+
+当前范围是无激波层流教学：绕流采用截断域入口／总牵引出口与无滑移固壁，必须满足正值、固定入出流分区和固定耗散波速的检查。制造解的内边界不是固壁。附录 A 提供二维形式连续分析及独立一维限制问题，不声称已实现一般二维绕流的连续伴随；也不将制造解精度推广到未验证的壁面载荷或工业 RANS。
+
+The scope is shock-free laminar teaching. Physical flow uses a truncated-domain inflow/total-traction outflow and no-slip wall, with positivity, fixed-partition and wave-speed checks. The manufactured inner boundary is not a solid wall. Appendix A gives formal 2D continuum analysis and an independent 1D restriction, not a general 2D-flow continuous-adjoint solver or an industrial RANS validation.
 
 ### 二维 Euler：无激波首版 / 2-D Euler: initial shock-free case
 
@@ -93,12 +105,12 @@ Revised baseline (N=8, dissipative inlet, default GS tolerances): maximum differ
 
 ## 十个页面怎么排布 / How the ten pages are arranged
 
-六组算例，每组两种离散。**十页教学主题相互对应**：前 14 节一一对应，第 12 节是差分验证，第 13 节是复数步长，
+七组算例，每组两种离散。**十页教学主题相互对应**：前 14 节一一对应，第 12 节是差分验证，第 13 节是复数步长，
 第 14 节是精度阶，总结都在最后一节；第 11 节在一维那一对里是对源项与入口值的设计导数，其余四对是几何导数；
 十页第 15 节均讨论伴随一致性；一维第 16 节新增 GS 预处理 GMRES，总结移到第 17 节，其余八页总结仍为第 16 节。二维 Euler 第 14 节仅报告网格加密结果，第 15 节只给形式连续分析及限制。一维还包含 $J$ 的误差估计。任意两页都能并排对照：
 横着比是**两种格式**；竖着比是**方程**——从一维，到二维纯对流，到加上扩散，再到方程组。
 
-Six model problems, each discretised two ways. All ten have **corresponding teaching topics**: their first
+Seven model problems, each discretised two ways. All ten have **corresponding teaching topics**: their first
 14 sections match one to one, Section 12 being the finite-difference check, Section 13 the complex
 step and Section 14 the order of accuracy, and the summary always comes last. Section 11 gives
 design derivatives with respect to the sources and the inflow value on the one-dimensional pair
@@ -147,7 +159,7 @@ The six new viewers contain **offline-computed results**, not browser PDE solves
 这是每一组里两页的分歧所在。**格心格式**的未知量是单元平均值，边界上没有任何自由度，
 所以边界条件只能**弱**加——在通量里给一个外侧状态。**格点格式**的边界节点<u>就在边界上</u>，
 它本身就是未知量，所以可以**强**加——直接把它的方程换掉。伴随里对应的是「进循环前清零、
-出循环后加回」，而且顺序不能反。六组算例分别展示这些处理：
+出循环后加回」，而且顺序不能反。七组算例分别展示这些处理：
 
 - **一维 Burgers**：只有入口一个条件 $u(0)=u_{\mathrm{in}}$，出口的通量就是物理通量。格心页把 $u_{\mathrm{in}}$
   当作入口面左侧的 ghost 状态（弱加）；格点页把节点 0 的整行换成 $u_0-u_{\mathrm{in}}$（强加）。
