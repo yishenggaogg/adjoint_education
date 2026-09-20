@@ -28,8 +28,8 @@ version. If the discrete adjoint is new to you, start with the one-dimensional p
 | [`adjoint_node.html`](adjoint_node.html) | 二维对流 / 2-D advection | **格点** / node-centred | 1036 KB |
 | [`adjoint_ad_cell.html`](adjoint_ad_cell.html) | 二维对流扩散 / 2-D advection–diffusion | **格心** / cell-centred | 830 KB |
 | [`adjoint_ad_node.html`](adjoint_ad_node.html) | 二维对流扩散 / 2-D advection–diffusion | **格点** / node-centred | 966 KB |
-| [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | 拟一维 Euler / quasi-1-D Euler | **格心** / cell-centred | 212 KB |
-| [`adjoint_q1d_node.html`](adjoint_q1d_node.html) | 拟一维 Euler / quasi-1-D Euler | **格点** / node-centred | 212 KB |
+| [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | 拟一维 Euler / quasi-1-D Euler | **格心** / cell-centred | 243 KB |
+| [`adjoint_q1d_node.html`](adjoint_q1d_node.html) | 拟一维 Euler / quasi-1-D Euler | **格点** / node-centred | 243 KB |
 | [`adjoint_euler_cell.html`](adjoint_euler_cell.html) | 二维 Euler / 2-D Euler | **格心** / cell-centred | 146 KB |
 | [`adjoint_euler_node.html`](adjoint_euler_node.html) | 二维 Euler / 2-D Euler | **格点** / node-centred | 146 KB |
 
@@ -195,7 +195,7 @@ loop, add back after", in that order and no other. The four rows go through this
 | 边界条件 / Boundary conditions | 入口值 $u_{\mathrm{in}}$ / the inflow value | 零通量壁面、特征远场 / a zero-flux wall, a characteristic far field | Dirichlet 壁面 $u=u_w$ / a Dirichlet wall | 内点状态的**非线性函数** / **nonlinear functions** of the interior |
 | 强加的形状 / Shape of strong imposition | 整行换成 $e_0^{\mathsf T}$ / the whole row becomes $e_0^{\mathsf T}$ | 没有强加 / none | 整行换成 $e_i^{\mathsf T}$ / the whole row becomes $e_i^{\mathsf T}$ | **部分行**换成约束梯度 / **partial rows** become constraint gradients |
 | 信息传播 / Information travels | 单向 / one way | 单向（纯对流）/ one way | 双向（扩散）/ both ways (diffusion) | 双向（亚声速）/ both ways (subsonic) |
-| 设计变量 / Design variables | 默认 8 个区间源项与 $u_{\mathrm{in}}$ / 8 interval sources by default and $u_{\mathrm{in}}$ | 48 个网格坐标 / 48 mesh coordinates | 48 个网格坐标 / 48 mesh coordinates | 13 个截面积及 3 个边界参数 / 13 areas and 3 boundary parameters |
+| 设计变量 / Design variables | 默认 8 个区间源项与 $u_{\mathrm{in}}$ / 8 interval sources by default and $u_{\mathrm{in}}$ | 48 个网格坐标 / 48 mesh coordinates | 48 个网格坐标 / 48 mesh coordinates | 默认 13 个截面积及 3 个边界参数 / 13 areas and 3 boundary parameters by default |
 
 一维那一对：面通量取二维对流页的 $n=1$，二阶时增加面值重构，网格小到每个数组、
 整个 Jacobian 都能完整摆在页面上；设计变量换成源项与入口值，所以不需要任何网格导数，一次伴随
@@ -299,7 +299,7 @@ The quasi-1-D edition distinguishes the exact operator $A_2$, low-order approxim
 - **流进物面的通量**（对流扩散页）：逐个壁面面或壁面节点看它吸收的通量；格点页把一致的反作用量
   与单侧差分公式并排对照
 - **拟一维精确算子与低阶矩阵**：精确 tangent／adjoint 沿计算图实施，不组装精确二阶矩阵；另展示一阶近似矩阵与 3×3 块 GS 扫描。
-- **拟一维连续伴随**：同页附录 A 展开变分、两端零空间边界、面积及边界数据导数；独立 RK4 射击法支持步数切换。附录 B 提供正激波跳跃与固定界面导数计算，完整移动激波流道求解尚未实现。
+- **拟一维连续伴随**：同页附录 A 展开变分、两端零空间边界、面积及边界数据导数；独立 RK4 射击法支持步数切换。附录 B 提供正激波跳跃与固定界面导数计算，新增独立的全流道激波拟合、未知位置求解与约化标量伴随；并非激波捕捉有限体积伴随或完整连续伴随场。
 - **BFGS 反设计**（一维页）：每个候选设计重新求解 primal 和伴随，经回溯接受下降步；入口值不动，因为它和第一个区间的源项几乎可以互相替代
 - **复数步长与前向迭代，逐轮对照**（二维标量四页）：选一个设计变量和起点，两条迭代的残差与它们逐轮之差画在一起。
   从收敛流场出发，复数迭代的虚部每一轮都等于前向迭代；从初始流场出发，两者只在收敛时相遇。图下的表把
@@ -307,9 +307,9 @@ The quasi-1-D edition distinguishes the exact operator $A_2$, low-order approxim
 - **哪一种检验抓哪一种错误**（一维页）：比较精确导数、两侧共同误用一阶 Jacobian、伴随符号错误；点积检验与独立复数残差检验相互补充。
 - **两种入口下的离散伴随与连续伴随**（一维页）：比较全域和固定内部区域误差、首源项导数比、光滑方向导数及入口导数。二阶格点迎风处理仍可能有伴随边界层。
 - **差分验证与步长扫描**：二维标量四页可选差分格式（中心／前向）与步长 $h$；一维页按所选参数计算中心差分步长扫描，并独立检查复数步长，逐分量用全链路差分对照伴随梯度；
-  底部扫描相对误差随步长的变化，截断与舍入怎样围出最优步长一目了然。拟一维页支持全部 16 个设计变量、中心／前向／后向差分和 12 个步长的完整重求解扫描
+  底部扫描相对误差随步长的变化，截断与舍入怎样围出最优步长一目了然。拟一维页支持全部面积及边界设计变量（默认 16 个）、中心／前向／后向差分和 12 个步长的完整重求解扫描
 
-Interactive panels show meshes, face fluxes, reconstruction, forward/reverse accumulation, solver residuals and full-rerun gradient checks. The four 2-D scalar pages retain their Jacobi iteration players. The quasi-1-D Euler pair now provides first/second-order reconstruction, primal snapshots, block-GS scans, matrix-free derivatives, GS/GMRES comparison, all 16 parameter gradients, three finite-difference formulas over 12 step sizes, and independently converged complex residuals. Its same-page continuous appendix solves an independent ODE in the browser; its shock appendix currently covers local jumps and interface analysis, not a full shocked-duct solve.
+Interactive panels show meshes, face fluxes, reconstruction, forward/reverse accumulation, solver residuals and full-rerun gradient checks. The four 2-D scalar pages retain their Jacobi iteration players. The quasi-1-D Euler pair now provides first/second-order reconstruction, primal snapshots, block-GS scans, matrix-free derivatives, GS/GMRES comparison, all area and boundary parameter gradients (16 by default), three finite-difference formulas over 12 step sizes, and independently converged complex residuals. Its same-page continuous appendix solves an independent ODE in the browser; its shock appendix adds independent full-duct shock fitting, an unknown shock position and a reduced scalar adjoint, alongside local jumps and interface analysis. This is not a shock-capturing finite-volume adjoint or a full continuous-adjoint field.
 
 The Burgers pages add a global spatial-order switch, reconstruction and transpose players, a row-by-row GS scan, GS/GMRES work comparisons, source-only BFGS steps with line search, and independently converged complex-step checks. Boundary studies separate interior accuracy, global boundary layers and design sensitivities; second-order node-based upwinding is not automatically adjoint consistent.
 
@@ -520,3 +520,13 @@ credit, provide a link to the licence, and indicate if changes were made. Full t
 两页保留原正文、静态图、逐句播放器及附录 A，在原有各节末尾嵌入光滑特征边界模型的一阶／二阶扩展。精度开关仅控制新增面板；原零通量模型独立保留，数值不混用。新增内容包括最小二乘重构、面积分、matrix-free tangent／adjoint、GS 预处理 GMRES、全部 49 个参数的三种差分及 12 个步长扫描、复数步长和精度阶对照。同页附录 B 推导并计算新模型的连续伴随。
 
 Both pages preserve their original prose, static diagrams, statement-by-statement players and Appendix A. Each existing section embeds a smooth characteristic-boundary extension with first/second-order reconstruction. The selector controls only the added panels; the original zero-flux problem remains separate. Extensions include least-squares reconstruction, face quadrature, matrix-free tangent/adjoint, GS-preconditioned GMRES, three finite-difference formulas over 12 steps for all 49 parameters, complex step and refinement comparisons. Same-page Appendix B derives and computes the new model’s continuous adjoint.
+
+## 拟一维 Euler 参数与激波拟合实验 / Quasi-1-D Euler parameter and shock-fitting experiments
+
+光滑算例可选择 6／12／24 个网格区间、面积收缩深度、出口背压、入口总压和总温，连续参考使用同一组参数。差分节分别展示原始求解容差与伴随线性容差对梯度验证的影响。固定默认参数的离线精度阶表与当前交互结果明确区分。
+
+The smooth case exposes 6/12/24 grid intervals, contraction depth, back pressure, inlet total pressure and total temperature. Its continuous reference uses the same parameters. The finite-difference section independently varies primal and adjoint linear tolerances. Offline default-parameter refinement data remain explicitly separate.
+
+附录 B.5 采用独立阻塞流道：等熵光滑区域与正激波跳跃决定出口压力，求根得到激波位置；约化伴随给出背压梯度。交互提供马赫数图、界面位移项、遗漏界面项的错误梯度、重求激波位置的差分和守恒检查，并内嵌完整实现。新增验证包括 21 组参数／连续参考／容差检查及 108 项激波拟合检查。
+
+Appendix B.5 uses an independent choked duct: isentropic smooth regions and normal-shock jumps determine exit pressure, whose root fixes shock position. A reduced adjoint provides back-pressure gradients. The experiment includes a Mach plot, interface-motion contribution, the incorrect gradient when that term is omitted, full-rerun finite differences, conservation checks and complete embedded source. Added validation covers 21 parameter/reference/tolerance cases and 108 shock-fitting checks.
