@@ -194,16 +194,7 @@ code { font-family:var(--font-mono); font-size:.86em; }
   <h3>页面上的数字都是实测的 / Every number is measured</h3>
   <p class="lede" style="font-size:.95rem;margin-bottom:0">
     离散交互与 Burgers 连续求积在浏览器现场计算；其他连续参考及加密图浏览独立求解后内嵌的离线结果。正文数值均来自实际计算。
-    梯度对全链路中心差分（h = 10<sup>&minus;6</sup>，相对最大分量）：二维对流 4.0e&minus;10／3.6e&minus;10，
-    二维对流扩散 3.7e&minus;9／3.4e&minus;9，拟一维 Euler 3.6e&minus;9／2.0e&minus;9。
-    拟一维的几何点积测试 1.95e&minus;16／4.48e&minus;16（两个方向都解析，不含步长），
-    反设计目标在<b>已知最优流道</b>上 L 与 dL/dA 逐比特为零，一维页在各自固定目标源项上检查 J 与 dJ/dp 归零；
-    复数步长梯度与伴随梯度之差（相对最大分量）：二维对流 2.0e&minus;16／2.2e&minus;16，
-    二维对流扩散 6.7e&minus;16／3.0e&minus;16，拟一维 Euler（推力）2.0e&minus;15／7.2e&minus;16；从收敛流场出发，复数迭代与前向迭代逐轮之差
-    （相对 max|v|）在其余六页上都不超过 2.1e&minus;14。
-    Burgers 新版另外检查重构导数、GS 转置、GS／GMRES 同一系统解及独立复数残差；一阶／二阶的完整结果见各页。
-    每一对页面的第 14 节都测了精度阶：一维 Burgers 对照精确平均值／节点值，一阶与二阶均实测验证；二维对流一阶但来得很慢，
-    对流扩散只有扩散时二阶、完整方程一阶，拟一维很快就是一阶。
+
   </p>
 
   <footer>
