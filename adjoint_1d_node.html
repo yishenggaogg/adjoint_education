@@ -2331,7 +2331,7 @@ html('burgers-direct-benchmark',button('direct-benchmark-run','比较 LU / GS / 
 function render(){try{
  $('page-error').hidden=true;const c=current();window.BURGERS_STATE={...state};window.BURGERS_RESULT=c;
  document.documentElement.dataset.order=state.order;for(const q of [1,2])$('order'+q).setAttribute('aria-pressed',String(state.order===q));
- $('model-status').textContent=T('全页当前设置：','Current page settings: ')+`${state.order===1?T('一阶','first order'):T('二阶','second order')} · N=${state.n} · ${state.inflow==='upwind'?T('迎风边界对照','upwind boundary comparison'):T('耗散边界','dissipative boundary')} · ${state.solver==='gs'?'GS':'GS–GMRES'} · `+T('每次修正／预处理 GS 扫描','GS sweeps per correction/preconditioner')+`=${state.sweeps}`;
+ $('model-status').textContent='';
  mesh(c);reconstruction(c);traces(c,'primal');matrices(c);objective(c);traces(c,'tangent');traces(c,'adjoint');dotCheck(c);solves(c);differences(c);taylorLab(c);studies(c);gmresPanel(c);optimization(c);directAppendix(c);
  document.querySelectorAll('[data-runtime-order]').forEach(el=>el.textContent=state.order);
  }catch(e){$('page-error').hidden=false;$('page-error').textContent=e.message;console.error(e);}}
