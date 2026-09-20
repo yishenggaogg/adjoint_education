@@ -28,8 +28,8 @@ version. If the discrete adjoint is new to you, start with the one-dimensional p
 | [`adjoint_node.html`](adjoint_node.html) | 二维对流 / 2-D advection | **格点** / node-centred | 917 KB |
 | [`adjoint_ad_cell.html`](adjoint_ad_cell.html) | 二维对流扩散 / 2-D advection–diffusion | **格心** / cell-centred | 830 KB |
 | [`adjoint_ad_node.html`](adjoint_ad_node.html) | 二维对流扩散 / 2-D advection–diffusion | **格点** / node-centred | 966 KB |
-| [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | 拟一维 Euler / quasi-1-D Euler | **格心** / cell-centred | 190 KB |
-| [`adjoint_q1d_node.html`](adjoint_q1d_node.html) | 拟一维 Euler / quasi-1-D Euler | **格点** / node-centred | 190 KB |
+| [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | 拟一维 Euler / quasi-1-D Euler | **格心** / cell-centred | 211 KB |
+| [`adjoint_q1d_node.html`](adjoint_q1d_node.html) | 拟一维 Euler / quasi-1-D Euler | **格点** / node-centred | 211 KB |
 | [`adjoint_euler_cell.html`](adjoint_euler_cell.html) | 二维 Euler / 2-D Euler | **格心** / cell-centred | 146 KB |
 | [`adjoint_euler_node.html`](adjoint_euler_node.html) | 二维 Euler / 2-D Euler | **格点** / node-centred | 146 KB |
 
@@ -111,6 +111,12 @@ equation** — one dimension, then pure advection in two, then diffusion added, 
 | **二维对流扩散** / 2-D advection–diffusion | [`adjoint_ad_cell.html`](adjoint_ad_cell.html) | [`adjoint_ad_node.html`](adjoint_ad_node.html) |
 | **拟一维 Euler** / quasi-1-D Euler | [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | [`adjoint_q1d_node.html`](adjoint_q1d_node.html) |
 | **二维 Euler** / 2-D Euler | [`adjoint_euler_cell.html`](adjoint_euler_cell.html) | [`adjoint_euler_node.html`](adjoint_euler_node.html) |
+
+### 拟一维直接伴随 / Direct quasi-1-D adjoints
+
+[附录 C（格心）](adjoint_q1d_cell.html#appendix-c) / [Appendix C (node)](adjoint_q1d_node.html#appendix-c) 针对当前 36／39 个未知量，显式组装所选阶数的精确 Jacobian，采用带部分主元的 LU 分解解伴随方程；展示矩阵、消元步骤、前代／回代结果及梯度，并实测包含矩阵组装的直接法、GS、GMRES 总耗时。正文 matrix-free 路径保留。204 项新增检查通过，直接解真残差最大 4.67×10⁻¹⁶。
+
+For the current 36/39 unknowns, Appendix C assembles the exact selected-order Jacobian and solves the adjoint using partial-pivot LU. Inspect the matrix, elimination steps and triangular solves, and benchmark direct, GS and GMRES timings including matrix setup. The main matrix-free path remains available. All 204 additional checks passed; the maximum direct true residual was 4.67×10⁻¹⁶. Timings are measured live rather than assumed to rank identically on every device.
 
 ### 连续伴随与一致性 / Continuous adjoints and consistency
 

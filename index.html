@@ -148,10 +148,10 @@ code { font-family:var(--font-mono); font-size:.86em; }
   <h3 style="margin-top:30px">拟一维 Euler 方程 / The quasi-one-dimensional Euler equations</h3>
   <p style="margin:0 0 14px;color:var(--muted);font-size:.93rem">
     变截面流道，入口给总压总温、出口给背压，全场亚声速。方程组版本：局部导数是 3×3 块，
-    一阶／二阶重构可切换，提供块 GS 与 GS 预处理 GMRES、完整差分扫描，以及同页连续伴随推导与独立交互计算。<br>
+    一阶／二阶重构可切换，提供块 GS 与 GS 预处理 GMRES、完整差分扫描，以及同页连续伴随推导、独立交互计算和附录 C 的 LU 直接伴随求解。<br>
     A variable-area duct with total conditions in, a back pressure out and subsonic flow throughout.
     Switch first/second-order reconstruction, solve with block GS or GS-preconditioned GMRES,
-    and explore full finite-difference sweeps and a same-page independent continuous-adjoint implementation.
+    and explore full finite-difference sweeps, an independent continuous adjoint and Appendix C’s direct LU adjoint solve.
   </p>
   <div class="cards">
     <a class="card" href="adjoint_q1d_cell.html">
