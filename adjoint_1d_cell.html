@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<meta name="description" content="入门页：带源项的一维定常 Burgers 方程，8 个单元的格心格式。面循环、matrix-free 前向与伴随逐句播放，Jacobi 迭代求解，一次伴随求解给出全部设计导数，再用有限差分、复数步长与精确解检验，最后看伴随一致性。">
+<meta name="description" content="带源项的一维定常 Burgers 方程，8 个单元的格心格式。面循环、matrix-free 前向与伴随逐句播放，Jacobi 迭代求解，一次伴随求解给出全部设计导数，再用有限差分、复数步长与精确解检验，最后看伴随一致性。">
 <title>一维 Burgers 方程的离散伴随：格心格式</title>
 <script>
   /* restore the saved language BEFORE first paint, so an English reader
@@ -478,7 +478,7 @@ table.lsqtab td { padding-right: 8px; }
   <button class="btn langtoggle" type="button" id="langtoggle">English</button>
   <a class="btn homebtn" href="index.html"><span lang="zh">← 返回首页</span><span lang="en">← Home</span></a>
   <h1 lang="zh">一维 Burgers 方程的离散伴随：格心格式</h1><h1 lang="en">The discrete adjoint of the one-dimensional Burgers equation, on a cell-centred scheme</h1>
-  <p class="lede"><span lang="zh">这是整个系列的<b>入门页</b>。方程是带源项的一维定常 Burgers 方程，网格只有 8 个单元，每一个数组、整个 Jacobian 都能完整地摆在页面上。离散用的就是二维页面上的那个面通量，只是法向取 <span class="nw"><span class="eq"><i>n</i>=<span class="dg">1</span></span>；</span>所以这一页讲清楚的每一件事——残差是一个面循环、前向把它换成导数、伴随把它倒过来——到了<a href="adjoint_cell.html">二维对流页</a>都原样成立。未知量放在单元上，入口条件通过通量弱加。</span><span lang="en">This is the <b>introductory page</b> of the series. The equation is the steady one-dimensional Burgers equation with a source, the grid has only 8 cells, and every array and the whole Jacobian fit on the page. The discretisation is the face flux of the two-dimensional pages with the normal taken as <span class="nw"><span class="eq"><i>n</i>=<span class="dg">1</span></span>;</span> so everything this page makes clear — the residual is a loop over faces, forward mode replaces it by its derivative, adjoint mode runs it backwards — carries over unchanged to the <a href="adjoint_cell.html">two-dimensional advection page</a>. The unknowns live in the cells, and the inflow condition is imposed weakly, through the flux.</span></p>
+  <p class="lede"><span lang="zh">方程是带源项的一维定常 Burgers 方程，网格只有 8 个单元，每一个数组、整个 Jacobian 都能完整地摆在页面上。离散用的就是二维页面上的那个面通量，只是法向取 <span class="nw"><span class="eq"><i>n</i>=<span class="dg">1</span></span>；</span>所以这一页讲清楚的每一件事——残差是一个面循环、前向把它换成导数、伴随把它倒过来——到了<a href="adjoint_cell.html">二维对流页</a>都原样成立。未知量放在单元上，入口条件通过通量弱加。</span><span lang="en">The equation is the steady one-dimensional Burgers equation with a source, the grid has only 8 cells, and every array and the whole Jacobian fit on the page. The discretisation is the face flux of the two-dimensional pages with the normal taken as <span class="nw"><span class="eq"><i>n</i>=<span class="dg">1</span></span>;</span> so everything this page makes clear — the residual is a loop over faces, forward mode replaces it by its derivative, adjoint mode runs it backwards — carries over unchanged to the <a href="adjoint_cell.html">two-dimensional advection page</a>. The unknowns live in the cells, and the inflow condition is imposed weakly, through the flux.</span></p>
   <ol class="route">
     <li><a href="#s1">1 <span lang="zh">网格</span><span lang="en">Grid</span></a><span class="sep">→</span></li>
     <li><a href="#s2">2 <span lang="zh">方程与通量</span><span lang="en">Equation &amp; flux</span></a><span class="sep">→</span></li>
@@ -1130,7 +1130,7 @@ if (!Element.prototype.replaceChildren) {
   } else { init(); }
 })();
 
-/* The one-dimensional model problem of the introductory pages, for both
+/* The one-dimensional model problem of the one-dimensional pages, for both
    schemes: the steady Burgers equation with a source,
 
        d/dx (1/2 u^2) = s(x)   on [0, 1],   u(0) = u_in,   u > 0,

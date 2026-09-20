@@ -3,7 +3,7 @@
 **八个**单文件、可交互的网页，把有限体积法的**全离散伴随**从头到尾讲一遍：
 从一个面上的一维通量开始，把同一个循环依次改写成 primal、matrix-free 前向（$Av$）与
 matrix-free 伴随（$A^{\mathsf T}w$），再做前向与伴随求解、几何导数，最后用有限差分逐项校验。
-四组算例——**一维 Burgers 方程**（入门）、**二维标量对流方程**、**二维标量对流扩散方程**与
+四组算例——**一维 Burgers 方程**、**二维标量对流方程**、**二维标量对流扩散方程**与
 **拟一维 Euler 方程**——各有**格心**与**格点**两版。第一次接触离散伴随，请从一维那一对读起。
 
 **Eight** self-contained, interactive web pages that develop the **fully discrete adjoint**
@@ -11,15 +11,15 @@ of a finite-volume scheme end to end: starting from the one-dimensional flux on 
 face, the same loop is rewritten as the primal, as matrix-free forward mode ($Av$) and as
 matrix-free adjoint mode ($A^{\mathsf T}w$), followed by the forward and the adjoint solve, the
 geometric derivatives and a term-by-term finite-difference verification. Four model problems &mdash;
-the **one-dimensional Burgers equation** (introductory), a **two-dimensional scalar advection
+the **one-dimensional Burgers equation**, a **two-dimensional scalar advection
 equation**, a **two-dimensional scalar advection&ndash;diffusion equation** and the
 **quasi-one-dimensional Euler equations** &mdash; each in a **cell-centred** and a **node-centred**
 version. If the discrete adjoint is new to you, start with the one-dimensional pair.
 
 | 文件 / File | 算例 / Problem | 格式 / Scheme | 大小 / Size |
 |---|---|---|---|
-| [`adjoint_1d_cell.html`](adjoint_1d_cell.html) | 一维 Burgers（入门）/ 1-D Burgers (introductory) | **格心** / cell-centred | 532 KB |
-| [`adjoint_1d_node.html`](adjoint_1d_node.html) | 一维 Burgers（入门）/ 1-D Burgers (introductory) | **格点** / node-centred | 549 KB |
+| [`adjoint_1d_cell.html`](adjoint_1d_cell.html) | 一维 Burgers/ 1-D Burgers | **格心** / cell-centred | 532 KB |
+| [`adjoint_1d_node.html`](adjoint_1d_node.html) | 一维 Burgers/ 1-D Burgers | **格点** / node-centred | 549 KB |
 | [`adjoint_cell.html`](adjoint_cell.html) | 二维对流 / 2-D advection | **格心** / cell-centred | 676 KB |
 | [`adjoint_node.html`](adjoint_node.html) | 二维对流 / 2-D advection | **格点** / node-centred | 748 KB |
 | [`adjoint_ad_cell.html`](adjoint_ad_cell.html) | 二维对流扩散 / 2-D advection–diffusion | **格心** / cell-centred | 610 KB |
@@ -56,7 +56,7 @@ equation** — one dimension, then pure advection in two, then diffusion added, 
 
 | | 格心 / cell-centred | 格点 / node-centred |
 |---|---|---|
-| **一维 Burgers**（入门）/ 1-D Burgers (introductory) | [`adjoint_1d_cell.html`](adjoint_1d_cell.html) | [`adjoint_1d_node.html`](adjoint_1d_node.html) |
+| **一维 Burgers**/ 1-D Burgers | [`adjoint_1d_cell.html`](adjoint_1d_cell.html) | [`adjoint_1d_node.html`](adjoint_1d_node.html) |
 | **二维对流** / 2-D advection | [`adjoint_cell.html`](adjoint_cell.html) | [`adjoint_node.html`](adjoint_node.html) |
 | **二维对流扩散** / 2-D advection–diffusion | [`adjoint_ad_cell.html`](adjoint_ad_cell.html) | [`adjoint_ad_node.html`](adjoint_ad_node.html) |
 | **拟一维 Euler** / quasi-1-D Euler | [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | [`adjoint_q1d_node.html`](adjoint_q1d_node.html) |
@@ -118,7 +118,7 @@ loop, add back after", in that order and no other. The four rows go through this
 | 信息传播 / Information travels | 单向 / one way | 单向（纯对流）/ one way | 双向（扩散）/ both ways (diffusion) | 双向（亚声速）/ both ways (subsonic) |
 | 设计变量 / Design variables | 8 个区间源项与 $u_{\mathrm{in}}$ / 8 interval sources and $u_{\mathrm{in}}$ | 48 个网格坐标 / 48 mesh coordinates | 48 个网格坐标 / 48 mesh coordinates | 13 个截面积 / 13 duct areas |
 
-一维那一对是入门：方程、通量与循环都和二维对流页相同，只是法向取 $n=1$，网格小到每个数组、
+一维那一对：方程、通量与循环都和二维对流页相同，只是法向取 $n=1$，网格小到每个数组、
 整个 Jacobian 都能完整摆在页面上；设计变量换成源项与入口值，所以不需要任何网格导数，一次伴随
 求解直接给出全部 9 个导数。二维对流那一对页面在第 2 节的注里说过一句话：「把标量换成状态向量、把局部导数换成块矩阵即可。」
 拟一维那一对就是把这句话兑现出来——并且顺带说明，兑现过程中会冒出源项、非线性边界条件
@@ -127,7 +127,7 @@ loop, add back after", in that order and no other. The four rows go through this
 开始不再只连相邻的未知量，matrix-free 的 Jacobi 迭代却照样只需要它的对角元；Dirichlet 壁面
 也在这里才有了适定的位置。
 
-The one-dimensional pair is the way in: the equation, the flux and the loop are those of the
+The one-dimensional pair: the equation, the flux and the loop are those of the
 two-dimensional advection pages with the normal taken as $n=1$, on a grid small enough for every
 array and the whole Jacobian to fit on the page; the design variables are the sources and the
 inflow value, so no mesh derivative is needed and one adjoint solve gives all nine derivatives.
@@ -143,7 +143,7 @@ also where a Dirichlet wall is finally well posed.
 
 ## 四个模型问题 / The four model problems
 
-**一维 Burgers / 1-D Burgers**（入门）— 带源项的定常 Burgers 方程
+**一维 Burgers / 1-D Burgers**— 带源项的定常 Burgers 方程
 $\frac{\mathrm d}{\mathrm dx}\big(\tfrac12u^2\big)=s(x)$，$0<x<1$，$u(0)=u_{\mathrm{in}}=1$；面通量是二维页的
 通量取 $n=1$：$h=\tfrac14(u_L^2+u_R^2)-\varepsilon(u_R-u_L)$，$\varepsilon=0.8$；8 个单元（格心）或 9 个节点
 （格点）；源项在 8 个区间上逐段为常数，当前设计 $\sigma=0.5$（精确解 $u=\sqrt{1+x}$）；目标是反设计
@@ -172,7 +172,7 @@ residual_b），再除以精确 Jacobian 的对角元（块），矩阵既不形
 本是直接 LU 分解，但那样体现不出 matrix-free；Jacobi 是最简单的迭代法，天然 matrix-free，而且
 三个迭代矩阵同谱，进入渐近阶段以后三条收敛曲线以同一个速率下降——各页把它们画在一起。
 
-**1-D Burgers** (introductory) — the steady Burgers equation with a source,
+**1-D Burgers** — the steady Burgers equation with a source,
 $\frac{\mathrm d}{\mathrm dx}\big(\tfrac12u^2\big)=s(x)$ on $0<x<1$, $u(0)=u_{\mathrm{in}}=1$; the face flux is that
 of the two-dimensional pages at $n=1$, $h=\tfrac14(u_L^2+u_R^2)-\varepsilon(u_R-u_L)$, $\varepsilon=0.8$; 8 cells
 (cell-centred) or 9 nodes (node-centred); the source is constant on each of the 8 intervals, $\sigma=0.5$ in the
