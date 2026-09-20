@@ -28,8 +28,8 @@ version. If the discrete adjoint is new to you, start with the one-dimensional p
 | [`adjoint_node.html`](adjoint_node.html) | 二维对流 / 2-D advection | **格点** / node-centred | 917 KB |
 | [`adjoint_ad_cell.html`](adjoint_ad_cell.html) | 二维对流扩散 / 2-D advection–diffusion | **格心** / cell-centred | 830 KB |
 | [`adjoint_ad_node.html`](adjoint_ad_node.html) | 二维对流扩散 / 2-D advection–diffusion | **格点** / node-centred | 966 KB |
-| [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | 拟一维 Euler / quasi-1-D Euler | **格心** / cell-centred | 807 KB |
-| [`adjoint_q1d_node.html`](adjoint_q1d_node.html) | 拟一维 Euler / quasi-1-D Euler | **格点** / node-centred | 792 KB |
+| [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | 拟一维 Euler / quasi-1-D Euler | **格心** / cell-centred | 190 KB |
+| [`adjoint_q1d_node.html`](adjoint_q1d_node.html) | 拟一维 Euler / quasi-1-D Euler | **格点** / node-centred | 190 KB |
 | [`adjoint_euler_cell.html`](adjoint_euler_cell.html) | 二维 Euler / 2-D Euler | **格心** / cell-centred | 146 KB |
 | [`adjoint_euler_node.html`](adjoint_euler_node.html) | 二维 Euler / 2-D Euler | **格点** / node-centred | 146 KB |
 
@@ -124,7 +124,7 @@ equation** — one dimension, then pure advection in two, then diffusion added, 
 
 Section 15 retains the conclusions; the same-page Appendix A derives the Green identities and objective-dependent boundary conditions, then compares independent continuous references with refined discrete adjoints. It distinguishes inconsistency from nonexistence, nonuniqueness and instability through explicit characteristic examples. The [full English derivation](adjoint_ad_cell.html#appendix-continuous) records assumptions and evidence limits. Advection–diffusion uses an independent FEM reference with wall dual value one and the implemented total-flux Robin far field; quasi-1-D uses an isentropic primal and a continuous dual boundary-value ODE for both objectives. The original scalar zero-flux body has no smooth positive reference of this kind, so its characteristic-boundary contrast is explicitly separate.
 
-六个新面板浏览内嵌的**离线计算结果**，不在浏览器中重新求解连续 PDE。它们不引入外部运行依赖。加密误差下降是所测网格族的证据，不是任意网格、激波或边界最大范数的收敛证明。
+二维标量的连续参考面板浏览内嵌的**离线计算结果**；拟一维 Euler 的附录 A 在浏览器中独立积分连续伴随 ODE，并与等熵流场差分比较。它们不引入外部运行依赖。加密误差下降是所测网格族的证据，不是任意网格、激波或边界最大范数的收敛证明。
 
 The six new viewers contain **offline-computed results**, not browser PDE solves, and add no runtime dependencies. Refinement trends are evidence for the tested families, not convergence proofs for arbitrary grids, shocks or boundary maximum norms.
 
@@ -178,12 +178,12 @@ loop, add back after", in that order and no other. The four rows go through this
 | 每个自由度 / Per unknown | 一个数 / one number | 一个数 / one number | 一个数 / one number | 三个数 ρ, ρu, ρE / three |
 | 残差 / Residual | 面循环加源项 / a face loop and a source | 一个面循环 / one face loop | **两遍**：先最小二乘梯度、后通量 / **two loops**: least-squares gradients, then fluxes | 面循环加源项 / a face loop and a source |
 | 局部导数 / Local derivative | $c_L,c_R$ 及重构链 / flux derivatives and reconstruction chain | 两个数 $c_L,c_R$ / two numbers | 两个数，外加一条经过梯度的路径 / two numbers, plus a path through the gradients | 两个 **3×3 块** / two **3×3 blocks** |
-| Jacobian 的一行 / A row of the Jacobian | 一阶三对角，二阶五对角 / tridiagonal at first order, five diagonals at second order | 相邻的未知量 / adjacent unknowns | **邻居的邻居**；Jacobi 迭代只用它的对角元 / **neighbours of neighbours**; the Jacobi iteration uses only its diagonal | 左右相邻的块（块三对角）/ the neighbouring blocks (block tridiagonal) |
+| Jacobian 的一行 / A row of the Jacobian | 一阶三对角，二阶五对角 / tridiagonal at first order, five diagonals at second order | 相邻的未知量 / adjacent unknowns | **邻居的邻居**；Jacobi 迭代只用它的对角元 / **neighbours of neighbours**; the Jacobi iteration uses only its diagonal | 一阶相邻块；二阶扩展到重构邻域 / adjacent blocks at first order; extended reconstruction stencil at second order |
 | 源项 / Source term | 有，逐区间常数，就是设计变量 / yes, constant on each interval: the design variables | 没有 / none | 没有 / none | 有，且不经过任何面 / yes, crossing no face |
 | 边界条件 / Boundary conditions | 入口值 $u_{\mathrm{in}}$ / the inflow value | 零通量壁面、特征远场 / a zero-flux wall, a characteristic far field | Dirichlet 壁面 $u=u_w$ / a Dirichlet wall | 内点状态的**非线性函数** / **nonlinear functions** of the interior |
 | 强加的形状 / Shape of strong imposition | 整行换成 $e_0^{\mathsf T}$ / the whole row becomes $e_0^{\mathsf T}$ | 没有强加 / none | 整行换成 $e_i^{\mathsf T}$ / the whole row becomes $e_i^{\mathsf T}$ | **部分行**换成约束梯度 / **partial rows** become constraint gradients |
 | 信息传播 / Information travels | 单向 / one way | 单向（纯对流）/ one way | 双向（扩散）/ both ways (diffusion) | 双向（亚声速）/ both ways (subsonic) |
-| 设计变量 / Design variables | 默认 8 个区间源项与 $u_{\mathrm{in}}$ / 8 interval sources by default and $u_{\mathrm{in}}$ | 48 个网格坐标 / 48 mesh coordinates | 48 个网格坐标 / 48 mesh coordinates | 13 个截面积 / 13 duct areas |
+| 设计变量 / Design variables | 默认 8 个区间源项与 $u_{\mathrm{in}}$ / 8 interval sources by default and $u_{\mathrm{in}}$ | 48 个网格坐标 / 48 mesh coordinates | 48 个网格坐标 / 48 mesh coordinates | 13 个截面积及 3 个边界参数 / 13 areas and 3 boundary parameters |
 
 一维那一对：面通量取二维对流页的 $n=1$，二阶时增加面值重构，网格小到每个数组、
 整个 Jacobian 都能完整摆在页面上；设计变量换成源项与入口值，所以不需要任何网格导数，一次伴随
@@ -230,9 +230,9 @@ $u=u_w=0$，远场数值通量使用 $u_\infty=1$、不另加扩散面通量（�
 **拟一维 Euler / quasi-1-D Euler** — 变截面流道 $A(x)=1-0.3\sin^2(\pi x)$，两端为 1、喉部 0.7；
 入口给**总压与总温**、出口给**背压**，全场亚声速；Rusanov 通量（耗散系数取两侧平均而非
 $\max$，以保可微）；目标有两个可切换：**反设计**（压力分布匹配）与**推力**；设计变量是
-13 个截面积。
+13 个截面积及出口背压、入口总压和总温。
 
-一维 Burgers 支持一阶常值和二阶线性重构。原始方程采用一阶近似 Jacobian 的 GS 预估矫正；精确 tangent / adjoint 可选 GS 固定点或 **GS 预处理 GMRES**。一阶矩阵仅参与修正与预处理，精确导数始终对应完整离散残差。原有六页保持原有 Jacobi 求解（拟一维为 3×3 块 Jacobi）。
+一维 Burgers 支持一阶常值和二阶线性重构。原始方程采用一阶近似 Jacobian 的 GS 预估矫正；精确 tangent / adjoint 可选 GS 固定点或 **GS 预处理 GMRES**。一阶矩阵仅参与修正与预处理，精确导数始终对应完整离散残差。拟一维 Euler 同样支持一阶／二阶重构，采用 3×3 块 GS 固定点或 GS 预处理 GMRES；一次预处理从零开始做 12 次 GS 扫描，并对整个映射实施精确转置。二维标量四页保留 Jacobi。
 
 **1-D Burgers** — the steady Burgers equation with a source,
 $\frac{\mathrm d}{\mathrm dx}\big(\tfrac12u^2\big)=s(x)$ on $0<x<1$, $u(0)=u_{\mathrm{in}}=1$; the face flux is that
@@ -242,7 +242,7 @@ current design (exact solution $u=\sqrt{1+x}$); the objective is inverse design,
 $J=\tfrac12\sum_iw_i(u_i-\bar u_i)^2$, with $\bar u$ the solution for the interval averages of $\sin\pi x$; the
 design variables are the 8 interval sources and $u_{\mathrm{in}}$.
 
-The Burgers pair supports first-order constant states and second-order linear reconstruction. Its primal uses GS predictor–corrector with a first-order approximate Jacobian; exact tangent and adjoint equations offer GS fixed point or **GS-preconditioned GMRES**. The first-order matrix is used only for correction and preconditioning. The other six pages retain Jacobi, with 3×3 block Jacobi for quasi-1-D Euler.
+The Burgers pair supports first-order constant states and second-order linear reconstruction. Its primal uses GS predictor–corrector with a first-order approximate Jacobian; exact tangent and adjoint equations offer GS fixed point or **GS-preconditioned GMRES**. The first-order matrix is used only for correction and preconditioning. Quasi-1-D Euler also supports both orders, 3×3 block-GS defect correction and GS-preconditioned GMRES. Each preconditioner application performs 12 zero-start GS sweeps with an exact transpose of the full map. The four 2-D scalar pages retain Jacobi.
 
 ## 每页的各节 / The sections
 
@@ -251,7 +251,7 @@ The Burgers pair supports first-order constant states and second-order linear re
 3. 边界条件 / Boundary conditions
 4. 残差 = 循环：收集、计算、分发（对流扩散页是两遍：先梯度、后通量）/ Residual = the loop:
    gather, compute, scatter (two loops on the advection–diffusion pages: gradients, then fluxes)
-5. 求解：Jacobian 与迭代（一维为 GS，其余为 Jacobi）/ Jacobian and iteration (GS for Burgers, Jacobi elsewhere)
+5. 求解：Jacobian 与迭代（Burgers 与拟一维为 GS，二维 Euler 为 GS-GMRES）/ Jacobian and iteration (GS for Burgers and quasi-1-D; GS-GMRES for 2-D Euler)
 6. 目标函数 / The objective function
 7. matrix-free 前向：计算 $Av$ / Matrix-free forward
 8. matrix-free 伴随：计算 $A^{\mathsf T}w$ / Matrix-free adjoint
@@ -259,15 +259,14 @@ The Burgers pair supports first-order constant states and second-order linear re
 10. 伴随求解：伴随方程 / The adjoint solve: the adjoint equation
 11. 几何导数（一维页：设计导数）/ Geometric derivatives (the 1-D pages: design derivatives)
 12. 验证：对有限差分 / Verification against finite differences
-13. 复数步长：独立检查收敛方程的总导数；原有六页还逐轮对照 Jacobi 前向迭代 / Complex step: independently check total derivatives of the converged equations; the other six also compare Jacobi iterates
+13. 复数步长：独立检查收敛方程的总导数；二维标量四页还逐轮对照 Jacobi 前向迭代 / Complex step: independently check total derivatives of the converged equations; the four 2-D scalar pages also compare Jacobi iterates
 14. 精度阶：构造解检验 / Order of accuracy: a manufactured solution
 15. 连续伴随与伴随一致性；一维还含 $J$ 的误差估计 / Continuous adjoints and adjoint consistency; the 1-D pair also estimates the error in $J$
-16. 一维：GS 固定点与 GS 预处理 GMRES；其余八页：总结 / Burgers: GS fixed point and GS-preconditioned GMRES; other eight: summary
-17. 一维：总结 / Burgers: summary
+16. Burgers 与拟一维 Euler：GS 固定点与 GS 预处理 GMRES；其余六页：总结 / Burgers and quasi-1-D Euler: GS fixed point and GS-preconditioned GMRES; other six: summary
+17. Burgers 与拟一维 Euler：总结 / Burgers and quasi-1-D Euler: summary
 
-拟一维页把 Jacobian 记作 $J$（那里 $A$ 是截面积），所以第 7、8 节在那两页算的是 $Jv$ 与 $J^{\mathsf T}w$。
-The quasi-one-dimensional pages write the Jacobian $J$, because $A$ is the duct area there, so Sections 7
-and 8 compute $Jv$ and $J^{\mathsf T}w$ on those two pages.
+拟一维新版使用精确 Jacobian 算子 $A_2$ 与一阶近似 $P$，截面积以 $A(x)$ 表示；连续附录使用 $B=F_U$ 表示物理通量 Jacobian。
+The quasi-1-D edition distinguishes the exact operator $A_2$, low-order approximation $P$, duct area $A(x)$ and continuous flux Jacobian $B=F_U$.
 
 ## 可以动手的地方 / What is interactive
 
@@ -278,53 +277,39 @@ and 8 compute $Jv$ and $J^{\mathsf T}w$ on those two pages.
 - **最小二乘梯度**（对流扩散页）：选一个单元或节点，看它的模板、矩阵 $M_i$、每个权重和算出的梯度；
   换成线性场，每个点上的梯度都精确到舍入误差
 - **一个面上的通量**：拖动两侧状态，看中心项与耗散项怎样组成数值通量；对流扩散页把扩散通量拆成
-  两点差与梯度修正；拟一维页还能逐个面载入收敛解，看质量与能量通量在各面上相同、中心项与耗散项
-  却各自在变
+  两点差与梯度修正；拟一维页逐面显示一阶／二阶重构及其依赖权重
 - **三个循环逐句播放**：primal、tangent、adjoint 各一个，每一行伪代码对应一步，
   数组里的数字随之变化——转置在数据流上长什么样，一眼可见；对流扩散页的每个循环分两遍，
   伴随先倒着走通量那一遍、再倒着走梯度那一遍
 - **点积测试**：随机向量，现场验证 $\langle w,Av\rangle=\langle A^{\mathsf T}w,v\rangle$；
   对流扩散格点页可对照错误入口行处理；一维页还检验 GS 预处理的转置关系
-- **三个求解过程**：一维展示 GS 逐行扫描、预估矫正与 GS 预处理 GMRES；原有六页的 primal、切线、伴随三个 Jacobi 迭代逐轮播放（对流页与拟一维页还逐面播放
-  切线与伴随那一轮内部的循环），三条收敛曲线画在一起：进入渐近阶段以后它们平行。
-  收敛曲线都越过停止判据，一直画到舍入误差平台：曲线变平，才说明已经收敛到机器精度
+- **三个求解过程**：Burgers 与拟一维 Euler 展示 GS 与 GMRES；拟一维提供原始迭代快照、逐块 GS 扫描、前向和伴随真残差。二维标量保留 Jacobi 迭代交互。
 - **流进物面的通量**（对流扩散页）：逐个壁面面或壁面节点看它吸收的通量；格点页把一致的反作用量
   与单侧差分公式并排对照
-- **精确 Jacobian 的组装**：拟一维页逐面播放 `jacobian(u, A)`——每个面的两个 3×3 块、边界块 $c_R+c_L\,\partial\mathbf B/\partial\mathbf u$、源项行、被替换的约束行——最后与中心差分对照；块 Jacobi 用的就是它的对角块
-- **边界块与它的秩**：拟一维格心页把两个边界 Jacobian 和它们的秩算出来
-- **梯度面板**：拟一维格点页把「忘记清零 $\Psi$」的后果和正确结果画在一起
+- **拟一维精确算子与低阶矩阵**：精确 tangent／adjoint 沿计算图实施，不组装精确二阶矩阵；另展示一阶近似矩阵与 3×3 块 GS 扫描。
+- **拟一维连续伴随**：同页附录 A 展开变分、两端零空间边界、面积及边界数据导数；独立 RK4 射击法支持步数切换。附录 B 提供正激波跳跃与固定界面导数计算，完整移动激波流道求解尚未实现。
 - **BFGS 反设计**（一维页）：每个候选设计重新求解 primal 和伴随，经回溯接受下降步；入口值不动，因为它和第一个区间的源项几乎可以互相替代
-- **复数步长与前向迭代，逐轮对照**（原有六页）：选一个设计变量和起点，两条迭代的残差与它们逐轮之差画在一起。
+- **复数步长与前向迭代，逐轮对照**（二维标量四页）：选一个设计变量和起点，两条迭代的残差与它们逐轮之差画在一起。
   从收敛流场出发，复数迭代的虚部每一轮都等于前向迭代；从初始流场出发，两者只在收敛时相遇。图下的表把
   复数步长、伴随与中心差分给出的梯度并排列出
 - **哪一种检验抓哪一种错误**（一维页）：比较精确导数、两侧共同误用一阶 Jacobian、伴随符号错误；点积检验与独立复数残差检验相互补充。
 - **两种入口下的离散伴随与连续伴随**（一维页）：比较全域和固定内部区域误差、首源项导数比、光滑方向导数及入口导数。二阶格点迎风处理仍可能有伴随边界层。
-- **差分验证与步长扫描**：原有六页可选差分格式（中心／前向）与步长 $h$；一维页按所选参数计算中心差分步长扫描，并独立检查复数步长，逐分量用全链路差分对照伴随梯度；
-  底部扫描相对误差随步长的变化，截断与舍入怎样围出最优步长一目了然。拟一维页把梯度画成流道壁上的箭头，
-  点一个面（或节点）就扫描那个分量
+- **差分验证与步长扫描**：二维标量四页可选差分格式（中心／前向）与步长 $h$；一维页按所选参数计算中心差分步长扫描，并独立检查复数步长，逐分量用全链路差分对照伴随梯度；
+  底部扫描相对误差随步长的变化，截断与舍入怎样围出最优步长一目了然。拟一维页支持全部 16 个设计变量、中心／前向／后向差分和 12 个步长的完整重求解扫描
 
-Interactive panels and figures are generated from numerical code. The three loops can be played statement by statement, with the arrays
-updating as each pseudocode line executes (on the advection–diffusion pages each loop runs in
-two passes, and the adjoint walks back through the flux pass before the gradient pass); the
-flux on one face can be taken apart term by term, the diffusive flux into its two-point part and
-its gradient correction; a least-squares gradient can be taken apart weight by weight, and seen
-to be exact on a linear field; the exact Jacobian can be watched being assembled block by block,
-boundary terms included; on the other six pages the primal, tangent and adjoint Jacobi iterations can be stepped through,
-their three curves drawn together, past the stopping criterion down to the round-off floor, where
-the curves go flat; the flux into the body can be read wall
-face by wall face, or wall node by wall node against the one-sided formula; and the shape
-gradient can be checked against full-chain differences at any step and scheme, with its error
-swept against the step size, component by component. On the other six pages the complex step, which
-needs no compromise on the step size, is run against the forward iteration: started from the
-converged flow the two agree at every sweep, started from the initial field they meet only at
-convergence, and the gradient it gives is set beside the adjoint's and the central difference's.
+Interactive panels show meshes, face fluxes, reconstruction, forward/reverse accumulation, solver residuals and full-rerun gradient checks. The four 2-D scalar pages retain their Jacobi iteration players. The quasi-1-D Euler pair now provides first/second-order reconstruction, primal snapshots, block-GS scans, matrix-free derivatives, GS/GMRES comparison, all 16 parameter gradients, three finite-difference formulas over 12 step sizes, and independently converged complex residuals. Its same-page continuous appendix solves an independent ODE in the browser; its shock appendix currently covers local jumps and interface analysis, not a full shocked-duct solve.
+
 The Burgers pages add a global spatial-order switch, reconstruction and transpose players, a row-by-row GS scan, GS/GMRES work comparisons, source-only BFGS steps with line search, and independently converged complex-step checks. Boundary studies separate interior accuracy, global boundary layers and design sensitivities; second-order node-based upwinding is not automatically adjoint consistent.
 
 ## 页面上的数字都是实测的 / Every number is measured
 
-离散交互与 Burgers 连续求积在浏览器现场计算；其他连续参考及加密图浏览独立求解后内嵌的离线结果。正文、表格与静态图的数值来自实际计算。以下保留原有六页的校验结果；Burgers 新版数据单列于上方：
+拟一维 Euler 新版完成 1,110 项数值检查，覆盖格心／格点、一阶／二阶、推力／反设计、GS／GMRES，以及全部 16 个设计变量。中心差分（h=10⁻⁵）与伴随的最大绝对差为 2.02×10⁻⁹，复数步长为 1.51×10⁻¹¹；完整状态和参数转置点积差为 1.43×10⁻¹⁴。连续 RK4 射击解与独立配点边值解的最大差为 2.20×10⁻¹¹（推力）、1.40×10⁻¹²（反设计）。二阶最后一档实测状态收敛阶为 1.903（格心）与 1.912（格点）。
 
-The original panels compute live in the browser. The new continuous-adjoint viewers display embedded results from independent offline solves. Text, tables and static figures use measured results. The following tables retain the other six pages’ checks; the revised Burgers data are reported separately above:
+The revised quasi-1-D pair passed 1,110 numerical checks across both grids, orders, objectives and solvers, testing all 16 parameters. Maximum absolute gradient differences were 2.02×10⁻⁹ for full-rerun central differences (h=10⁻⁵) and 1.51×10⁻¹¹ for complex step; the joint state/parameter transpose discrepancy was 1.43×10⁻¹⁴. The continuous RK4 shooting solution agrees with independent boundary-value collocation within 2.20×10⁻¹¹ (thrust) and 1.40×10⁻¹² (inverse design). Final-grid second-order state rates are 1.903 (cell) and 1.912 (node).
+
+以下保留二维标量与旧版拟一维一阶 Jacobi 实现的历史校验，**旧版拟一维数据不代表当前二阶／GS 页面**。当前拟一维数据见上段和页面现场计算。连续加密图使用预先独立求解的数据，拟一维连续 ODE 交互则在浏览器中重新计算。
+
+The tables below retain historical checks for the scalar pages and the former first-order quasi-1-D Jacobi implementation. **Historical quasi-1-D values do not describe the current second-order/GS pages.** Use the new results above and live page calculations for the current implementation.
 
 | 页面 / Page | 点积测试 / dot test | 几何点积测试 / geometric dot test | 梯度对全链路差分 / gradient vs full-chain FD | 漏掉一步的后果 / cost of one missing step |
 |---|---|---|---|---|
@@ -363,9 +348,9 @@ source term dropped from the adjoint: the dot test's relative error, depending o
 ⁶ $\Psi$ not zeroed on the constrained rows before assembling the geometric gradient (inverse
 design; 4% for thrust).
 
-原有六页第 13 节的复数步长（$h=10^{-30}$）：
+旧版六页第 13 节的复数步长（拟一维为历史数据）（$h=10^{-30}$）：
 
-The other six pages’ Section 13 complex-step checks ($h=10^{-30}$):
+Historical Section 13 complex-step checks for the former six pages ($h=10^{-30}$):
 
 | 页面 / Page | 逐轮，从 $u^*$ 出发 / per sweep, from $u^*$ | 逐轮，从初始流场出发 / per sweep, from the initial field | 实部，从 $u^*$ 出发 / real part, from $u^*$ | 复数步长对伴随 / complex step vs adjoint | 中心差分对伴随 / central difference vs adjoint |
 |---|---|---|---|---|---|

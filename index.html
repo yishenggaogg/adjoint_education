@@ -148,17 +148,17 @@ code { font-family:var(--font-mono); font-size:.86em; }
   <h3 style="margin-top:30px">拟一维 Euler 方程 / The quasi-one-dimensional Euler equations</h3>
   <p style="margin:0 0 14px;color:var(--muted);font-size:.93rem">
     变截面流道，入口给总压总温、出口给背压，全场亚声速。方程组版本：局部导数是 3×3 块，
-    残差多了一个不经过任何面的源项，边界条件是内点状态的非线性函数。<br>
+    一阶／二阶重构可切换，提供块 GS 与 GS 预处理 GMRES、完整差分扫描，以及同页连续伴随推导与独立交互计算。<br>
     A variable-area duct with total conditions in, a back pressure out and subsonic flow throughout.
-    The system version: local derivatives are 3&times;3 blocks, the residual gains a source term that
-    crosses no face, and the boundary conditions are nonlinear functions of the interior state.
+    Switch first/second-order reconstruction, solve with block GS or GS-preconditioned GMRES,
+    and explore full finite-difference sweeps and a same-page independent continuous-adjoint implementation.
   </p>
   <div class="cards">
     <a class="card" href="adjoint_q1d_cell.html">
       <h2>格心格式</h2>
       <p class="en">Cell-centred finite volume</p>
       <p>边界条件<b>弱</b>加：用特征关系重构一个 ghost 状态喂给通量。边界 Jacobian 的<b>秩等于出域特征条数</b>。</p>
-      <p class="facts">12 个单元 &middot; 36 个未知量 &middot; nnz(A) = 306<br>adjoint_q1d_cell.html</p>
+      <p class="facts">12 个单元 &middot; 36 个未知量 &middot; 一阶／二阶 &middot; matrix-free<br>adjoint_q1d_cell.html</p>
     </a>
     <a class="card node" href="adjoint_q1d_node.html">
       <h2>格点格式</h2>
