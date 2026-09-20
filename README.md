@@ -1,23 +1,23 @@
 # 离散伴随教学页 / Discrete adjoint, taught page by page
 
-本项目的主线是离散伴随教学，面向学过微积分、线性代数与数值方法的本科生；最终目标是完整展示工业级非结构网格 RANS 的离散伴随实现（当前尚未实现 RANS）。连续伴随只作为简单算例的独立验证和对比：正文保留结论，各页附录 A 提供完整推导、可复制运行的参考代码、图和交互，随页面切换中英文，不再另设文档页面。可以为选定的连续 RANS 模型写出形式伴随，但不能把它自动当作含湍流闭合、壁面处理、限幅与边界算法的完整工业离散流程的严格参照。
+本项目的主线是离散伴随教学，面向学过微积分、线性代数与数值方法的本科生；最终目标是完整展示工业级非结构网格 RANS 的离散伴随实现（当前尚未实现 RANS）。连续伴随只作为简单算例的独立验证和对比：正文保留结论，原八页附录 A 提供完整推导、可复制运行的参考代码、图和交互，随页面切换中英文，不再另设文档页面。可以为选定的连续 RANS 模型写出形式伴随，但不能把它自动当作含湍流闭合、壁面处理、限幅与边界算法的完整工业离散流程的严格参照。
 
-The teaching path develops discrete adjoints for undergraduates with calculus, linear algebra and numerical-methods background, toward a complete industrial unstructured-grid RANS implementation (not yet implemented). Continuous adjoints are independent checks for simple cases. Main chapters retain conclusions; each bilingual same-page Appendix A contains full derivations, runnable reference code, figures and interaction. Formal continuous RANS adjoints do not automatically supply a strict reference for the full implemented industrial algorithm.
+The teaching path develops discrete adjoints for undergraduates with calculus, linear algebra and numerical-methods background, toward a complete industrial unstructured-grid RANS implementation (not yet implemented). Continuous adjoints are independent checks for simple cases. Main chapters retain conclusions; the original eight pages’ bilingual same-page Appendix A contains full derivations, runnable reference code, figures and interaction. Formal continuous RANS adjoints do not automatically supply a strict reference for the full implemented industrial algorithm.
 
-**八个**单文件、可交互的网页，把有限体积法的**全离散伴随**从头到尾讲一遍：
+**十个**单文件、可交互的网页，把有限体积法的**全离散伴随**从头到尾讲一遍：
 从一个面上的一维通量开始，把同一个循环依次改写成 primal、matrix-free 前向（$Av$）与
 matrix-free 伴随（$A^{\mathsf T}w$），再做前向与伴随求解、几何导数，最后用有限差分逐项校验。
-四组算例——**一维 Burgers 方程**、**二维标量对流方程**、**二维标量对流扩散方程**与
-**拟一维 Euler 方程**——各有**格心**与**格点**两版。第一次接触离散伴随，请从一维那一对读起。
+五组算例——**一维 Burgers 方程**、**二维标量对流方程**、**二维标量对流扩散方程**与
+**拟一维 Euler 方程**与**二维 Euler 方程**——各有**格心**与**格点**两版。第一次接触离散伴随，请从一维那一对读起。
 
-**Eight** self-contained, interactive web pages that develop the **fully discrete adjoint**
+**Ten** self-contained, interactive web pages that develop the **fully discrete adjoint**
 of a finite-volume scheme end to end: starting from the one-dimensional flux on a single
 face, the same loop is rewritten as the primal, as matrix-free forward mode ($Av$) and as
 matrix-free adjoint mode ($A^{\mathsf T}w$), followed by the forward and the adjoint solve, the
-geometric derivatives and a term-by-term finite-difference verification. Four model problems &mdash;
+geometric derivatives and a term-by-term finite-difference verification. Five model problems &mdash;
 the **one-dimensional Burgers equation**, a **two-dimensional scalar advection
 equation**, a **two-dimensional scalar advection&ndash;diffusion equation** and the
-**quasi-one-dimensional Euler equations** &mdash; each in a **cell-centred** and a **node-centred**
+**quasi-one-dimensional Euler equations** and **two-dimensional Euler equations** &mdash; each in a **cell-centred** and a **node-centred**
 version. If the discrete adjoint is new to you, start with the one-dimensional pair.
 
 | 文件 / File | 算例 / Problem | 格式 / Scheme | 大小 / Size |
@@ -30,6 +30,8 @@ version. If the discrete adjoint is new to you, start with the one-dimensional p
 | [`adjoint_ad_node.html`](adjoint_ad_node.html) | 二维对流扩散 / 2-D advection–diffusion | **格点** / node-centred | 966 KB |
 | [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | 拟一维 Euler / quasi-1-D Euler | **格心** / cell-centred | 807 KB |
 | [`adjoint_q1d_node.html`](adjoint_q1d_node.html) | 拟一维 Euler / quasi-1-D Euler | **格点** / node-centred | 792 KB |
+| [`adjoint_euler_cell.html`](adjoint_euler_cell.html) | 二维 Euler / 2-D Euler | **格心** / cell-centred | 146 KB |
+| [`adjoint_euler_node.html`](adjoint_euler_node.html) | 二维 Euler / 2-D Euler | **格点** / node-centred | 146 KB |
 
 直接用浏览器打开即可：**没有任何外部依赖**，不联网、不需要构建、不需要服务器。
 Just open any of them in a browser — **no external dependencies**, no network, no build step,
@@ -42,6 +44,16 @@ no server. Each page has a 中文 / English toggle in the top-right corner.
 [Gitee](https://gitee.com/gaoyishenggg/adjoint_education) — 内容相同 / identical content
 
 ---
+
+### 二维 Euler：无激波首版 / 2-D Euler: initial shock-free case
+
+[格心](adjoint_euler_cell.html)与[格点](adjoint_euler_node.html)使用与二维标量逐点、逐单元一致的基础混合网格，继承其页面样式、双语导航和逐面执行结构。理想气体四分量 Euler、一阶 Rusanov 形式通量、滑移压力壁面、亚声速特征远场；Newton / GS 预处理 GMRES 求解原始问题，计算图提供 matrix-free 状态及几何 JVP/VJP。提供来流马赫数、攻角（弧度）与物面节点坐标的 tangent／adjoint 梯度、完整重算差分及独立复数残差检查。
+
+The [cell](adjoint_euler_cell.html) and [node](adjoint_euler_node.html) pages retain the scalar pages’ indexed base mesh, styling, bilingual navigation and face-loop execution structure. Four-component ideal-gas Euler uses first-order Rusanov-form fluxes, pressure slip walls and a subsonic characteristic far field. Newton / GS-preconditioned GMRES solves the primal problem; scalar-operation tapes provide matrix-free state/geometry JVPs and VJPs. Full-rerun finite differences and independent complex residuals verify Mach, incidence (per radian) and body-coordinate gradients.
+
+当前是教学用低马赫数粗网格算例：三层加密数据未建立可靠载荷精度阶，尚无独立连续 Euler 伴随参考。页面明确区分这些限制与离散求导验证，不把压力数值阻力解释为激波或粘性阻力。
+
+This low-Mach teaching case does not establish a reliable order for pressure loads from its three refinement levels, and has no independent continuous Euler adjoint reference. These limitations are separated from discrete derivative verification; numerical pressure drag is not interpreted as shock or viscous drag.
 
 ### Burgers 附录 B / Appendix B
 
@@ -77,19 +89,19 @@ Revised baseline (N=8, dissipative inlet, default GS tolerances): maximum differ
 
 同页附录（使用页面语言按钮切换）：[中文](adjoint_1d_cell.html#appendix-continuous) / [English](adjoint_1d_cell.html#appendix-continuous)。
 
-## 八个页面怎么排布 / How the eight pages are arranged
+## 十个页面怎么排布 / How the ten pages are arranged
 
-四组算例，每组两种离散。**八页教学主题相互对应**：前 14 节一一对应，第 12 节是差分验证，第 13 节是复数步长，
-第 14 节是精度阶，总结都在最后一节；第 11 节在一维那一对里是对源项与入口值的设计导数，其余三对是几何导数；
-八页第 15 节均讨论伴随一致性；一维第 16 节新增 GS 预处理 GMRES，总结移到第 17 节，其余六页总结仍为第 16 节。一维还包含 $J$ 的误差估计。任意两页都能并排对照：
+五组算例，每组两种离散。**十页教学主题相互对应**：前 14 节一一对应，第 12 节是差分验证，第 13 节是复数步长，
+第 14 节是精度阶，总结都在最后一节；第 11 节在一维那一对里是对源项与入口值的设计导数，其余四对是几何导数；
+十页第 15 节均讨论伴随一致性；一维第 16 节新增 GS 预处理 GMRES，总结移到第 17 节，其余八页总结仍为第 16 节。二维 Euler 第 14 节仅报告网格加密结果，第 15 节只给形式连续分析及限制。一维还包含 $J$ 的误差估计。任意两页都能并排对照：
 横着比是**两种格式**；竖着比是**方程**——从一维，到二维纯对流，到加上扩散，再到方程组。
 
-Four model problems, each discretised two ways. All eight have **corresponding teaching topics**: their first
+Five model problems, each discretised two ways. All ten have **corresponding teaching topics**: their first
 14 sections match one to one, Section 12 being the finite-difference check, Section 13 the complex
 step and Section 14 the order of accuracy, and the summary always comes last. Section 11 gives
 design derivatives with respect to the sources and the inflow value on the one-dimensional pair
-and geometric derivatives on the other three. All eight now discuss adjoint consistency in
-Section 15. The Burgers pair adds GS-preconditioned GMRES in Section 16 and concludes in Section 17; the other six conclude in Section 16. The one-dimensional pair also estimates the error in $J$. Any two can be read side by side: across, the **two schemes**; down, **the
+and geometric derivatives on the other four. All ten now discuss adjoint consistency in
+Section 15. The Burgers pair adds GS-preconditioned GMRES in Section 16 and concludes in Section 17; the other eight conclude in Section 16. The initial 2-D Euler pair reports refinement without an order claim and only formal continuous analysis. The one-dimensional pair also estimates the error in $J$. Any two can be read side by side: across, the **two schemes**; down, **the
 equation** — one dimension, then pure advection in two, then diffusion added, then a system.
 
 | | 格心 / cell-centred | 格点 / node-centred |
@@ -98,10 +110,13 @@ equation** — one dimension, then pure advection in two, then diffusion added, 
 | **二维对流** / 2-D advection | [`adjoint_cell.html`](adjoint_cell.html) | [`adjoint_node.html`](adjoint_node.html) |
 | **二维对流扩散** / 2-D advection–diffusion | [`adjoint_ad_cell.html`](adjoint_ad_cell.html) | [`adjoint_ad_node.html`](adjoint_ad_node.html) |
 | **拟一维 Euler** / quasi-1-D Euler | [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | [`adjoint_q1d_node.html`](adjoint_q1d_node.html) |
+| **二维 Euler** / 2-D Euler | [`adjoint_euler_cell.html`](adjoint_euler_cell.html) | [`adjoint_euler_node.html`](adjoint_euler_node.html) |
 
 ### 连续伴随与一致性 / Continuous adjoints and consistency
 
-正文第 15 节保留一致性结论，各页同页附录 A 给出分部积分、目标对应的伴随边界条件，以及独立连续解和原离散伴随的加密比较；并区分不一致、无解、不唯一和不稳定，用特征线反例解释边界条件的适定性。完整推导见 [中文版](adjoint_ad_cell.html#appendix-continuous)。
+二维 Euler 首版例外：只提供形式方程、壁面变分与验证范围，未提供独立连续参考。The initial 2-D Euler pair provides formal equations and boundary variations, without an independent continuous reference.
+
+正文第 15 节保留一致性结论，原八页同页附录 A 给出分部积分、目标对应的伴随边界条件，以及独立连续解和原离散伴随的加密比较；并区分不一致、无解、不唯一和不稳定，用特征线反例解释边界条件的适定性。完整推导见 [中文版](adjoint_ad_cell.html#appendix-continuous)。
 
 - **对流扩散**：独立有限元连续参考，壁面伴随值为 1，远场按原数值总通量解释为 Robin 条件；验证远场值导数。
 - **拟一维 Euler**：等熵原始解与连续伴随边值 ODE，分别检验反设计和推力目标；保留形状导数的端点项。
@@ -118,7 +133,7 @@ The six new viewers contain **offline-computed results**, not browser PDE solves
 这是每一组里两页的分歧所在。**格心格式**的未知量是单元平均值，边界上没有任何自由度，
 所以边界条件只能**弱**加——在通量里给一个外侧状态。**格点格式**的边界节点<u>就在边界上</u>，
 它本身就是未知量，所以可以**强**加——直接把它的方程换掉。伴随里对应的是「进循环前清零、
-出循环后加回」，而且顺序不能反。四组算例把这件事走了四遍：
+出循环后加回」，而且顺序不能反。五组算例分别展示这些处理：
 
 - **一维 Burgers**：只有入口一个条件 $u(0)=u_{\mathrm{in}}$，出口的通量就是物理通量。格心页把 $u_{\mathrm{in}}$
   当作入口面左侧的 ghost 状态（弱加）；格点页把节点 0 的整行换成 $u_0-u_{\mathrm{in}}$（强加）。
@@ -217,7 +232,7 @@ $u=u_w=0$，远场数值通量使用 $u_\infty=1$、不另加扩散面通量（�
 $\max$，以保可微）；目标有两个可切换：**反设计**（压力分布匹配）与**推力**；设计变量是
 13 个截面积。
 
-一维 Burgers 支持一阶常值和二阶线性重构。原始方程采用一阶近似 Jacobian 的 GS 预估矫正；精确 tangent / adjoint 可选 GS 固定点或 **GS 预处理 GMRES**。一阶矩阵仅参与修正与预处理，精确导数始终对应完整离散残差。其余六页保持原有 Jacobi 求解（拟一维为 3×3 块 Jacobi）。
+一维 Burgers 支持一阶常值和二阶线性重构。原始方程采用一阶近似 Jacobian 的 GS 预估矫正；精确 tangent / adjoint 可选 GS 固定点或 **GS 预处理 GMRES**。一阶矩阵仅参与修正与预处理，精确导数始终对应完整离散残差。原有六页保持原有 Jacobi 求解（拟一维为 3×3 块 Jacobi）。
 
 **1-D Burgers** — the steady Burgers equation with a source,
 $\frac{\mathrm d}{\mathrm dx}\big(\tfrac12u^2\big)=s(x)$ on $0<x<1$, $u(0)=u_{\mathrm{in}}=1$; the face flux is that
@@ -244,10 +259,10 @@ The Burgers pair supports first-order constant states and second-order linear re
 10. 伴随求解：伴随方程 / The adjoint solve: the adjoint equation
 11. 几何导数（一维页：设计导数）/ Geometric derivatives (the 1-D pages: design derivatives)
 12. 验证：对有限差分 / Verification against finite differences
-13. 复数步长：独立检查收敛方程的总导数；其余六页还逐轮对照 Jacobi 前向迭代 / Complex step: independently check total derivatives of the converged equations; the other six also compare Jacobi iterates
+13. 复数步长：独立检查收敛方程的总导数；原有六页还逐轮对照 Jacobi 前向迭代 / Complex step: independently check total derivatives of the converged equations; the other six also compare Jacobi iterates
 14. 精度阶：构造解检验 / Order of accuracy: a manufactured solution
 15. 连续伴随与伴随一致性；一维还含 $J$ 的误差估计 / Continuous adjoints and adjoint consistency; the 1-D pair also estimates the error in $J$
-16. 一维：GS 固定点与 GS 预处理 GMRES；其余六页：总结 / Burgers: GS fixed point and GS-preconditioned GMRES; other six: summary
+16. 一维：GS 固定点与 GS 预处理 GMRES；其余八页：总结 / Burgers: GS fixed point and GS-preconditioned GMRES; other eight: summary
 17. 一维：总结 / Burgers: summary
 
 拟一维页把 Jacobian 记作 $J$（那里 $A$ 是截面积），所以第 7、8 节在那两页算的是 $Jv$ 与 $J^{\mathsf T}w$。
@@ -270,7 +285,7 @@ and 8 compute $Jv$ and $J^{\mathsf T}w$ on those two pages.
   伴随先倒着走通量那一遍、再倒着走梯度那一遍
 - **点积测试**：随机向量，现场验证 $\langle w,Av\rangle=\langle A^{\mathsf T}w,v\rangle$；
   对流扩散格点页可对照错误入口行处理；一维页还检验 GS 预处理的转置关系
-- **三个求解过程**：一维展示 GS 逐行扫描、预估矫正与 GS 预处理 GMRES；其余六页的 primal、切线、伴随三个 Jacobi 迭代逐轮播放（对流页与拟一维页还逐面播放
+- **三个求解过程**：一维展示 GS 逐行扫描、预估矫正与 GS 预处理 GMRES；原有六页的 primal、切线、伴随三个 Jacobi 迭代逐轮播放（对流页与拟一维页还逐面播放
   切线与伴随那一轮内部的循环），三条收敛曲线画在一起：进入渐近阶段以后它们平行。
   收敛曲线都越过停止判据，一直画到舍入误差平台：曲线变平，才说明已经收敛到机器精度
 - **流进物面的通量**（对流扩散页）：逐个壁面面或壁面节点看它吸收的通量；格点页把一致的反作用量
@@ -279,12 +294,12 @@ and 8 compute $Jv$ and $J^{\mathsf T}w$ on those two pages.
 - **边界块与它的秩**：拟一维格心页把两个边界 Jacobian 和它们的秩算出来
 - **梯度面板**：拟一维格点页把「忘记清零 $\Psi$」的后果和正确结果画在一起
 - **BFGS 反设计**（一维页）：每个候选设计重新求解 primal 和伴随，经回溯接受下降步；入口值不动，因为它和第一个区间的源项几乎可以互相替代
-- **复数步长与前向迭代，逐轮对照**（其余六页）：选一个设计变量和起点，两条迭代的残差与它们逐轮之差画在一起。
+- **复数步长与前向迭代，逐轮对照**（原有六页）：选一个设计变量和起点，两条迭代的残差与它们逐轮之差画在一起。
   从收敛流场出发，复数迭代的虚部每一轮都等于前向迭代；从初始流场出发，两者只在收敛时相遇。图下的表把
   复数步长、伴随与中心差分给出的梯度并排列出
 - **哪一种检验抓哪一种错误**（一维页）：比较精确导数、两侧共同误用一阶 Jacobian、伴随符号错误；点积检验与独立复数残差检验相互补充。
 - **两种入口下的离散伴随与连续伴随**（一维页）：比较全域和固定内部区域误差、首源项导数比、光滑方向导数及入口导数。二阶格点迎风处理仍可能有伴随边界层。
-- **差分验证与步长扫描**：其余六页可选差分格式（中心／前向）与步长 $h$；一维页按所选参数计算中心差分步长扫描，并独立检查复数步长，逐分量用全链路差分对照伴随梯度；
+- **差分验证与步长扫描**：原有六页可选差分格式（中心／前向）与步长 $h$；一维页按所选参数计算中心差分步长扫描，并独立检查复数步长，逐分量用全链路差分对照伴随梯度；
   底部扫描相对误差随步长的变化，截断与舍入怎样围出最优步长一目了然。拟一维页把梯度画成流道壁上的箭头，
   点一个面（或节点）就扫描那个分量
 
@@ -307,7 +322,7 @@ The Burgers pages add a global spatial-order switch, reconstruction and transpos
 
 ## 页面上的数字都是实测的 / Every number is measured
 
-离散交互与 Burgers 连续求积在浏览器现场计算；其他连续参考及加密图浏览独立求解后内嵌的离线结果。正文、表格与静态图的数值来自实际计算。以下保留其余六页的校验结果；Burgers 新版数据单列于上方：
+离散交互与 Burgers 连续求积在浏览器现场计算；其他连续参考及加密图浏览独立求解后内嵌的离线结果。正文、表格与静态图的数值来自实际计算。以下保留原有六页的校验结果；Burgers 新版数据单列于上方：
 
 The original panels compute live in the browser. The new continuous-adjoint viewers display embedded results from independent offline solves. Text, tables and static figures use measured results. The following tables retain the other six pages’ checks; the revised Burgers data are reported separately above:
 
@@ -348,7 +363,7 @@ source term dropped from the adjoint: the dot test's relative error, depending o
 ⁶ $\Psi$ not zeroed on the constrained rows before assembling the geometric gradient (inverse
 design; 4% for thrust).
 
-其余六页第 13 节的复数步长（$h=10^{-30}$）：
+原有六页第 13 节的复数步长（$h=10^{-30}$）：
 
 The other six pages’ Section 13 complex-step checks ($h=10^{-30}$):
 
@@ -486,11 +501,11 @@ discard whatever was committed through the web UI.
 
 © 2026 Yisheng Gao
 
-本仓库的八个页面、连续伴随推导与本 README 以 **知识共享 署名 4.0 国际（CC BY 4.0）** 许可发布：
+本仓库的十个页面、连续伴随推导与本 README 以 **知识共享 署名 4.0 国际（CC BY 4.0）** 许可发布：
 您可以自由地共享与改编，包括用于商业目的，只要给出**适当署名**、提供许可协议的链接，
 并说明是否作了修改。完整条款见 [`LICENSE`](LICENSE)。
 
-The eight pages, continuous-adjoint derivation and this README are licensed under a
+The ten pages, continuous-adjoint derivation and this README are licensed under a
 **Creative Commons Attribution 4.0 International License (CC BY 4.0)**. You are free to share
 and adapt the material, including for commercial purposes, so long as you give appropriate
 credit, provide a link to the licence, and indicate if changes were made. Full terms in

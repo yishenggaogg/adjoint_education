@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>离散伴随教学页 / Discrete adjoint, taught page by page</title>
-<meta name="description" content="八个单文件、可交互的网页，把有限体积法的全离散伴随从头到尾讲一遍：一维 Burgers 方程、二维标量对流方程、二维标量对流扩散方程与拟一维 Euler 方程，各有格心与格点两版，并排对照。">
+<meta name="description" content="十个单文件、可交互的网页，把有限体积法的全离散伴随从头到尾讲一遍：一维 Burgers 方程、二维标量对流方程、二维标量对流扩散方程、拟一维 Euler 方程与二维 Euler 方程，各有格心与格点两版，并排对照。">
 <style>
 :root {
   --ground:#F3F5F7; --surface:#FFFFFF; --sunken:#EAEEF2;
@@ -68,15 +68,15 @@ code { font-family:var(--font-mono); font-size:.86em; }
 <div class="wrap">
 
   <h1>离散伴随教学页</h1>
-<div class="note"><p><b>教学主线与目标：</b>面向学过微积分、线性代数和数值方法的本科生，从小模型的残差、前向和伴随逐句实现，走向工业级非结构网格 RANS 的完整离散伴随。RANS 是后续目标，当前页面是通向这一目标的基础算例。</p><p><b>Learning path:</b> for undergraduates familiar with calculus, linear algebra and numerical methods, develop residuals, tangents and adjoints statement by statement, toward a complete industrial unstructured-grid RANS discrete adjoint. RANS is a future destination; the current lessons are foundational cases.</p><p>连续伴随用于简单算例的独立验证与对比。正文保留结论，完整推导、实现、图和交互均在各页附录 A。工业求解器的完整离散流程不能简单地由形式连续伴随作严格参照；验证重点是实际残差与目标的精确导数。</p><p>Continuous adjoints provide independent comparisons for simple cases. Main chapters retain conclusions; each page’s Appendix A holds derivations, implementations, figures and interaction. A formal continuous adjoint is not automatically a strict reference for a complete industrial discrete solver; verification targets the implemented residual and objective derivatives.</p></div>
+<div class="note"><p><b>教学主线与目标：</b>面向学过微积分、线性代数和数值方法的本科生，从小模型的残差、前向和伴随逐句实现，走向工业级非结构网格 RANS 的完整离散伴随。RANS 是后续目标，当前页面是通向这一目标的基础算例。</p><p><b>Learning path:</b> for undergraduates familiar with calculus, linear algebra and numerical methods, develop residuals, tangents and adjoints statement by statement, toward a complete industrial unstructured-grid RANS discrete adjoint. RANS is a future destination; the current lessons are foundational cases.</p><p>连续伴随用于简单算例的独立验证与对比。正文保留结论，完整推导、实现、图和交互均在原八页附录 A；二维 Euler 首版仅给形式连续分析与验证范围。工业求解器的完整离散流程不能简单地由形式连续伴随作严格参照；验证重点是实际残差与目标的精确导数。</p><p>Continuous adjoints provide independent comparisons for simple cases. Main chapters retain conclusions; the original eight pages’ Appendix A holds derivations, implementations, figures and interaction. The initial 2-D Euler pair provides formal continuous analysis and validation limits. A formal continuous adjoint is not automatically a strict reference for a complete industrial discrete solver; verification targets the implemented residual and objective derivatives.</p></div>
   <p class="sub">Discrete adjoint, taught page by page &middot; 中文 / English</p>
 
   <p class="lede">
-    八个<b>单文件、可交互</b>的网页，把有限体积法的<b>全离散伴随</b>从头到尾讲一遍：
+    十个<b>单文件、可交互</b>的网页，把有限体积法的<b>全离散伴随</b>从头到尾讲一遍：
     从一个面上的一维通量开始，把同一个循环依次改写成 primal、matrix-free 前向与 matrix-free 伴随，
     再做前向与伴随求解、几何导数，最后用有限差分与复数步长逐项校验。
-    四组算例（<b>一维 Burgers</b>、<b>二维标量对流</b>、<b>二维标量对流扩散</b>与<b>拟一维 Euler</b>）各有<b>格心</b>与<b>格点</b>两版，
-    <b>八页教学主题相互对应</b>，可以任意两两并排对照。第一次接触离散伴随，请从一维 Burgers 那一对读起。
+    五组算例（<b>一维 Burgers</b>、<b>二维标量对流</b>、<b>二维标量对流扩散</b>、<b>拟一维 Euler</b>与<b>二维 Euler</b>）各有<b>格心</b>与<b>格点</b>两版，
+    <b>十页教学主题相互对应</b>，可以任意两两并排对照。第一次接触离散伴随，请从一维 Burgers 那一对读起。
   </p>
 
   <h3 style="margin-top:30px">一维 Burgers 方程/ The one-dimensional Burgers equation</h3>
@@ -168,10 +168,26 @@ code { font-family:var(--font-mono); font-size:.86em; }
     </a>
   </div>
 
+  <h3 style="margin-top:30px">二维 Euler 方程（无激波） / Two-dimensional Euler (shock-free)</h3>
+  <p style="margin:0 0 14px;color:var(--muted);font-size:.93rem">
+    沿用二维标量的同一张混合 O 型网格，承接拟一维 Euler 的热力学与特征边界。低马赫数绕流，滑移壁面保留压力动量通量；
+    一阶通量、matrix-free tangent／adjoint、GS 预处理 GMRES、物面坐标与来流梯度，以及完整重算差分和复数残差验证。<br>
+    The scalar example’s identical hybrid mesh, with four Euler variables, slip-wall pressure flux and subsonic characteristic far field.
+    Matrix-free derivatives and GS-preconditioned GMRES are checked by full-rerun finite differences and complex residuals.
+  </p>
+  <div class="cards">
+    <a class="card" href="adjoint_euler_cell.html"><h2>格心格式</h2><p class="en">Cell-centred Euler</p>
+      <p>每个单元四个守恒量；逐面查看通量、状态与几何导数。压力目标包含直接法向导数。</p>
+      <p class="facts">24 个单元 &middot; 48 个面 &middot; 96 个状态自由度<br>adjoint_euler_cell.html</p></a>
+    <a class="card node" href="adjoint_euler_node.html"><h2>格点格式</h2><p class="en">Node-centred Euler, median dual</p>
+      <p>中值对偶面与边界半面；滑移壁面和特征远场均通过通量弱加，完整反传边界依赖。</p>
+      <p class="facts">24 个节点 &middot; 80 个面 &middot; 96 个状态自由度<br>adjoint_euler_node.html</p></a>
+  </div>
+
   <p class="note">
-八个页面都是<b>自包含的单个 HTML 文件</b>：不联网、不需要构建、不需要服务器，直接打开即可。
+十个页面都是<b>自包含的单个 HTML 文件</b>：不联网、不需要构建、不需要服务器，直接打开即可。
     页面右上角可切换中文 / English。<br>
-    All eight are <b>self-contained single HTML files</b> — no network, no build step, no server.
+    All ten are <b>self-contained single HTML files</b> — no network, no build step, no server.
     A 中文 / English toggle sits in the top-right corner of each page.
   </p>
 
@@ -180,14 +196,15 @@ code { font-family:var(--font-mono); font-size:.86em; }
     <li>网格、一维通量与边界条件 &mdash; mesh, the one-dimensional flux, boundary conditions</li>
     <li>残差 = 一个循环：收集、计算、分发 &mdash; the residual as one gather&ndash;compute&ndash;scatter loop</li>
     <li>同一个循环改写成 matrix-free 前向 <code>Av</code> 与伴随 <code>A&#8288;<sup>T</sup>w</code>，每一行都能逐句播放</li>
-    <li>前向与伴随求解（Burgers 使用 GS／GS 预处理 GMRES，其余六页保留 Jacobi）、几何导数 <code>dR/dX</code> 与 <code>dL/dX</code>（一维页是对源项与入口值的设计导数）&mdash; the forward and the adjoint solve (GS / GS-preconditioned GMRES for Burgers; Jacobi on the other six pages), and the geometric derivatives (on the 1-D pages, the design derivatives with respect to the sources and the inflow value)</li>
+    <li>前向与伴随求解（Burgers 使用 GS／GS 预处理 GMRES，二维 Euler 使用 GS 预处理 GMRES，其余六页保留 Jacobi）、几何导数 <code>dR/dX</code> 与 <code>dL/dX</code>（一维页是对源项与入口值的设计导数）&mdash; the forward and the adjoint solve (GS / GS-preconditioned GMRES for Burgers, GS-preconditioned GMRES for 2-D Euler; Jacobi on the other six pages), and the geometric derivatives (on the 1-D pages, the design derivatives with respect to the sources and the inflow value)</li>
     <li>点积测试与有限差分校验，以及差分校验本身的陷阱 &mdash; the dot-product test, and where finite differences mislead</li>
     <li>复数步长：公式与实现；从收敛流场出发，复数迭代每一轮都等于前向迭代；用它验证梯度 &mdash; the complex step: the formula and how to implement it; started from the converged flow, the complex iteration is the forward iteration at every sweep; the gradient checked by it</li>
-    <li>精度阶：构造解、一致加密的网格族、观测阶 &mdash; the order of accuracy: a manufactured solution, a uniformly refined family, the observed order</li>
+    <li>精度阶与网格加密：构造解、网格族、观测阶；二维 Euler 首版仅报告加密结果，尚不宣称精度阶 &mdash; accuracy and refinement: manufactured solutions and observed orders; the initial 2-D Euler study reports refinement data without claiming an observed order</li>
     <li>（一维）源项作设计变量、伴随梯度驱动的 BFGS 反设计、离散伴随与连续伴随的对照 &mdash; (1-D) sources as design variables, a BFGS inverse design driven by the adjoint gradient, the discrete adjoint against the continuous one</li>
     <li>（一维）哪一种检验抓哪一种错误、入口一致性对照与用伴随估计 <code>J</code> 的误差 &mdash; (1-D) which check catches which bug, an inflow-consistency comparison and an adjoint-based estimate of the error in <code>J</code></li>
-    <li>（全部页面，第 15 节）伴随一致性；连续方程、边界条件与网格加密对照。二维纯对流另设特征边界对照，并说明原零通量内壁的限制。各页附录 A 提供完整推导、实现与交互 / Full derivations, implementations and interaction are in each page’s Appendix A &mdash; continuous dual equations, boundary conditions and refinement; a separate characteristic-boundary contrast for 2-D advection.</li>
+    <li>（全部页面，第 15 节）伴随一致性；连续方程、边界条件与网格加密对照。二维纯对流另设特征边界对照，并说明原零通量内壁的限制。原八页附录 A 提供完整推导、实现与交互；二维 Euler 首版仅给出形式连续分析及验证范围 / The original eight pages include Appendix A; the new 2-D Euler pair provides formal continuous analysis and explicit validation limits &mdash; continuous dual equations, boundary conditions and refinement; a separate characteristic-boundary contrast for 2-D advection.</li>
     <li>（对流扩散）最小二乘梯度、两遍循环、伸到邻居的邻居的精确 Jacobian、强加的 Dirichlet 壁面 &mdash; (advection&ndash;diffusion) least-squares gradients, two loops, an exact Jacobian reaching the neighbours of neighbours, a strongly imposed Dirichlet wall</li>
+    <li>（二维 Euler）四分量面循环、压力壁面、特征旋转、计算图正反传播与固定边界分支 / Four-component face loops, pressure walls, characteristic rotations and forward/reverse computational graphs.</li>
     <li>（拟一维）源项、特征边界条件、3×3 块 &mdash; (quasi-1-D) the source term, characteristic boundary conditions, 3&times;3 blocks</li>
   </ul>
 

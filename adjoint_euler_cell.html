@@ -1,0 +1,892 @@
+<!doctype html>
+<html lang="zh-CN" data-lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="光滑亚声速二维 Euler，沿用二维标量混合网格，展示守恒通量、特征边界、matrix-free tangent 和 adjoint、几何导数与验证。">
+<title>二维 Euler 方程的离散伴随：格心格式</title>
+<script>
+  /* restore the saved language BEFORE first paint, so an English reader
+     never sees a flash of Chinese */
+  try {
+    var L = localStorage.getItem("adjlang");
+    if (L === "en") { document.documentElement.setAttribute("data-lang", "en");
+      document.documentElement.setAttribute("lang", "en"); }
+  } catch (e) {}
+</script>
+<style>
+:root {
+  --ground: #F3F5F7;
+  --surface: #FFFFFF;
+  --sunken: #EAEEF2;
+  --ink: #18202B;
+  --ink2: #3A4553;
+  --muted: #667283;
+  --rule: #D3DAE2;
+  --grid: #C4CCD6;
+  --primal: #2F5E9E;
+  --primal-soft: #E1EAF6;
+  --tangent: #0B7A69;
+  --tangent-soft: #DAF0EB;
+  --adjoint: #B8432A;
+  --adjoint-soft: #F7E3DC;
+  --amber: #B97809;
+  --amber-soft: #FBEFD6;
+  /* amber marks the wall and nothing else; highlights and accents are violet */
+  --violet: #7A4CB0;
+  --violet-soft: #EFE7F8;
+  --hl: #F3ECFB;
+  --shadow: 0 1px 2px rgba(20, 30, 45, .06), 0 6px 18px rgba(20, 30, 45, .05);
+  --font-body: system-ui, -apple-system, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Source Han Sans SC", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
+  --font-display: Georgia, "Times New Roman", "Songti SC", "SimSun", "Noto Serif CJK SC", "Source Han Serif SC", serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", "DejaVu Sans Mono", monospace;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #0F141A;
+    --surface: #161C24;
+    --sunken: #1C2430;
+    --ink: #E6EAF0;
+    --ink2: #C3CBD6;
+    --muted: #8F9BAB;
+    --rule: #2A3441;
+    --grid: #3A4656;
+    --primal: #8DB3EA;
+    --primal-soft: #1C2A3D;
+    --tangent: #4CC3AE;
+    --tangent-soft: #14302B;
+    --adjoint: #F0876C;
+    --adjoint-soft: #3A221C;
+    --amber: #E8B04A;
+    --amber-soft: #3A2E17;
+    --violet: #B79AF0;
+    --violet-soft: #2A2342;
+    --hl: #2B2440;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 18px rgba(0, 0, 0, .25);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --ground: #0F141A;
+  --surface: #161C24;
+  --sunken: #1C2430;
+  --ink: #E6EAF0;
+  --ink2: #C3CBD6;
+  --muted: #8F9BAB;
+  --rule: #2A3441;
+  --grid: #3A4656;
+  --primal: #8DB3EA;
+  --primal-soft: #1C2A3D;
+  --tangent: #4CC3AE;
+  --tangent-soft: #14302B;
+  --adjoint: #F0876C;
+  --adjoint-soft: #3A221C;
+  --amber: #E8B04A;
+  --amber-soft: #3A2E17;
+  --violet: #B79AF0;
+  --violet-soft: #2A2342;
+  --hl: #2B2440;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 18px rgba(0, 0, 0, .25);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.8;
+  padding-inline: 20px;
+  padding-block: 0 80px;
+}
+
+.page { max-width: 1120px; margin: 0 auto; }
+.prose { max-width: 720px; margin: 0 auto; }
+
+h1, h2, h3 { font-family: var(--font-display); font-weight: 600; text-wrap: balance; color: var(--ink); }
+h1 { font-size: clamp(30px, 5vw, 44px); line-height: 1.2; margin: 0 0 14px; letter-spacing: .01em; }
+h2 { font-size: 26px; line-height: 1.3; margin: 0 0 10px; }
+h3 { font-size: 19px; line-height: 1.4; margin: 34px 0 6px; }
+p { margin: 10px 0; }
+b, strong { font-weight: 700; }
+code, .mono { font-family: var(--font-mono); font-size: .88em; }
+code { background: var(--sunken); padding: 1px 5px; border-radius: 4px; }
+
+/* header */
+.masthead { padding-block: 44px 20px; }
+.eyebrow {
+  font-family: var(--font-mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 12px;
+}
+.lede { font-size: 18px; color: var(--ink2); max-width: 720px; }
+.route { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 18px; padding: 0; list-style: none; }
+.route li { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.route a {
+  text-decoration: none; color: var(--ink); border: 1px solid var(--rule); background: var(--surface);
+  padding: 4px 12px; border-radius: 999px;
+}
+.route a:hover { border-color: var(--ink2); }
+.route .sep { color: var(--muted); }
+
+nav.toc {
+  position: sticky; top: 0; z-index: 5; background: var(--ground);
+  border-bottom: 1px solid var(--rule); margin-inline: -20px; padding-inline: 20px;
+}
+nav.toc ul { display: flex; gap: 22px; list-style: none; margin: 0 auto; padding: 10px 0; max-width: 1120px; overflow-x: auto; white-space: nowrap; }
+nav.toc a { color: var(--muted); text-decoration: none; font-size: 14px; }
+nav.toc a:hover, nav.toc a:focus-visible { color: var(--ink); }
+nav.toc .num { font-family: var(--font-mono); color: var(--violet); margin-right: 4px; }
+
+/* ---- collapsible side navigation -------------------------------------
+   The page is long, so on wide screens nav.toc becomes a sticky left rail
+   instead of the horizontal bar. Same markup, same anchors: below 1000px
+   it reverts to the original scrolling bar, so narrow screens are
+   unchanged. The toggle only exists in the rail layout.               */
+.navtoggle { display: none; }
+@media (min-width: 1000px) {
+  body { padding-inline: 20px; }
+  nav.toc {
+    position: fixed; top: 0; left: 0; bottom: 0; width: 248px; z-index: 6;
+    margin-inline: 0; padding: 18px 12px 18px 20px; overflow-y: auto;
+    border-bottom: 0; border-right: 1px solid var(--rule);
+    transition: width .18s ease, padding .18s ease;
+  }
+  nav.toc ul {
+    display: block; max-width: none; padding: 0; margin: 0;
+    white-space: normal; overflow-x: visible;
+  }
+  nav.toc li { margin: 2px 0; }
+  nav.toc a {
+    display: block; padding: 6px 10px; border-radius: 6px; font-size: 14px;
+    line-height: 1.45; overflow: hidden; text-overflow: ellipsis;
+  }
+  nav.toc a:hover, nav.toc a:focus-visible { background: var(--sunken); color: var(--ink); }
+  nav.toc a[aria-current="true"] { background: var(--sunken); color: var(--ink); font-weight: 600; }
+  .navtoggle {
+    display: block; margin: 0 0 10px; width: 100%; text-align: left;
+    font: inherit; font-size: 13px; color: var(--muted); cursor: pointer;
+    background: var(--surface); border: 1px solid var(--rule);
+    border-radius: 6px; padding: 5px 10px;
+  }
+  .navtoggle:hover { border-color: var(--ink2); color: var(--ink); }
+  .page { margin-left: 248px; transition: margin-left .18s ease; }
+  /* collapsed: rail shrinks to a strip, content reclaims the width */
+  body.navhid nav.toc { width: 44px; padding-inline: 6px; }
+  body.navhid nav.toc ul { display: none; }
+  body.navhid .navtoggle { text-align: center; padding-inline: 4px; }
+  body.navhid .page { margin-left: 44px; }
+}
+
+section.sec { padding-block: 56px 8px; border-top: 1px solid var(--rule); margin-top: 40px; }
+section.sec:first-of-type { border-top: 0; margin-top: 0; }
+.secnum { font-family: var(--font-mono); font-size: 13px; color: var(--violet); letter-spacing: .08em; }
+
+.note {
+  background: var(--sunken); border-radius: 8px; padding: 12px 16px; margin: 16px 0; font-size: 15px;
+}
+.note b { color: var(--ink); }
+
+/* role words */
+.r-primal { color: var(--primal); font-weight: 600; }
+.r-tangent { color: var(--tangent); font-weight: 600; }
+.r-adjoint { color: var(--adjoint); font-weight: 600; }
+.r-amber { color: var(--amber); font-weight: 600; }
+.r-violet { color: var(--violet); font-weight: 600; }
+
+/* lab panel */
+.lab {
+  background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; box-shadow: var(--shadow);
+  margin: 24px 0 8px; overflow: hidden;
+}
+.lab-head {
+  display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; justify-content: space-between;
+  padding: 14px 18px 10px; border-bottom: 1px solid var(--rule);
+}
+.lab-title { font-weight: 700; font-size: 15px; }
+.lab-sub { color: var(--muted); font-size: 13px; }
+.lab-body { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 0; }
+.lab-body > * { min-width: 0; }
+.lab-pane { padding: 14px 18px; }
+.lab-pane + .lab-pane { border-left: 1px solid var(--rule); }
+.lab-foot { border-top: 1px solid var(--rule); padding: 12px 18px; }
+@media (max-width: 860px) {
+  .lab-body { grid-template-columns: 1fr; }
+  .lab-pane + .lab-pane { border-left: 0; border-top: 1px solid var(--rule); }
+}
+
+.svgbox { width: 100%; }
+.svgbox svg { width: 100%; height: auto; display: block; }
+.scrollx { overflow-x: auto; }
+.scrollx svg { min-width: 720px; }
+
+/* pseudocode */
+.code {
+  font-family: var(--font-mono); font-size: 13px; line-height: 1.75; background: var(--sunken);
+  border-radius: 8px; padding: 8px 0; overflow-x: auto;
+}
+.code .ln {
+  display: grid; grid-template-columns: 2.4em max-content 1fr; column-gap: 12px; padding: 0 12px 0 0;
+  border-left: 3px solid transparent;
+}
+.code .ln.active { background: var(--hl); border-left-color: var(--violet); }
+.code .no { color: var(--muted); text-align: right; user-select: none; }
+.code .src { white-space: pre; color: var(--ink); }
+.code .cm { font-family: var(--font-body); color: var(--muted); font-size: 12.5px; white-space: normal; min-width: 8em; }
+.code .kw { color: var(--primal); font-weight: 600; }
+.code-static .ln { border-left: 0; }
+
+/* status line under code */
+.status {
+  margin-top: 10px; font-size: 14px; min-height: 3.6em; color: var(--ink2);
+  font-variant-numeric: tabular-nums;
+}
+.status .big { font-family: var(--font-mono); font-size: 13px; color: var(--ink); }
+
+/* controls */
+.controls { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.btn {
+  font: inherit; font-size: 14px; color: var(--ink); background: var(--surface);
+  border: 1px solid var(--rule); border-radius: 8px; padding: 5px 12px; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px; line-height: 1.4;
+}
+.btn:hover { border-color: var(--ink2); }
+.btn:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible {
+  outline: 2px solid var(--violet); outline-offset: 2px;
+}
+.btn.primary { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.btn.primary:hover { opacity: .9; }
+.btn[aria-pressed="true"] { background: var(--violet-soft); border-color: var(--violet); }
+.btn svg { width: 14px; height: 14px; fill: currentColor; }
+input.numinput { font: inherit; font-size: 14px; font-family: var(--font-mono); color: var(--ink);
+  background: var(--surface); border: 1px solid var(--rule); border-radius: 8px;
+  padding: 4px 8px; width: 92px; }
+.range { flex: 1 1 180px; accent-color: var(--violet); min-width: 120px; }
+select { font: inherit; font-size: 14px; color: var(--ink); background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 4px 8px; }
+.counter { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* sliders form */
+.sliders { display: grid; grid-template-columns: max-content 1fr 5.5em; gap: 6px 12px; align-items: center; font-size: 14px; }
+.sliders output { font-family: var(--font-mono); font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; }
+.sliders input[type="range"] { width: 100%; accent-color: var(--violet); }
+
+/* small tables */
+table.kv { border-collapse: collapse; font-size: 13.5px; width: 100%; font-variant-numeric: tabular-nums; }
+table.kv th, table.kv td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+table.kv th { color: var(--muted); font-weight: 500; white-space: nowrap; width: 1%; }
+/* column headers may wrap: a long one (the section-11 table in English) otherwise
+   holds the whole table wider than a phone screen */
+table.kv thead th { white-space: normal; width: auto; }
+/* on a phone the row labels may wrap too (long English labels, e.g. the
+   conservation readouts), so no table is held wider than the screen */
+@media (max-width: 600px) { table.kv th { white-space: normal; } }
+table.kv td.num { font-family: var(--font-mono); font-size: 13px; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 12.5px; border: 1px solid var(--rule); border-radius: 999px; padding: 1px 10px; color: var(--ink2); background: var(--surface); }
+
+figure { margin: 22px 0; }
+figcaption { font-size: 13.5px; color: var(--muted); margin-top: 8px; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink2); margin-top: 8px; }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 5px; }
+
+.cmp { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 760px) { .cmp { grid-template-columns: 1fr; } }
+.cmp .col { border: 1px solid var(--rule); border-radius: 10px; padding: 10px 12px; background: var(--surface); }
+.cmp .col h4 { margin: 0 0 6px; font-size: 14px; }
+.cmp .col .code { font-size: 12px; }
+
+.summary { width: 100%; border-collapse: collapse; font-size: 14px; margin: 16px 0; }
+.summary th, .summary td { border-bottom: 1px solid var(--rule); padding: 8px 10px; text-align: left; vertical-align: top; }
+.summary thead th { font-weight: 600; color: var(--ink); border-bottom: 2px solid var(--ink2); }
+.summary tbody th { color: var(--muted); font-weight: 500; white-space: nowrap; }
+.tablewrap { overflow-x: auto; }
+
+mjx-container { color: inherit; }
+mjx-container[display="true"] { overflow-x: auto; overflow-y: hidden; padding-block: 4px; }
+
+.foot { color: var(--muted); font-size: 13px; margin-top: 48px; }
+
+.matwrap { margin-top: 14px; border-top: 1px solid var(--rule); padding-top: 10px; }
+.matwrap > summary { cursor: pointer; font-size: 13.5px; color: var(--ink2); font-weight: 600;
+  list-style: none; display: flex; align-items: center; gap: 6px; }
+.matwrap > summary::before { content: "▾"; color: var(--violet); font-size: 11px; }
+.matwrap:not([open]) > summary::before { content: "▸"; }
+.matwrap > summary::-webkit-details-marker { display: none; }
+.matwrap > .svgbox { margin-top: 8px; }
+
+.errbar { background: var(--adjoint-soft); color: var(--adjoint); border: 1px solid var(--adjoint);
+  border-radius: 8px; padding: 10px 14px; margin: 16px 0; font-size: 14px; }
+
+a.fref { color: var(--violet); text-decoration: none; border-bottom: 1px dashed var(--violet);
+  white-space: nowrap; padding: 0 1px; }
+a.fref:hover { color: var(--ink); border-bottom-color: var(--ink); }
+.figno { color: var(--violet); font-weight: 700; }
+
+/* ---- language switch: one set shown, the other hidden ---- */
+html[data-lang="zh"] [lang="en"] { display: none; }
+html[data-lang="en"] [lang="zh"] { display: none; }
+.langtoggle { float: right; margin-left: 16px; font-size: 13px; padding: 3px 10px; }
+/* back to the index of all pages: beside the language button (a float after
+   it lands to its left), and first in the contents, which stay in view */
+.homebtn { float: right; margin-left: 10px; font-size: 13px; padding: 3px 10px; text-decoration: none; }
+nav.toc li.tochome .num { color: var(--muted); }
+@media (min-width: 1000px) {
+  nav.toc li.tochome { border-bottom: 1px solid var(--rule); padding-bottom: 6px; margin-bottom: 8px; }
+}
+
+/* ---- plain HTML math (no external renderer) ---- */
+.eq, .eqd { font-family: var(--font-display); white-space: nowrap;
+  display: inline-flex; align-items: baseline; vertical-align: baseline; }
+/* vertical-align was middle, which centres the formula's BOX on the line: a
+   formula with a fraction has a box that reaches far below its baseline, so
+   it rode up off the text line (all 173 inline formulas on the cell page sat
+   off the baseline, the worst by 31.6px). An inline-flex box whose items align
+   on their baselines has exactly that shared baseline, so baseline alignment
+   puts every formula on the line. */
+/* Georgia on macOS and Windows has old-style figures only (measured: the
+   lining-nums feature changes nothing), so a 0 in a vector read as the letter
+   o and a 4 dropped below the baseline. Digits use a serif with lining ones. */
+.dg { font-family: "Times New Roman", Times, "Liberation Serif", "Noto Serif", serif;
+  font-style: normal; }
+.eq { font-size: 1.02em; }
+.nw { white-space: nowrap; }
+.eqwrap { margin: 16px 0; text-align: center; overflow-x: auto; overflow-y: hidden; }
+.eqd { font-size: 1.12em; padding: 2px 0 1.35em; }
+.eq i, .eqd i { font-style: italic; }
+.eq sub, .eqd sub, .eq sup, .eqd sup { font-size: .72em; font-style: normal; }
+.eq .op, .eqd .op { padding: 0 .16em; }
+.sp1 { display: inline-block; width: 1em; }
+.sp2 { display: inline-block; width: 1.8em; }
+.spt { display: inline-block; width: .18em; }
+/* The fraction column (.fcol) is raised by vertical-align inside an
+   inline-block (.frac) that holds it on one line box. The raise therefore
+   counts in layout and the row grows to contain the numerator. As a flex item
+   or inline, .frac presents the baseline of that line box, so both contexts
+   use the same markup and the same single offset. It used to be a relative
+   shift (top: -0.665em) on flex items, which moves the drawing but not the
+   box: every numerator stuck ~0.665em out of its row, and .eqwrap (overflow-y
+   hidden) cut the top off a lining superscript 2 in a^2/(gamma-1). */
+.frac { display: inline-block; margin: 0 .16em; }
+.frac .fcol { display: inline-flex; flex-direction: column; vertical-align: 0.663em;
+  text-align: center; }
+.frac .num { border-bottom: 1px solid currentColor; padding: 0 .3em 1px; line-height: 1.25; }
+/* A fraction is placed by its numerator's baseline, and the bar is the
+   numerator's bottom edge, so anything that deepens the numerator's line box
+   lowers the bar. A subscript did exactly that: the bar of a_0^2/(gamma-1)
+   sat 0.157em below the two bars beside it in the same equation. With no
+   line height of its own a subscript no longer moves the bar. */
+.frac .num sub { line-height: 0; }
+.frac .den { padding: 1px .3em 0; line-height: 1.25; }
+/* .eq/.eqd align their children on the BASELINE, not centred: an .ub group is
+   2.08em to 3.17em tall depending on its content, and only baseline alignment
+   puts its interior text on the row baseline at every height (measured: 0.000
+   for all of them). Everything below is then a fixed offset from that baseline,
+   measured in Chrome. A fraction bar belongs on the math axis, 0.25em above the
+   baseline; at rest its bar sits 0.413em BELOW, in every context, and .fcol's
+   vertical-align lifts it there (see .frac above). */
+/* sub/sup are flex items in .eq/.eqd, so their default vertical-align is
+   dropped and align-items:center renders subscripts and superscripts at the
+   SAME height. Put them back on the baseline and offset them explicitly. */
+/* Leave them centred by align-items (deterministic: zero spread) and
+   offset from there. align-self:baseline is NOT usable here - with only
+   sub/sup opting in, the flex line baseline varies per formula. */
+.eq > sub, .eqd > sub, .eq > sup, .eqd > sup { position: relative; }
+/* Measured in Chrome: centred, a sub/sup baseline sits 0.083em ABOVE the
+   parent baseline, so sub is indistinguishable from sup. Shift each onto the
+   position the browser itself uses for a sub/sup in normal inline flow
+   (measured on nested ones: sub +0.230em, sup -0.361em), so direct children
+   and nested ones agree. top is in the child's own em, ie 0.72 of parent. */
+.eq > sub, .eqd > sub { top: 0.317em; }
+.eq > sup, .eqd > sup { top: -0.501em; }
+/* A bare grid has no meaningful baseline, so it stays centred. A matrix
+   (.pmat) now carries one of its own and takes part in the row's baseline
+   alignment like everything else. */
+.eq > .mgrid, .eqd > .mgrid { align-self: center; }
+.ub { position: relative; display: inline-block; margin: 0 .14em;
+  border-bottom: 2px solid var(--muted); padding-bottom: 2px; }
+.ub .ubx { display: inline-block; }
+.ub .ubl { position: absolute; left: 50%; top: calc(100% + 3px);
+  transform: translateX(-50%); font-size: .6em; color: var(--muted);
+  font-style: normal; font-family: var(--font-body); white-space: nowrap; }
+.pmat { display: inline-flex; align-items: stretch; vertical-align: baseline; margin: 0 .12em; }
+/* The baseline of a flex container none of whose items align on baselines is
+   the baseline of its FIRST item. That item is this zero-width strut, centred
+   on the grid, so the matrix's baseline sits a fixed distance below its
+   centre and the row puts the centre on the math axis, level with the
+   fraction bars beside it, instead of hanging the matrix from its first row.
+   The margin moves the centre from 0.349em above the baseline (Georgia's
+   (ascent - descent)/2) down to the fraction-bar height. */
+.pmat .pstrut { align-self: center; width: 0; margin-bottom: .094em; }
+/* Drawn parentheses: a one-sided border stretches with the grid however many
+   rows it has, and tapers to nothing at both ends like a typeset one. */
+.pmat .lp, .pmat .rp { flex: none; width: .3em; border: 0 solid var(--ink2); }
+.pmat .lp { border-left-width: .07em; border-radius: 100% 0 0 100% / 50% 0 0 50%; }
+.pmat .rp { border-right-width: .07em; border-radius: 0 100% 100% 0 / 0 50% 50% 0; }
+.mgrid { display: inline-grid; gap: 2px 14px; align-items: center; justify-items: center; padding: 0 .2em; }
+.mcell { font-size: .92em; }
+
+table.ordtab { border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; margin: 8px 0 14px; }
+table.ordtab th, table.ordtab td { padding: 4px 9px; border-bottom: 1px solid var(--rule); text-align: right; white-space: nowrap; }
+table.ordtab thead th { color: var(--muted); font-weight: 500; }
+table.ordtab td.num { font-family: var(--font-mono); font-size: 12.5px; }
+table.ordtab td.ord { font-family: var(--font-mono); font-size: 12.5px; color: var(--ink2); }
+.euler-lab{padding:20px}.mesh-pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start}.mesh-pair>div{min-width:0}.euler-lab svg{display:block;width:100%;height:auto}.euler-lab figure{margin:14px 0}.controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:14px 0}.controls label{display:flex;gap:6px;align-items:center}.tablewrap{max-width:100%;overflow:auto}.kv{width:100%;border-collapse:collapse;font:12px var(--font-mono)}.kv td,.kv th{padding:8px;border-bottom:1px solid var(--rule);white-space:nowrap;text-align:left}.equation{overflow:auto;padding:16px;background:var(--surface);border-left:3px solid var(--violet);margin:20px 0}.equation math{display:block;width:max-content;min-width:100%}.algorithm,.source-code{overflow:auto;background:var(--surface);padding:18px;font:12px/1.8 var(--font-mono);border:1px solid var(--rule)}.execution-code{padding:16px 16px 16px 40px;background:var(--sunken);font:12px/1.8 var(--font-mono);overflow:auto}.execution-code li{white-space:pre}.execution-code li.active{background:var(--violet-soft);font-weight:bold}.sec>h2{margin-top:10px}.euler-status{overflow-wrap:anywhere}#mesh-pick [data-face],#mesh-pick [data-volume]{cursor:pointer}.page>main{max-width:920px;margin:auto}@media(max-width:700px){.mesh-pair{grid-template-columns:1fr}.euler-lab{padding:12px}.controls{gap:8px}.controls select{max-width:210px}.euler-lab figure{overflow:auto}.euler-lab figure svg{min-width:500px}.equation math{font-size:.95rem}} </style>
+</head><body data-scheme="cell"><div class="page"><header class="masthead"><button class="btn langtoggle" id="langtoggle">English</button><a class="btn homebtn" href="index.html"><span lang="zh">← 首页</span><span lang="en">← Home</span></a><h1 lang="zh">二维 Euler 方程的离散伴随：格心格式</h1><h1 lang="en">Discrete adjoints for two-dimensional Euler: cell-centred</h1><p lang="zh">从二维标量的同一张混合网格出发，把一个标量换成四个守恒量，再接上拟一维 Euler 的热力学与特征边界。本页先研究低马赫数、无激波的稳态绕流：逐面查看通量与导数，求解原始、前向和伴随方程，并验证来流与物面坐标的压力载荷梯度。</p><p lang="en">Starting from the scalar example’s hybrid mesh, replace one scalar by four conserved variables and extend quasi-one-dimensional Euler thermodynamics and characteristic boundaries. This page studies low-Mach, shock-free steady flow: inspect face fluxes and derivatives, solve primal/tangent/adjoint equations, and verify pressure-load gradients with respect to free-stream inputs and body coordinates.</p>
+<ol class="route"><li><a href="#s1">1 <span lang="zh">网格</span><span lang="en">Mesh</span></a><span class="sep">→</span></li><li><a href="#s2">2 <span lang="zh">方程与通量</span><span lang="en">Equation & flux</span></a><span class="sep">→</span></li><li><a href="#s3">3 <span lang="zh">边界条件</span><span lang="en">Boundaries</span></a><span class="sep">→</span></li><li><a href="#s4">4 <span lang="zh">残差</span><span lang="en">Residual</span></a><span class="sep">→</span></li><li><a href="#s5">5 <span lang="zh">Jacobian 与 GS</span><span lang="en">Jacobian & GS</span></a><span class="sep">→</span></li><li><a href="#s6">6 <span lang="zh">目标函数</span><span lang="en">Objective</span></a><span class="sep">→</span></li><li><a href="#s7">7 <span lang="zh">前向</span><span lang="en">Tangent</span></a><span class="sep">→</span></li><li><a href="#s8">8 <span lang="zh">伴随</span><span lang="en">Adjoint</span></a><span class="sep">→</span></li><li><a href="#s9">9 <span lang="zh">前向求解</span><span lang="en">Tangent solve</span></a><span class="sep">→</span></li><li><a href="#s10">10 <span lang="zh">伴随求解</span><span lang="en">Adjoint solve</span></a><span class="sep">→</span></li><li><a href="#s11">11 <span lang="zh">几何导数</span><span lang="en">Geometry</span></a><span class="sep">→</span></li><li><a href="#s12">12 <span lang="zh">差分验证</span><span lang="en">FD check</span></a><span class="sep">→</span></li><li><a href="#s13">13 <span lang="zh">复数步长</span><span lang="en">Complex step</span></a><span class="sep">→</span></li><li><a href="#s14">14 <span lang="zh">网格加密</span><span lang="en">Refinement</span></a><span class="sep">→</span></li><li><a href="#s15">15 <span lang="zh">连续伴随</span><span lang="en">Continuous adjoint</span></a><span class="sep">→</span></li><li><a href="#s16">16 <span lang="zh">总结</span><span lang="en">Summary</span></a></li></ol><div class="controls"><label>M∞ <select id="mach"><option>0.12</option><option selected>0.2</option><option>0.28</option></select></label><label>θ (°) <select id="angle"><option>5</option><option selected>10</option><option>15</option></select></label><label><span lang="zh">压力目标</span><span lang="en">Pressure objective</span><select id="objective"><option value="lift" data-zh="y 方向合力" data-en="y force">y 方向合力</option><option value="drag" data-zh="x 方向合力" data-en="x force">x 方向合力</option></select></label><button class="btn" id="solve"><span lang="zh">计算与更新</span><span lang="en">Solve & update</span></button></div><p class="euler-status" id="euler-status" role="status"></p><noscript><p lang="zh">推导可离线阅读；交互需要 JavaScript。</p><p lang="en">Derivations remain readable offline; interactions require JavaScript.</p></noscript></header><nav class="toc"><ul><li class="tochome"><a href="index.html"><span lang="zh">首页：全部页面</span><span lang="en">Home: all pages</span></a></li><li><a href="#s1"><span class="num">1</span><span lang="zh">网格</span><span lang="en">Mesh</span></a></li><li><a href="#s2"><span class="num">2</span><span lang="zh">方程与通量</span><span lang="en">Equation & flux</span></a></li><li><a href="#s3"><span class="num">3</span><span lang="zh">边界条件</span><span lang="en">Boundaries</span></a></li><li><a href="#s4"><span class="num">4</span><span lang="zh">残差</span><span lang="en">Residual</span></a></li><li><a href="#s5"><span class="num">5</span><span lang="zh">Jacobian 与 GS</span><span lang="en">Jacobian & GS</span></a></li><li><a href="#s6"><span class="num">6</span><span lang="zh">目标函数</span><span lang="en">Objective</span></a></li><li><a href="#s7"><span class="num">7</span><span lang="zh">前向</span><span lang="en">Tangent</span></a></li><li><a href="#s8"><span class="num">8</span><span lang="zh">伴随</span><span lang="en">Adjoint</span></a></li><li><a href="#s9"><span class="num">9</span><span lang="zh">前向求解</span><span lang="en">Tangent solve</span></a></li><li><a href="#s10"><span class="num">10</span><span lang="zh">伴随求解</span><span lang="en">Adjoint solve</span></a></li><li><a href="#s11"><span class="num">11</span><span lang="zh">几何导数</span><span lang="en">Geometry</span></a></li><li><a href="#s12"><span class="num">12</span><span lang="zh">差分验证</span><span lang="en">FD check</span></a></li><li><a href="#s13"><span class="num">13</span><span lang="zh">复数步长</span><span lang="en">Complex step</span></a></li><li><a href="#s14"><span class="num">14</span><span lang="zh">网格加密</span><span lang="en">Refinement</span></a></li><li><a href="#s15"><span class="num">15</span><span lang="zh">连续伴随</span><span lang="en">Continuous adjoint</span></a></li><li><a href="#s16"><span class="num">16</span><span lang="zh">总结</span><span lang="en">Summary</span></a></li></ul></nav><main><section class="sec" id="s1"><div class="secnum"><span lang="zh">第 1 节</span><span lang="en">Section 1</span></div><h2 lang="zh">网格：沿用二维标量的混合 O 型网格</h2><h2 lang="en">Mesh: the scalar example’s hybrid O-grid</h2><p lang="zh">先复用已经认识的网格，再更换方程。基础网格的 24 个节点坐标、8 个四边形和 16 个三角形，逐点、逐单元与二维标量一致。内圈是非对称物面，外圈是半径 1.9 的远场。数组从 0 开始编号；边界的 R=−1 表示没有右控制体，绝不能拿它访问数组。</p><p lang="en">Reuse the mesh before changing the equation. The 24 base nodes, eight quadrilaterals and sixteen triangles match the scalar example point for point and cell for cell. The inner boundary is an asymmetric body; the outer boundary has radius 1.9. Arrays are zero-based. R=−1 denotes an absent exterior control volume and must never be used as an array index.</p><p lang="zh">每个原始单元保存四个守恒分量，单元平均值显示在顶点平均中心。每条边就是一个计算面；逆时针绕单元走时，面积向量指向流出该单元的方向。这里共有 24 个控制体、48 个面、96 个状态自由度。</p><p lang="en">Each original cell stores four conserved averages, displayed at its vertex-average centre. An edge is a computational face. Walking counterclockwise around a cell gives an outward area vector. There are 24 volumes, 48 faces and 96 state degrees of freedom.</p><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi mathvariant="bold-italic">n</mi><mi>f</mi></msub><mo>=</mo><mo stretchy="false">(</mo><msub><mi>y</mi><mi>b</mi></msub><mo>−</mo><msub><mi>y</mi><mi>a</mi></msub><mo separator="true">,</mo><mtext>  </mtext><mo>−</mo><mo stretchy="false">(</mo><msub><mi>x</mi><mi>b</mi></msub><mo>−</mo><msub><mi>x</mi><mi>a</mi></msub><mo stretchy="false">)</mo><mo stretchy="false">)</mo><mo separator="true">,</mo><mspace width="1em"/><msub><mi mathvariant="normal">ℓ</mi><mi>f</mi></msub><mo>=</mo><mi mathvariant="normal">∥</mi><msub><mi mathvariant="bold-italic">n</mi><mi>f</mi></msub><mi mathvariant="normal">∥</mi><mo separator="true">,</mo><mspace width="1em"/><msub><mover accent="true"><mi mathvariant="bold-italic">n</mi><mo stretchy="true">^</mo></mover><mi>f</mi></msub><mo>=</mo><msub><mi mathvariant="bold-italic">n</mi><mi>f</mi></msub><mi mathvariant="normal">/</mi><msub><mi mathvariant="normal">ℓ</mi><mi>f</mi></msub><mo separator="true">,</mo><mspace width="1em"/><munder><mo>∑</mo><mrow><mi>f</mi><mo>∈</mo><mi mathvariant="normal">∂</mi><msub><mi>V</mi><mi>i</mi></msub></mrow></munder><msub><mi mathvariant="bold-italic">n</mi><mrow><mi>i</mi><mi>f</mi></mrow></msub><mo>=</mo><mn>0.</mn></mrow><annotation encoding="application/x-tex">\boldsymbol n_f=(y_b-y_a,\;-(x_b-x_a)),\quad \ell_f=\|\boldsymbol n_f\|,\quad \widehat{\boldsymbol n}_f=\boldsymbol n_f/\ell_f,\quad \sum_{f\in\partial V_i}\boldsymbol n_{if}=0.</annotation></semantics></math></span></div><p lang="zh">面积向量 n 已经包含面长；单位法向只用于特征分解，不能混用。点击图中的控制体或面，查看编号、法向和守恒量。格点页用虚线显示对偶分段，实线保留原始混合网格。</p><p lang="en">The area vector n already includes face length; the unit normal is used for characteristic decomposition. Click a volume or face to inspect its index, normal and state. On the node page dashed dual segments overlay the original hybrid grid.</p><div class="lab euler-lab" id="mesh-lab"></div></section><section class="sec" id="s2"><div class="secnum"><span lang="zh">第 2 节</span><span lang="en">Section 2</span></div><h2 lang="zh">Euler 方程与四分量面通量</h2><h2 lang="en">Euler equations and the four-component face flux</h2><p lang="zh">拟一维 Euler 的三分量状态现在多了一个横向动量。二维没有变截面积源项：几何直接进入每个面的面积向量。采用理想气体 γ=1.4，ρE 是单位体积总能量，包含两个方向的动能；压力计算漏掉横向动能，就会破坏原始方程及所有导数。</p><p lang="en">The quasi-one-dimensional Euler state gains a transverse momentum component. There is no variable-area source: geometry enters through each face area vector. Use an ideal gas with γ=1.4. The total energy density ρE includes kinetic energy in both directions; omitting transverse kinetic energy corrupts both the primal equations and their derivatives.</p><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>U</mi><mo>=</mo><mo stretchy="false">(</mo><mi>ρ</mi><mo separator="true">,</mo><msub><mi>m</mi><mi>x</mi></msub><mo separator="true">,</mo><msub><mi>m</mi><mi>y</mi></msub><mo separator="true">,</mo><mi>e</mi><msup><mo stretchy="false">)</mo><mi>T</mi></msup><mo separator="true">,</mo><mspace width="1em"/><mo stretchy="false">(</mo><mi>u</mi><mo separator="true">,</mo><mi>v</mi><mo stretchy="false">)</mo><mo>=</mo><mo stretchy="false">(</mo><msub><mi>m</mi><mi>x</mi></msub><mo separator="true">,</mo><msub><mi>m</mi><mi>y</mi></msub><mo stretchy="false">)</mo><mi mathvariant="normal">/</mi><mi>ρ</mi><mo separator="true">,</mo><mspace width="1em"/><mi>p</mi><mo>=</mo><mo stretchy="false">(</mo><mi>γ</mi><mo>−</mo><mn>1</mn><mo stretchy="false">)</mo><mrow><mo fence="true">(</mo><mi>e</mi><mo>−</mo><mfrac><mrow><msubsup><mi>m</mi><mi>x</mi><mn>2</mn></msubsup><mo>+</mo><msubsup><mi>m</mi><mi>y</mi><mn>2</mn></msubsup></mrow><mrow><mn>2</mn><mi>ρ</mi></mrow></mfrac><mo fence="true">)</mo></mrow><mo separator="true">,</mo><mspace width="1em"/><mi>c</mi><mo>=</mo><msqrt><mrow><mi>γ</mi><mi>p</mi><mi mathvariant="normal">/</mi><mi>ρ</mi></mrow></msqrt><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">U=(\rho,m_x,m_y,e)^T,\quad (u,v)=(m_x,m_y)/\rho,\quad p=(\gamma-1)\left(e-\frac{m_x^2+m_y^2}{2\rho}\right),\quad c=\sqrt{\gamma p/\rho}.</annotation></semantics></math></span></div><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi mathvariant="normal">∂</mi><mi>t</mi></msub><mi>U</mi><mo>+</mo><msub><mi mathvariant="normal">∂</mi><mi>x</mi></msub><msub><mi>F</mi><mi>x</mi></msub><mo stretchy="false">(</mo><mi>U</mi><mo stretchy="false">)</mo><mo>+</mo><msub><mi mathvariant="normal">∂</mi><mi>y</mi></msub><msub><mi>F</mi><mi>y</mi></msub><mo stretchy="false">(</mo><mi>U</mi><mo stretchy="false">)</mo><mo>=</mo><mn>0</mn><mo separator="true">,</mo><mspace width="2em"/><msub><mi>F</mi><mi>n</mi></msub><mo stretchy="false">(</mo><mi>U</mi><mo stretchy="false">)</mo><mo>=</mo><mrow><mo fence="true">[</mo><mtable rowspacing="0.16em" columnalign="center" columnspacing="1em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mi>ρ</mi><mi>q</mi></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><msub><mi>m</mi><mi>x</mi></msub><mi>q</mi><mo>+</mo><mi>p</mi><msub><mi>n</mi><mi>x</mi></msub></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><msub><mi>m</mi><mi>y</mi></msub><mi>q</mi><mo>+</mo><mi>p</mi><msub><mi>n</mi><mi>y</mi></msub></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mo stretchy="false">(</mo><mi>e</mi><mo>+</mo><mi>p</mi><mo stretchy="false">)</mo><mi>q</mi></mrow></mstyle></mtd></mtr></mtable><mo fence="true">]</mo></mrow><mo separator="true">,</mo><mspace width="1em"/><mi>q</mi><mo>=</mo><mi>u</mi><msub><mi>n</mi><mi>x</mi></msub><mo>+</mo><mi>v</mi><msub><mi>n</mi><mi>y</mi></msub><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">\partial_tU+\partial_xF_x(U)+\partial_yF_y(U)=0,\qquad F_n(U)=\begin{bmatrix}\rho q\\m_xq+pn_x\\m_yq+pn_y\\(e+p)q\end{bmatrix},\quad q=un_x+vn_y.</annotation></semantics></math></span></div><p lang="zh">首版使用一阶分片常值重构与固定耗散系数 α=2 的 Rusanov 形式通量。固定 α 是本例明确选定的数值方法，因此它对状态的导数为零；不是对一个本应依赖状态的 max 波速偷偷冻结导数。页面检查 |u·n̂|+c 是否低于 α。此选择便于理解与验证，但在低马赫数下耗散较强。</p><p lang="en">This first version uses piecewise-constant reconstruction and a Rusanov-form flux with fixed dissipation α=2. A constant α is part of the specified method, so its state derivative is zero; it is not an omitted derivative of a state-dependent maximum wave speed. The page checks |u·n̂|+c against α. The choice simplifies teaching and verification but is dissipative at low Mach numbers.</p><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>H</mi><mo stretchy="false">(</mo><msub><mi>U</mi><mi>L</mi></msub><mo separator="true">,</mo><msub><mi>U</mi><mi>R</mi></msub><mo separator="true">,</mo><mi>n</mi><mo stretchy="false">)</mo><mo>=</mo><mfrac><mrow><msub><mi>F</mi><mi>n</mi></msub><mo stretchy="false">(</mo><msub><mi>U</mi><mi>L</mi></msub><mo stretchy="false">)</mo><mo>+</mo><msub><mi>F</mi><mi>n</mi></msub><mo stretchy="false">(</mo><msub><mi>U</mi><mi>R</mi></msub><mo stretchy="false">)</mo></mrow><mn>2</mn></mfrac><mo>−</mo><mfrac><mrow><mi>α</mi><mi mathvariant="normal">ℓ</mi></mrow><mn>2</mn></mfrac><mo stretchy="false">(</mo><msub><mi>U</mi><mi>R</mi></msub><mo>−</mo><msub><mi>U</mi><mi>L</mi></msub><mo stretchy="false">)</mo><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">H(U_L,U_R,n)=\frac{F_n(U_L)+F_n(U_R)}2-\frac{\alpha\ell}2(U_R-U_L).</annotation></semantics></math></span></div><pre class="algorithm"><code>q = (mx*nx + my*ny)/rho
+p = (gamma-1)*(e-(mx*mx+my*my)/(2*rho))
+Fn = [rho*q, mx*q+p*nx, my*q+p*ny, (e+p)*q]
+H = (Fn(UL,n)+Fn(UR,n))/2-alpha*length(n)*(UR-UL)/2</code></pre><div class="lab euler-lab" id="flux-lab"></div></section><section class="sec" id="s3"><div class="secnum"><span lang="zh">第 3 节</span><span lang="en">Section 3</span></div><h2 lang="zh">边界：滑移壁面与亚声速特征远场</h2><h2 lang="en">Boundaries: slip walls and subsonic characteristic far field</h2><p lang="zh">这里与二维标量最重要的区别在物面。无穿透只令质量和能量通量为零；压力仍传递两个方向的动量。壁面通量采用内侧压力，不需要把四个守恒量强行赋值。格心和格点都在边界面上弱施加这条通量规则；格点位于物面并不意味着可以把四行全换成 Dirichlet 约束。</p><p lang="en">The body boundary is the key difference from the scalar example. No penetration removes mass and energy flux, but pressure still transfers momentum. The wall flux uses interior pressure without assigning all four conserved values. Both schemes impose this flux weakly; placing a node on the wall does not justify replacing all four equations by Dirichlet constraints.</p><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>H</mi><mrow><mi>w</mi><mi>a</mi><mi>l</mi><mi>l</mi></mrow></msub><mo>=</mo><mo stretchy="false">(</mo><mn>0</mn><mo separator="true">,</mo><msub><mi>p</mi><mi>L</mi></msub><msub><mi>n</mi><mi>x</mi></msub><mo separator="true">,</mo><msub><mi>p</mi><mi>L</mi></msub><msub><mi>n</mi><mi>y</mi></msub><mo separator="true">,</mo><mn>0</mn><msup><mo stretchy="false">)</mo><mi>T</mi></msup><mo separator="true">,</mo><mspace width="2em"/><mi>δ</mi><msub><mi>H</mi><mrow><mi>w</mi><mi>a</mi><mi>l</mi><mi>l</mi></mrow></msub><mo>=</mo><mo stretchy="false">(</mo><mn>0</mn><mo separator="true">,</mo><msub><mi>n</mi><mi>x</mi></msub><mi>δ</mi><mi>p</mi><mo>+</mo><mi>p</mi><mi>δ</mi><msub><mi>n</mi><mi>x</mi></msub><mo separator="true">,</mo><msub><mi>n</mi><mi>y</mi></msub><mi>δ</mi><mi>p</mi><mo>+</mo><mi>p</mi><mi>δ</mi><msub><mi>n</mi><mi>y</mi></msub><mo separator="true">,</mo><mn>0</mn><msup><mo stretchy="false">)</mo><mi>T</mi></msup><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">H_{wall}=(0,p_L n_x,p_L n_y,0)^T,\qquad \delta H_{wall}=(0,n_x\delta p+p\delta n_x,n_y\delta p+p\delta n_y,0)^T.</annotation></semantics></math></span></div><p lang="zh">远场先转到单位法向／切向坐标。亚声速下，uₙ+c 是出域声学特征，uₙ−c 是入域声学特征；另外两个速度为 uₙ 的特征输送熵和切向速度。因此入流从外部提供三项信息、出流提供一项，不能按标量的单一入／出开关复制整个状态。此处采用局部一维 Riemann 不变量闭合，不宣称是精确无反射边界。</p><p lang="en">Rotate to unit normal/tangential coordinates at the far field. In subsonic flow, uₙ+c is the outgoing acoustic characteristic and uₙ−c the incoming one; two uₙ characteristics transport entropy and tangential velocity. Inflow therefore receives three pieces of external information, outflow one. A scalar-style copy of the entire state is inappropriate. This local one-dimensional Riemann-invariant closure is not claimed to be exactly non-reflecting.</p><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>r</mi><mo>+</mo></msub><mo>=</mo><msub><mi>u</mi><mrow><mi>n</mi><mo separator="true">,</mo><mi>L</mi></mrow></msub><mo>+</mo><mfrac><mrow><mn>2</mn><msub><mi>c</mi><mi>L</mi></msub></mrow><mrow><mi>γ</mi><mo>−</mo><mn>1</mn></mrow></mfrac><mo separator="true">,</mo><mspace width="1em"/><msub><mi>r</mi><mo>−</mo></msub><mo>=</mo><msub><mi>u</mi><mrow><mi>n</mi><mo separator="true">,</mo><mi mathvariant="normal">∞</mi></mrow></msub><mo>−</mo><mfrac><mrow><mn>2</mn><msub><mi>c</mi><mi mathvariant="normal">∞</mi></msub></mrow><mrow><mi>γ</mi><mo>−</mo><mn>1</mn></mrow></mfrac><mo separator="true">,</mo><mspace width="1em"/><msub><mi>u</mi><mrow><mi>n</mi><mo separator="true">,</mo><mi>b</mi></mrow></msub><mo>=</mo><mfrac><mrow><msub><mi>r</mi><mo>+</mo></msub><mo>+</mo><msub><mi>r</mi><mo>−</mo></msub></mrow><mn>2</mn></mfrac><mo separator="true">,</mo><mspace width="1em"/><msub><mi>c</mi><mi>b</mi></msub><mo>=</mo><mfrac><mrow><mi>γ</mi><mo>−</mo><mn>1</mn></mrow><mn>4</mn></mfrac><mo stretchy="false">(</mo><msub><mi>r</mi><mo>+</mo></msub><mo>−</mo><msub><mi>r</mi><mo>−</mo></msub><mo stretchy="false">)</mo><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">r_+=u_{n,L}+\frac{2c_L}{\gamma-1},\quad r_-=u_{n,\infty}-\frac{2c_\infty}{\gamma-1},\quad u_{n,b}=\frac{r_++r_-}2,\quad c_b=\frac{\gamma-1}4(r_+-r_-).</annotation></semantics></math></span></div><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>S</mi><mi>b</mi></msub><mo>=</mo><mi>p</mi><mi mathvariant="normal">/</mi><msup><mi>ρ</mi><mi>γ</mi></msup><mo separator="true">,</mo><mspace width="1em"/><msub><mi>ρ</mi><mi>b</mi></msub><mo>=</mo><msup><mrow><mo fence="true">(</mo><mfrac><msubsup><mi>c</mi><mi>b</mi><mn>2</mn></msubsup><mrow><mi>γ</mi><msub><mi>S</mi><mi>b</mi></msub></mrow></mfrac><mo fence="true">)</mo></mrow><mrow><mn>1</mn><mi mathvariant="normal">/</mi><mo stretchy="false">(</mo><mi>γ</mi><mo>−</mo><mn>1</mn><mo stretchy="false">)</mo></mrow></msup><mo separator="true">,</mo><mspace width="1em"/><msub><mi>p</mi><mi>b</mi></msub><mo>=</mo><msub><mi>S</mi><mi>b</mi></msub><msubsup><mi>ρ</mi><mi>b</mi><mi>γ</mi></msubsup><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">S_b=p/\rho^\gamma,\quad \rho_b=\left(\frac{c_b^2}{\gamma S_b}\right)^{1/(\gamma-1)},\quad p_b=S_b\rho_b^\gamma.</annotation></semantics></math></span></div><p lang="zh">S 与切向速度在入流取来流值，在出流取内侧值，再旋转回笛卡尔坐标构造 U_b。入／出分支按基准来流法向速度确定并保存；求导会经过 r±、声速、密度、旋转和法向单位化的所有运算。页面同时检查收敛边界状态是否仍属于这个分支；若跨过掠入流或声速点，应重新分析，而不是把当前线性化外推。</p><p lang="en">Entropy S and tangential velocity come from the free stream on inflow and the interior on outflow. Rotate back to construct U_b. The inflow/outflow branch is saved from the base free-stream normal velocity. Derivatives include all invariant, sound-speed, density, rotation and normalisation operations. The page checks that the converged boundary state remains on that branch; grazing or sonic transitions require a fresh analysis.</p><div class="lab euler-lab" id="boundary-lab"></div></section><section class="sec" id="s4"><div class="secnum"><span lang="zh">第 4 节</span><span lang="en">Section 4</span></div><h2 lang="zh">残差：同一个面，两个相反贡献</h2><h2 lang="en">Residual: one face, two opposite contributions</h2><p lang="zh">一个控制体现在对应四条积分平衡方程。Rᵢ 是四分量流出通量之和，稳态要求全部分量为零。内部面只计算一次 H，并向左加、向右减。这使全域求和时内部贡献精确抵消，是几何导数和伴随也必须保留的计算结构。</p><p lang="en">Each volume now has four integrated balance equations. Rᵢ sums its outward fluxes; steady state requires every component to vanish. An internal face computes H once, adds it to the left and subtracts it from the right. Internal contributions cancel globally, a structure also preserved by geometry derivatives and adjoints.</p><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>R</mi><mi>i</mi></msub><mo stretchy="false">(</mo><mi>U</mi><mo separator="true">,</mo><mi>X</mi><mo separator="true">,</mo><mi>b</mi><mo stretchy="false">)</mo><mo>=</mo><munder><mo>∑</mo><mi>f</mi></munder><msub><mi>B</mi><mrow><mi>i</mi><mi>f</mi></mrow></msub><msub><mi>H</mi><mi>f</mi></msub><mo separator="true">,</mo><mspace width="2em"/><msub><mi>B</mi><mrow><mi>L</mi><mi>f</mi></mrow></msub><mo>=</mo><mo>+</mo><mn>1</mn><mo separator="true">,</mo><mspace width="1em"/><msub><mi>B</mi><mrow><mi>R</mi><mi>f</mi></mrow></msub><mo>=</mo><mo>−</mo><mn>1</mn><mo separator="true">,</mo><mspace width="2em"/><mi>R</mi><mo stretchy="false">(</mo><msup><mi>U</mi><mo>∗</mo></msup><mo separator="true">,</mo><mi>X</mi><mo separator="true">,</mo><mi>b</mi><mo stretchy="false">)</mo><mo>=</mo><mn>0.</mn></mrow><annotation encoding="application/x-tex">R_i(U,X,b)=\sum_f B_{if}H_f,\qquad B_{Lf}=+1,\quad B_{Rf}=-1,\qquad R(U^*,X,b)=0.</annotation></semantics></math></span></div><p lang="zh">这里没有除以控制体体积。若写非定常方程，则是 Vᵢ dUᵢ/dt+Rᵢ=0。当前 Newton 法求解的对象是积分残差，其 Jacobian、收敛阈值和伴随乘子都沿用这一约定。播放器逐面显示读取、通量、左累加、右累加，四个分量可以分别查看。</p><p lang="en">Residuals are not divided by volume. An unsteady equation would be Vᵢ dUᵢ/dt+Rᵢ=0. Newton solves the integrated residual, so its Jacobian, tolerances and adjoint multipliers use that convention. The player exposes gather, flux, left scatter and right scatter for each face, with all four components selectable.</p><pre class="algorithm"><code>R[:] = 0
+for face in faces:
+    UL = U[L]; UR = U[R] if R >= 0 else boundary(UL)
+    H = flux_or_wall(UL, UR, n)
+    R[L,:] += H
+    if R >= 0: R[R,:] -= H</code></pre><div class="lab euler-lab" id="residual-lab"></div></section><section class="sec" id="s5"><div class="secnum"><span lang="zh">第 5 节</span><span lang="en">Section 5</span></div><h2 lang="zh">Jacobian、Newton 与 GS 预处理 GMRES</h2><h2 lang="en">Jacobian, Newton and GS-preconditioned GMRES</h2><p lang="zh">标量 Jacobian 的一个非零数，现在变成一个 4×4 状态块。内部通量把相邻两个控制体耦合；边界状态又引入内侧状态的链式导数。我们保持精确算子 matrix-free，用 Newton 解非线性残差，再由 GMRES 解每次线性修正。</p><p lang="en">A scalar Jacobian entry becomes a 4×4 state block. Interior faces couple neighbouring volumes, while boundary states introduce additional chain-rule terms. The exact operator remains matrix-free. Newton solves the nonlinear residual and GMRES solves each linear correction.</p><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>A</mi><mo>=</mo><msub><mi>R</mi><mi>U</mi></msub><mo separator="true">,</mo><mspace width="2em"/><mi>A</mi><mo stretchy="false">(</mo><msup><mi>U</mi><mi>k</mi></msup><mo stretchy="false">)</mo><mi mathvariant="normal">Δ</mi><mi>U</mi><mo>=</mo><mo>−</mo><mi>R</mi><mo stretchy="false">(</mo><msup><mi>U</mi><mi>k</mi></msup><mo stretchy="false">)</mo><mo separator="true">,</mo><mspace width="2em"/><msup><mi>U</mi><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msup><mo>=</mo><msup><mi>U</mi><mi>k</mi></msup><mo>+</mo><mi>ω</mi><mi mathvariant="normal">Δ</mi><mi>U</mi><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">A=R_U,\qquad A(U^k)\Delta U=-R(U^k),\qquad U^{k+1}=U^k+\omega\Delta U.</annotation></semantics></math></span></div><p lang="zh">GS 预处理只取固定数值耗散形成的图 Laplacian 近似：内部面给两侧对角加 αℓ/2、相邻块加 −αℓI₄/2；边界只增加对角近似。取它的下三角部分 P=D+L，做一次前向 GS 三角求解；伴随用 Pᵀ 的反向扫描。这个 P 省略了压力和特征边界导数，仅负责加速，最终线性残差仍用完整 A 或 Aᵀ 检查。</p><p lang="en">The GS preconditioner approximates only numerical dissipation: internal faces add αℓ/2 to both diagonals and −αℓI₄/2 to neighbouring blocks; boundaries add a diagonal approximation. One forward GS solve applies the inverse of P=D+L. The adjoint uses a backward solve with Pᵀ. Pressure and characteristic-boundary derivatives are omitted only from P, not from the exact operator used to check convergence.</p><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>A</mi><msup><mi>P</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><mi>z</mi><mo>=</mo><mi>b</mi><mo separator="true">,</mo><mspace width="1em"/><mi>x</mi><mo>=</mo><msup><mi>P</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><mi>z</mi><mo separator="true">,</mo><mspace width="2em"/><msup><mi>A</mi><mi>T</mi></msup><msup><mi>P</mi><mrow><mo>−</mo><mi>T</mi></mrow></msup><mi>z</mi><mo>=</mo><mi>b</mi><mo separator="true">,</mo><mspace width="1em"/><mi>x</mi><mo>=</mo><msup><mi>P</mi><mrow><mo>−</mo><mi>T</mi></mrow></msup><mi>z</mi><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">AP^{-1}z=b,\quad x=P^{-1}z,\qquad A^TP^{-T}z=b,\quad x=P^{-T}z.</annotation></semantics></math></span></div><p lang="zh">修正若使密度或压力失去正值，或离开本例设定的亚声速范围，就减小 ω；同时要求残差下降。这个线搜索只用于找到收敛解。后面的稳态 tangent／adjoint 对 R(U*)=0 求导，不是对接受了几次回退这一离散逻辑求导。</p><p lang="en">A line search reduces ω if density or pressure loses positivity, the state leaves the permitted subsonic range, or the residual fails to decrease. It only locates the converged solution. The steady tangent/adjoint differentiates R(U*)=0, not the discrete history of accepted line-search decisions.</p><div class="lab euler-lab" id="primal-lab"></div></section><section class="sec" id="s6"><div class="secnum"><span lang="zh">第 6 节</span><span lang="en">Section 6</span></div><h2 lang="zh">目标函数：物面压力合力</h2><h2 lang="en">Objective: integrated pressure force on the body</h2><p lang="zh">从拟一维的推力目标推广到二维物面压力合力。n 指向流体域外、也就是物体内部，所以流体施加给物体的压力合力为 Σp n。页面可选固定坐标方向的 x 分量或 y 分量；这里没有除以动压或参考面积，也不是随攻角旋转的气动升阻力系数。</p><p lang="en">Extend the quasi-one-dimensional thrust objective to body pressure force. The normal points out of the fluid domain into the body, so force exerted by the fluid on the body is Σp n. Choose the fixed Cartesian x or y component. These are dimensional-normalised force integrals, without division by dynamic pressure or reference area, and are not lift/drag coefficients in axes rotated with incidence.</p><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>J</mi><mo stretchy="false">(</mo><mi>U</mi><mo separator="true">,</mo><mi>X</mi><mo stretchy="false">)</mo><mo>=</mo><munder><mo>∑</mo><mrow><mi>f</mi><mo>∈</mo><mi>w</mi><mi>a</mi><mi>l</mi><mi>l</mi></mrow></munder><mi>p</mi><mo stretchy="false">(</mo><msub><mi>U</mi><mrow><mi>L</mi><mo stretchy="false">(</mo><mi>f</mi><mo stretchy="false">)</mo></mrow></msub><mo stretchy="false">)</mo><mtext> </mtext><msub><mi mathvariant="bold-italic">n</mi><mi>f</mi></msub><mo>⋅</mo><msub><mi mathvariant="bold-italic">e</mi><mi>d</mi></msub><mo separator="true">,</mo><mspace width="2em"/><mi>δ</mi><mi>J</mi><mo>=</mo><munder><mo>∑</mo><mrow><mi>w</mi><mi>a</mi><mi>l</mi><mi>l</mi></mrow></munder><mrow><mo fence="true">(</mo><mo stretchy="false">(</mo><mi>n</mi><mo>⋅</mo><msub><mi>e</mi><mi>d</mi></msub><mo stretchy="false">)</mo><mi>δ</mi><mi>p</mi><mo>+</mo><mi>p</mi><mtext> </mtext><mi>δ</mi><mi>n</mi><mo>⋅</mo><msub><mi>e</mi><mi>d</mi></msub><mo fence="true">)</mo></mrow><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">J(U,X)=\sum_{f\in wall}p(U_{L(f)})\,\boldsymbol n_f\cdot\boldsymbol e_d,\qquad \delta J=\sum_{wall}\left((n\cdot e_d)\delta p+p\,\delta n\cdot e_d\right).</annotation></semantics></math></span></div><p lang="zh">第一项给状态梯度 J_U，第二项给固定状态下的直接几何导数 J_X。遗漏第二项，会导致形状梯度即使求解器收敛也不正确。格点版本在每个边界半面用相应端点状态的压力，因此它和格心格式是两个明确不同的离散目标。</p><p lang="en">The first term produces J_U and the second the direct geometry derivative J_X at fixed state. Omitting the latter gives an incorrect shape gradient even with fully converged solvers. The node scheme uses the associated endpoint pressure on each boundary half-face, so the two schemes define distinct discrete objectives.</p><div class="lab euler-lab" id="objective-lab"></div></section><section class="sec" id="s7"><div class="secnum"><span lang="zh">第 7 节</span><span lang="en">Section 7</span></div><h2 lang="zh">前向：从热力学到 matrix-free Av</h2><h2 lang="en">Tangent: from thermodynamics to matrix-free Av</h2><p lang="zh">先对压力和速度求导，再对法向速度、物理通量和耗散项求导。给定任意状态方向 v，不必逐列构造 A；每个面只读取左右四分量扰动，按同一计算图传播，然后依原残差符号分发。</p><p lang="en">Differentiate pressure and velocity first, then normal velocity, physical flux and dissipation. For an arbitrary state direction v, no Jacobian columns need be assembled: gather the two four-component perturbations, propagate through the face computation and scatter with the residual signs.</p><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>δ</mi><mi>p</mi><mo>=</mo><mo stretchy="false">(</mo><mi>γ</mi><mo>−</mo><mn>1</mn><mo stretchy="false">)</mo><mrow><mo fence="true">[</mo><mi>δ</mi><mi>e</mi><mo>−</mo><mi>u</mi><mi>δ</mi><msub><mi>m</mi><mi>x</mi></msub><mo>−</mo><mi>v</mi><mi>δ</mi><msub><mi>m</mi><mi>y</mi></msub><mo>+</mo><mfrac><mrow><msup><mi>u</mi><mn>2</mn></msup><mo>+</mo><msup><mi>v</mi><mn>2</mn></msup></mrow><mn>2</mn></mfrac><mi>δ</mi><mi>ρ</mi><mo fence="true">]</mo></mrow><mo separator="true">,</mo><mspace width="1em"/><mi>δ</mi><mi>u</mi><mo>=</mo><mfrac><mrow><mi>δ</mi><msub><mi>m</mi><mi>x</mi></msub><mo>−</mo><mi>u</mi><mi>δ</mi><mi>ρ</mi></mrow><mi>ρ</mi></mfrac><mo separator="true">,</mo><mspace width="1em"/><mi>δ</mi><mi>v</mi><mo>=</mo><mfrac><mrow><mi>δ</mi><msub><mi>m</mi><mi>y</mi></msub><mo>−</mo><mi>v</mi><mi>δ</mi><mi>ρ</mi></mrow><mi>ρ</mi></mfrac><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">\delta p=(\gamma-1)\left[\delta e-u\delta m_x-v\delta m_y+\frac{u^2+v^2}{2}\delta\rho\right],\quad \delta u=\frac{\delta m_x-u\delta\rho}{\rho},\quad \delta v=\frac{\delta m_y-v\delta\rho}{\rho}.</annotation></semantics></math></span></div><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>δ</mi><mi>q</mi><mo>=</mo><msub><mi>n</mi><mi>x</mi></msub><mi>δ</mi><mi>u</mi><mo>+</mo><msub><mi>n</mi><mi>y</mi></msub><mi>δ</mi><mi>v</mi><mo separator="true">,</mo><mspace width="1em"/><mi>δ</mi><msub><mi>F</mi><mi>n</mi></msub><mo>=</mo><mrow><mo fence="true">[</mo><mtable rowspacing="0.16em" columnalign="center" columnspacing="1em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mi>q</mi><mi>δ</mi><mi>ρ</mi><mo>+</mo><mi>ρ</mi><mi>δ</mi><mi>q</mi></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mi>q</mi><mi>δ</mi><msub><mi>m</mi><mi>x</mi></msub><mo>+</mo><msub><mi>m</mi><mi>x</mi></msub><mi>δ</mi><mi>q</mi><mo>+</mo><msub><mi>n</mi><mi>x</mi></msub><mi>δ</mi><mi>p</mi></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mi>q</mi><mi>δ</mi><msub><mi>m</mi><mi>y</mi></msub><mo>+</mo><msub><mi>m</mi><mi>y</mi></msub><mi>δ</mi><mi>q</mi><mo>+</mo><msub><mi>n</mi><mi>y</mi></msub><mi>δ</mi><mi>p</mi></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mi>q</mi><mo stretchy="false">(</mo><mi>δ</mi><mi>e</mi><mo>+</mo><mi>δ</mi><mi>p</mi><mo stretchy="false">)</mo><mo>+</mo><mo stretchy="false">(</mo><mi>e</mi><mo>+</mo><mi>p</mi><mo stretchy="false">)</mo><mi>δ</mi><mi>q</mi></mrow></mstyle></mtd></mtr></mtable><mo fence="true">]</mo></mrow><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">\delta q=n_x\delta u+n_y\delta v,\quad \delta F_n=\begin{bmatrix}q\delta\rho+\rho\delta q\\q\delta m_x+m_x\delta q+n_x\delta p\\q\delta m_y+m_y\delta q+n_y\delta p\\q(\delta e+\delta p)+(e+p)\delta q\end{bmatrix}.</annotation></semantics></math></span></div><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>δ</mi><mi>H</mi><mo>=</mo><mstyle scriptlevel="0" displaystyle="false"><mfrac><mn>1</mn><mn>2</mn></mfrac></mstyle><mo fence="true" stretchy="true" minsize="1.2em" maxsize="1.2em">(</mo><msubsup><mi>F</mi><mi>n</mi><mo mathvariant="normal" lspace="0em" rspace="0em">′</mo></msubsup><mo stretchy="false">(</mo><msub><mi>U</mi><mi>L</mi></msub><mo stretchy="false">)</mo><mi>δ</mi><msub><mi>U</mi><mi>L</mi></msub><mo>+</mo><msubsup><mi>F</mi><mi>n</mi><mo mathvariant="normal" lspace="0em" rspace="0em">′</mo></msubsup><mo stretchy="false">(</mo><msub><mi>U</mi><mi>R</mi></msub><mo stretchy="false">)</mo><mi>δ</mi><msub><mi>U</mi><mi>R</mi></msub><mo fence="true" stretchy="true" minsize="1.2em" maxsize="1.2em">)</mo><mo>−</mo><mstyle scriptlevel="0" displaystyle="false"><mfrac><mrow><mi>α</mi><mi mathvariant="normal">ℓ</mi></mrow><mn>2</mn></mfrac></mstyle><mo stretchy="false">(</mo><mi>δ</mi><msub><mi>U</mi><mi>R</mi></msub><mo>−</mo><mi>δ</mi><msub><mi>U</mi><mi>L</mi></msub><mo stretchy="false">)</mo><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">\delta H=\tfrac12\bigl(F&#x27;_n(U_L)\delta U_L+F&#x27;_n(U_R)\delta U_R\bigr)-\tfrac{\alpha\ell}{2}(\delta U_R-\delta U_L).</annotation></semantics></math></span></div><p lang="zh">上式暂时固定几何。远场的 δU_R 必须由边界函数 B_UδU_L 得到，不能置零；壁面使用第 3 节的压力导数。当前实现把标量加、减、乘、除、幂和三角函数的局部偏导保存成计算图，再沿图向前传播；这是解析链式法则，不是有限差分，也不存全局 Jacobian。</p><p lang="en">These formulas hold geometry fixed. At the far field δU_R comes from B_UδU_L, not zero. Wall derivatives use the pressure formula in Section 3. The implementation records local derivatives of scalar arithmetic, powers and trigonometric operations and propagates along that graph. This is analytic chain-rule differentiation, not finite differencing, and stores no global Jacobian.</p><pre class="algorithm"><code>forward multiplication: z = a*b
+    dz = b*da + a*db
+forward division: z = a/b
+    dz = da/b - a*db/(b*b)
+# Seed state inputs with v; seed all design inputs with zero.</code></pre><div class="lab euler-lab" id="tangent-lab"></div></section><section class="sec" id="s8"><div class="secnum"><span lang="zh">第 8 节</span><span lang="en">Section 8</span></div><h2 lang="zh">伴随：转置同一个计算图</h2><h2 lang="en">Adjoint: transpose the same computation graph</h2><p lang="zh">给残差四分量权重 w，内部面的通量反传种子为 η=w_L−w_R。再分别乘左右通量导数的转置，累加回状态。标量页里的一次乘法变成块转置，但收集、计算、分发的顺序没有变。</p><p lang="en">Given four-component residual weights w, an internal face receives flux seed η=w_L−w_R. Apply the transposed left and right flux derivatives and scatter into state adjoints. Scalar multiplications become block transposes, while the gather/compute/scatter structure remains the same.</p><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msup><mi>A</mi><mi>T</mi></msup><mi>w</mi><mo>=</mo><munder><mo>∑</mo><mi>f</mi></munder><mrow><mo fence="true">(</mo><msubsup><mi>H</mi><msub><mi>U</mi><mi>L</mi></msub><mi>T</mi></msubsup><msub><mi>η</mi><mi>f</mi></msub><mo>⟶</mo><mi>L</mi><mo separator="true">,</mo><mspace width="1em"/><msubsup><mi>H</mi><msub><mi>U</mi><mi>R</mi></msub><mi>T</mi></msubsup><msub><mi>η</mi><mi>f</mi></msub><mo>⟶</mo><mi>R</mi><mo fence="true">)</mo></mrow><mo separator="true">,</mo><mspace width="1em"/><msub><mi>η</mi><mi>f</mi></msub><mo>=</mo><msub><mi>w</mi><mi>L</mi></msub><mo>−</mo><msub><mi>w</mi><mi>R</mi></msub><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">A^Tw=\sum_f\left(H_{U_L}^T\eta_f\longrightarrow L,\quad H_{U_R}^T\eta_f\longrightarrow R\right),\quad\eta_f=w_L-w_R.</annotation></semantics></math></span></div><p lang="zh">反向传播中所有贡献都用“+=”。一个状态被多个面读取，反传时必须累加所有路径。远场外侧状态由内侧状态构造，外侧权重还要经过 B_Uᵀ 回到内侧；几何和来流参数的反传也不能丢掉。保存运算图后逆序访问每个算子，能自动完成这些汇合。</p><p lang="en">All reverse contributions accumulate with +=. A state is read by several faces, so every return path must be included. At the far field the exterior-state weight returns through B_Uᵀ to the interior. Geometry and free-stream paths also remain. Reversing the recorded scalar operations handles these merges directly.</p><pre class="algorithm"><code>reverse multiplication: z = a*b
+    a_bar += b*z_bar
+    b_bar += a*z_bar
+reverse division: z = a/b
+    a_bar += z_bar/b
+    b_bar -= a*z_bar/(b*b)
+# Seed residual outputs with w, then traverse operations backwards.</code></pre><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msup><mi>w</mi><mi>T</mi></msup><mo stretchy="false">(</mo><mi>A</mi><mi>v</mi><mo stretchy="false">)</mo><mo>=</mo><msup><mi>v</mi><mi>T</mi></msup><mo stretchy="false">(</mo><msup><mi>A</mi><mi>T</mi></msup><mi>w</mi><mo stretchy="false">)</mo><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">w^T(Av)=v^T(A^Tw).</annotation></semantics></math></span></div><p lang="zh">点积测试检查转置实现是否相互一致，不能单独证明 A 是正确的物理残差导数。因此还要做残差方向差分、独立复数运算和全链路目标差分。下面使用与第 7 节相同的方向；播放器可查看某个面的反传如何累加到各控制体。</p><p lang="en">A dot test checks transposition but cannot alone establish that A differentiates the intended residual. Residual directional differences, independent complex arithmetic and full objective reruns provide additional checks. The player shows how a selected face accumulates reverse contributions into its volumes.</p><div class="lab euler-lab" id="adjoint-lab"></div></section><section class="sec" id="s9"><div class="secnum"><span lang="zh">第 9 节</span><span lang="en">Section 9</span></div><h2 lang="zh">前向求解：输入改变后状态如何响应</h2><h2 lang="en">Tangent solve: state response to a design input</h2><p lang="zh">把稳态残差沿设计参数 b 求导，得到 A U_b=−R_b。右端必须包括远场参数或网格变化对数值残差的直接影响。用与原始 Newton 相同的 GMRES／GS 算法求解，但基准流场保持不动。</p><p lang="en">Differentiate the steady residual with respect to a design parameter b to obtain A U_b=−R_b. The right-hand side includes the direct effect of free-stream or mesh changes. Solve with GMRES/GS at the fixed converged base state.</p><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>A</mi><msub><mi>U</mi><mi>b</mi></msub><mo>=</mo><mo>−</mo><msub><mi>R</mi><mi>b</mi></msub><mo separator="true">,</mo><mspace width="2em"/><mfrac><mrow><mi>d</mi><mi>J</mi></mrow><mrow><mi>d</mi><mi>b</mi></mrow></mfrac><mo>=</mo><msub><mi>J</mi><mi>U</mi></msub><msub><mi>U</mi><mi>b</mi></msub><mo>+</mo><msub><mi>J</mi><mi>b</mi></msub><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">A U_b=-R_b,\qquad \frac{dJ}{db}=J_U U_b+J_b.</annotation></semantics></math></span></div><p lang="zh">参数选择包括来流马赫数、攻角，以及物面每个节点的 x／y 坐标。攻角在所有导数中以弧度为单位；页首用度数显示。几何参数只移动所选节点，其余节点固定，不包含额外的网格弹性变形。下图显示响应场的某个守恒分量。</p><p lang="en">Select free-stream Mach number, incidence or x/y coordinates of each body node. Incidence derivatives are per radian, although the header displays degrees. A coordinate parameter moves only that node; other nodes stay fixed, without an additional mesh-deformation model. The plot shows a chosen conserved component of the response.</p><div class="lab euler-lab" id="tangent-solve-lab"></div></section><section class="sec" id="s10"><div class="secnum"><span lang="zh">第 10 节</span><span lang="en">Section 10</span></div><h2 lang="zh">伴随求解：一次求解得到多个设计导数</h2><h2 lang="en">Adjoint solve: one solve, many design derivatives</h2><p lang="zh">采用与其他页面一致的拉格朗日函数 L=J+ψᵀR。选择 Aᵀψ=−J_Uᵀ 后，状态响应 U_b 消掉；每个设计分量只需要直接目标导数加残差反传。对另一个目标，需要重新解一次伴随，而不需要重新求原始流场。</p><p lang="en">Use the same Lagrangian convention as the other pages: L=J+ψᵀR. Choosing Aᵀψ=−J_Uᵀ eliminates U_b. Each design derivative then combines the direct objective derivative and a residual reverse product. A new objective needs another adjoint solve, but not another primal flow solve.</p><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msup><mi>A</mi><mi>T</mi></msup><mi>ψ</mi><mo>=</mo><mo>−</mo><msubsup><mi>J</mi><mi>U</mi><mi>T</mi></msubsup><mo separator="true">,</mo><mspace width="2em"/><mfrac><mrow><mi>d</mi><mi>J</mi></mrow><mrow><mi>d</mi><mi>b</mi></mrow></mfrac><mo>=</mo><msub><mi>J</mi><mi>b</mi></msub><mo>+</mo><msup><mi>ψ</mi><mi>T</mi></msup><msub><mi>R</mi><mi>b</mi></msub><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">A^T\psi=-J_U^T,\qquad \frac{dJ}{db}=J_b+\psi^TR_b.</annotation></semantics></math></span></div><p lang="zh">右预处理使用 P⁻ᵀ，即前向 GS 三角算子的精确转置逆。它与完整 Aᵀ 不同。停止条件检查未预处理的真实残差 ‖Aᵀψ+J_Uᵀ‖，避免预处理缩放掩盖误差。图中乘子对应四条积分平衡方程，不是压力或流速。</p><p lang="en">Right preconditioning uses P⁻ᵀ, the inverse transpose of the forward GS triangular operator. It is distinct from Aᵀ. The stopping test uses the true unpreconditioned residual ‖Aᵀψ+J_Uᵀ‖, preventing scaling from hiding error. The four multiplier components correspond to integrated conservation equations, not pressure or velocity.</p><div class="lab euler-lab" id="adjoint-solve-lab"></div></section><section class="sec" id="s11"><div class="secnum"><span lang="zh">第 11 节</span><span lang="en">Section 11</span></div><h2 lang="zh">几何导数：面法向、面长与直接压力载荷</h2><h2 lang="en">Geometry derivatives: normals, lengths and direct pressure load</h2><p lang="zh">二维标量已经展示了移动节点如何改变法向。Euler 还需要把单位法向的变化传入远场特征旋转，把面长变化传入耗散。格点对偶面由边中点和顶点平均中心构造，因此一个节点还会影响相邻对偶分段。所有这些几何计算都进入同一条求导链。</p><p lang="en">As in the scalar example, moving a node changes face normals. Euler additionally differentiates unit normals in characteristic rotations and lengths in dissipation. Node-centred dual segments depend on edge midpoints and vertex-average cell centres, so one coordinate affects neighbouring segments. All these constructions enter the same derivative graph.</p><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>δ</mi><mi>n</mi><mo>=</mo><mo stretchy="false">(</mo><mi>δ</mi><msub><mi>y</mi><mi>b</mi></msub><mo>−</mo><mi>δ</mi><msub><mi>y</mi><mi>a</mi></msub><mo separator="true">,</mo><mo>−</mo><mi>δ</mi><msub><mi>x</mi><mi>b</mi></msub><mo>+</mo><mi>δ</mi><msub><mi>x</mi><mi>a</mi></msub><mo stretchy="false">)</mo><mo separator="true">,</mo><mspace width="1em"/><mi>δ</mi><mi mathvariant="normal">ℓ</mi><mo>=</mo><mover accent="true"><mi>n</mi><mo stretchy="true">^</mo></mover><mo>⋅</mo><mi>δ</mi><mi>n</mi><mo separator="true">,</mo><mspace width="1em"/><mi>δ</mi><mover accent="true"><mi>n</mi><mo stretchy="true">^</mo></mover><mo>=</mo><mfrac><mrow><mi>δ</mi><mi>n</mi><mo>−</mo><mover accent="true"><mi>n</mi><mo stretchy="true">^</mo></mover><mi>δ</mi><mi mathvariant="normal">ℓ</mi></mrow><mi mathvariant="normal">ℓ</mi></mfrac><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">\delta n=(\delta y_b-\delta y_a,-\delta x_b+\delta x_a),\quad\delta\ell=\widehat n\cdot\delta n,\quad\delta\widehat n=\frac{\delta n-\widehat n\delta\ell}{\ell}.</annotation></semantics></math></span></div><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mrow><mi>δ</mi><mi>H</mi><mo fence="true">∣</mo></mrow><mi>U</mi></msub><mo>=</mo><mstyle scriptlevel="0" displaystyle="false"><mfrac><mn>1</mn><mn>2</mn></mfrac></mstyle><mo stretchy="false">(</mo><msub><mi>F</mi><mrow><mi>δ</mi><mi>n</mi></mrow></msub><mo stretchy="false">(</mo><msub><mi>U</mi><mi>L</mi></msub><mo stretchy="false">)</mo><mo>+</mo><msub><mi>F</mi><mrow><mi>δ</mi><mi>n</mi></mrow></msub><mo stretchy="false">(</mo><msub><mi>U</mi><mi>R</mi></msub><mo stretchy="false">)</mo><mo stretchy="false">)</mo><mo>−</mo><mstyle scriptlevel="0" displaystyle="false"><mfrac><mi>α</mi><mn>2</mn></mfrac></mstyle><mi>δ</mi><mi mathvariant="normal">ℓ</mi><mo stretchy="false">(</mo><msub><mi>U</mi><mi>R</mi></msub><mo>−</mo><msub><mi>U</mi><mi>L</mi></msub><mo stretchy="false">)</mo><mo>+</mo><msub><mi>H</mi><msub><mi>U</mi><mi>R</mi></msub></msub><mi>δ</mi><msub><mi>U</mi><mi>b</mi></msub><mspace width="1em"/><mtext>(far field)</mtext><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">\left.\delta H\right|_U=\tfrac12(F_{\delta n}(U_L)+F_{\delta n}(U_R))-\tfrac\alpha2\delta\ell(U_R-U_L)+H_{U_R}\delta U_b\quad\text{(far field)}.</annotation></semantics></math></span></div><p lang="zh">最后一项只在外侧状态随法向变化时出现。几何分支、连通性和边界分类在这些微扰中保持不变；不允许跨过翻转单元或切换入流分类后还声称使用同一个导数。积分稳态残差没有体积除法，因此体积导数不出现在当前 R_X 中；若加入时间项，它就必须出现。</p><p lang="en">The last term applies where the exterior state depends on the normal. Connectivity and boundary classification stay fixed under these perturbations. Crossing an inverted cell or changing an inflow branch is outside this linearisation. Integrated steady residuals have no volume division, so volume derivatives do not appear in R_X; they would be required for time terms.</p><div class="lab euler-lab" id="geometry-lab"></div></section><section class="sec" id="s12"><div class="secnum"><span lang="zh">第 12 节</span><span lang="en">Section 12</span></div><h2 lang="zh">有限差分：变量、步长与完整原始重算</h2><h2 lang="en">Finite differences: variables, steps and full primal reruns</h2><p lang="zh">每个差分点都移动同一个设计变量，重新计算几何与边界状态，并把整个 Euler 原始问题重新收敛。不能只在固定 U* 上差分 J，那样只得到直接导数 J_b。表中同时保留正负扰动目标值、原始残差与完整梯度；选择“全部变量”可检查来流与全部物面坐标。</p><p lang="en">Each difference perturbs the selected parameter, recomputes geometry and boundary states, and reconverges the full Euler problem. Differencing J at fixed U* would recover only J_b. Tables retain both perturbed objectives, primal residuals and total gradients. The all-variable option checks free-stream inputs and every body coordinate.</p><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msubsup><mi>D</mi><mi>h</mi><mo>+</mo></msubsup><mo>=</mo><mfrac><mrow><mi>J</mi><mo stretchy="false">(</mo><mi>b</mi><mo>+</mo><mi>h</mi><mo stretchy="false">)</mo><mo>−</mo><mi>J</mi><mo stretchy="false">(</mo><mi>b</mi><mo stretchy="false">)</mo></mrow><mi>h</mi></mfrac><mo separator="true">,</mo><mspace width="2em"/><msubsup><mi>D</mi><mi>h</mi><mn>0</mn></msubsup><mo>=</mo><mfrac><mrow><mi>J</mi><mo stretchy="false">(</mo><mi>b</mi><mo>+</mo><mi>h</mi><mo stretchy="false">)</mo><mo>−</mo><mi>J</mi><mo stretchy="false">(</mo><mi>b</mi><mo>−</mo><mi>h</mi><mo stretchy="false">)</mo></mrow><mrow><mn>2</mn><mi>h</mi></mrow></mfrac><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">D_h^+=\frac{J(b+h)-J(b)}h,\qquad D_h^0=\frac{J(b+h)-J(b-h)}{2h}.</annotation></semantics></math></span></div><p lang="zh">大步长有截断误差；很小的步长放大舍入和原始求解残差。正确证据是存在合适的步长区间，而不是只挑一个好看的数字。误差可切换绝对值与相对分量误差；当真梯度接近零时，优先查看绝对误差。</p><p lang="en">Large steps incur truncation error; tiny steps amplify roundoff and primal residuals. Look for a useful step-size range, not one favourable number. Absolute and component-relative errors are selectable; near a zero gradient, absolute errors are more informative.</p><div class="lab euler-lab" id="fd-lab"></div></section><section class="sec" id="s13"><div class="secnum"><span lang="zh">第 13 节</span><span lang="en">Section 13</span></div><h2 lang="zh">复数步长：独立复数残差核的检查</h2><h2 lang="en">Complex step: checking an independent complex residual kernel</h2><p lang="zh">光滑无激波分支没有限幅器或 max 波速运算，适合复数步长检查。复数算术与实数求导图分开实现，几何面长使用 sqrt(nx²+ny²) 的解析延拓，不能使用取共轭的复数范数。物理公式和固定边界分支共用。</p><p lang="en">This smooth branch has no limiter or maximum wave-speed operation, making complex-step verification useful. Complex arithmetic is implemented separately from the real derivative tape. Geometry uses the analytic continuation sqrt(nx²+ny²), not a conjugating complex norm. Physical formulas and fixed boundary branches are shared.</p><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>b</mi><mi>c</mi></msub><mo>=</mo><mi>b</mi><mo>+</mo><mi>i</mi><mi>h</mi><mo separator="true">,</mo><mspace width="2em"/><mfrac><mrow><mi>d</mi><mi>J</mi></mrow><mrow><mi>d</mi><mi>b</mi></mrow></mfrac><mo>≈</mo><mfrac><mrow><mi mathvariant="normal">Im</mi><mo>⁡</mo><mi>J</mi><mo stretchy="false">(</mo><msub><mi>U</mi><mi>c</mi></msub><mo separator="true">,</mo><msub><mi>b</mi><mi>c</mi></msub><mo stretchy="false">)</mo></mrow><mi>h</mi></mfrac><mo separator="true">,</mo><mspace width="2em"/><mi>h</mi><mo>=</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>25</mn></mrow></msup><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">b_c=b+ih,\qquad \frac{dJ}{db}\approx\frac{\operatorname{Im}J(U_c,b_c)}h,\qquad h=10^{-25}.</annotation></semantics></math></span></div><p lang="zh">从已收敛实数场出发，直接计算复数残差，用实数 A 作为虚部修正的迭代算子，直到 Im(R)/h 收敛。这样独立的复数残差仍能检出错误的 A；必须检查最终虚部残差，不能只做一次修正就宣称成功。它不是对 Newton 的回退逻辑做复数运算。</p><p lang="en">Starting from the converged real state, evaluate the complex residual and use real A as an iterative correction operator for the imaginary part until Im(R)/h converges. The independent complex residual can still expose an incorrect A; its final imaginary residual must be checked. This does not apply complex arithmetic to Newton line-search decisions.</p><div class="lab euler-lab" id="complex-lab"></div></section><section class="sec" id="s14"><div class="secnum"><span lang="zh">第 14 节</span><span lang="en">Section 14</span></div><h2 lang="zh">网格加密：当前证据与精度阶的边界</h2><h2 lang="en">Mesh refinement: present evidence and accuracy limits</h2><p lang="zh">一阶分片常值通量是当前空间离散。下面实际重解相同形状公式生成的三层网格，报告压力合力、最小密度／压力和最大马赫数。基准采用 M∞=0.2、攻角 10°，与页首当前选择分开标明。加密增加周向和径向节点，也改变物面的多边形近似。</p><p lang="en">The current spatial scheme is piecewise constant. Three meshes generated from the same shape formula are actually solved below, reporting forces, minimum density/pressure and maximum Mach number. The fixed study uses M∞=0.2 and incidence 10°, separately from live controls. Refinement increases angular and radial resolution and changes the polygonal body approximation.</p><p lang="zh">当前三层结果尚不足以宣称压力合力进入渐近收敛区，不能把它们拟合成可信精度阶。尤其粗网格、固定大耗散和有限远场距离会影响压力阻力；非零压力阻力不能解释为已经捕捉到激波或真实粘性阻力。后续需要独立光滑制造解、统一几何加密和更远外边界的研究。这里如实给出数值，不把“原始残差很小”当作“物理解已准确”。</p><p lang="en">These three levels do not establish asymptotic convergence of pressure forces, so no trustworthy order is fitted. Coarse resolution, fixed large dissipation and the finite outer boundary affect pressure drag; a nonzero value is not evidence of shocks or viscous drag. Independent smooth manufactured solutions, controlled geometry refinement and far-field-distance studies remain necessary. A tiny algebraic residual is not a certificate of physical accuracy.</p><div class="lab euler-lab" id="refinement-lab"></div></section><section class="sec" id="s15"><div class="secnum"><span lang="zh">第 15 节</span><span lang="en">Section 15</span></div><h2 lang="zh">连续伴随：形式方程与验证范围</h2><h2 lang="en">Continuous adjoint: formal equations and verification scope</h2><p lang="zh">对光滑稳态 Euler，令 A_x=∂F_x/∂U、A_y=∂F_y/∂U，线性化为 ∂x(A_xδU)+∂y(A_yδU)=0。乘以连续乘子并分部积分，域内形式转置为 −A_xᵀ∂xλ−A_yᵀ∂yλ。边界项必须和压力目标的变分一起处理，不能把原始的四个边界状态直接复制给 λ。</p><p lang="en">For smooth steady Euler, let A_x=∂F_x/∂U and A_y=∂F_y/∂U. Linearisation gives ∂x(A_xδU)+∂y(A_yδU)=0. Integration by parts yields the formal interior transpose −A_xᵀ∂xλ−A_yᵀ∂yλ. Boundary terms must be combined with the pressure-objective variation; copying four primal boundary values to λ is invalid.</p><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mo>∫</mo><mi mathvariant="normal">Ω</mi></msub><msup><mi>λ</mi><mi>T</mi></msup><mi mathvariant="normal">∇</mi><mo>⋅</mo><mo stretchy="false">(</mo><mi>A</mi><mi>δ</mi><mi>U</mi><mo stretchy="false">)</mo><mtext> </mtext><mi>d</mi><mi mathvariant="normal">Ω</mi><mo>=</mo><msub><mo>∫</mo><mrow><mi mathvariant="normal">∂</mi><mi mathvariant="normal">Ω</mi></mrow></msub><msup><mi>λ</mi><mi>T</mi></msup><msub><mi>A</mi><mi>n</mi></msub><mi>δ</mi><mi>U</mi><mtext> </mtext><mi>d</mi><mi>s</mi><mo>−</mo><msub><mo>∫</mo><mi mathvariant="normal">Ω</mi></msub><mi>δ</mi><msup><mi>U</mi><mi>T</mi></msup><mo stretchy="false">(</mo><msubsup><mi>A</mi><mi>x</mi><mi>T</mi></msubsup><msub><mi>λ</mi><mi>x</mi></msub><mo>+</mo><msubsup><mi>A</mi><mi>y</mi><mi>T</mi></msubsup><msub><mi>λ</mi><mi>y</mi></msub><mo stretchy="false">)</mo><mtext> </mtext><mi>d</mi><mi mathvariant="normal">Ω</mi><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">\int_\Omega\lambda^T\nabla\cdot(A\delta U)\,d\Omega=\int_{\partial\Omega}\lambda^TA_n\delta U\,ds-\int_\Omega\delta U^T(A_x^T\lambda_x+A_y^T\lambda_y)\,d\Omega.</annotation></semantics></math></span></div><p lang="zh">若采用本文的加号拉格朗日约定，壁面固定几何时有 δJ=∫(n·e_d)δp ds，物理壁面通量变分是 (0,nxδp,nyδp,0)。于是边界变分中压力系数要求 λ_mx nx+λ_my ny=−n·e_d；这只是可容许壁面变分下的一个条件，并非四个分量的完整边值问题。远场仍需按入／出特征限制可容许的 δU，并分析整个边值算子的可逆性。</p><p lang="en">With the plus-sign Lagrangian, fixed-wall geometry gives δJ=∫(n·e_d)δp ds and wall flux variation (0,nxδp,nyδp,0). Cancelling the pressure coefficient requires λ_mx nx+λ_my ny=−n·e_d. This is one condition on admissible wall variations, not a complete four-component boundary-value problem. Far-field characteristic constraints and invertibility of the full boundary operator must still be analysed.</p><p lang="zh">本页没有把同一个离散矩阵的转置再包装成“独立连续伴随”。当前验证对象是完整离散 Euler 的状态、几何和来流导数；尚未提供独立连续 Euler 伴随参考，也未证明其网格极限。它与拟一维可独立求解的连续伴随 ODE 不同，正好展示从简单验证算例走向工业离散伴随时的证据边界。</p><p lang="en">This page does not relabel a transpose of the same discrete matrix as an independent continuous adjoint. It verifies discrete state, geometry and free-stream derivatives. An independent continuous Euler adjoint reference and proof of the mesh limit are not provided. Unlike the independently solvable quasi-one-dimensional adjoint ODE, this case makes the validation boundary explicit.</p><p lang="zh">边界条件的信息数可参照 <a href="https://www.grc.nasa.gov/www/winddocs/user/tutorial.html">NASA Wind-US 边界教程</a>；本页所有数值结果来自内嵌实现，不是该参考的算例结果。</p><p lang="en">For characteristic boundary information counts see the <a href="https://www.grc.nasa.gov/www/winddocs/user/tutorial.html">NASA Wind-US boundary tutorial</a>. Numerical results here come from the embedded implementation, not that reference.</p></section><section class="sec" id="s16"><div class="secnum"><span lang="zh">第 16 节</span><span lang="en">Section 16</span></div><h2 lang="zh">总结：从标量面循环到 Euler 方程组</h2><h2 lang="en">Summary: from scalar face loops to Euler systems</h2><p lang="zh">几何、面方向、守恒分发和反向累加沿用二维标量；热力学和多特征边界承接拟一维 Euler。新增的难点是四分量耦合、压力壁面通量、特征状态对法向的依赖，以及多条反传路径。核心仍是同一条链：节点 → 面几何 → 边界状态与通量 → 残差 → 收敛解 → 压力目标。</p><p lang="en">Geometry, face orientation, conservative scatter and reverse accumulation follow the scalar pages. Thermodynamics and characteristic boundaries extend quasi-one-dimensional Euler. The new issues are four-component coupling, pressure wall fluxes, normal-dependent characteristic states and merged reverse paths. The chain remains nodes → face geometry → boundary states and fluxes → residual → converged state → pressure objective.</p><p lang="zh">首版完整提供一阶、亚声速分支的原始求解、matrix-free tangent／adjoint、来流与几何梯度、全链路差分和复数残差验证。没有加入激波、限制器、二阶重构或湍流闭合；也不以当前粗网格载荷代替可信的空气动力学结果。下一步扩展应逐项增加离散算子，并让验证始终针对实际执行的程序。</p><p lang="en">This first version provides first-order subsonic primal solves, matrix-free tangent/adjoint operators, free-stream and geometry gradients, full-rerun finite differences and complex-residual checks. Shocks, limiters, second-order reconstruction and turbulence closure are not implemented. Coarse-grid forces are not presented as validated aerodynamic predictions. Each future operator should be added together with verification of the program actually executed.</p><details><summary><span lang="zh">展开本页完整数值核心</span><span lang="en">Complete numerical core</span></summary><pre class="source-code" id="core-source">/* Smooth 2-D Euler: a scalar-operation tape gives exact matrix-free JVP/VJP.
+   Scalar face algebra also runs with independent complex arithmetic. */
+(function(root){'use strict';
+const gamma=1.4,alpha=2,zeros=n=>Array(n).fill(0),dot=(a,b)=>a.reduce((s,x,i)=>s+x*b[i],0),norm=a=>Math.sqrt(dot(a,a));
+const real={c:x=>x,add:(a,b)=>a+b,sub:(a,b)=>a-b,mul:(a,b)=>a*b,div:(a,b)=>a/b,pow:(a,p)=>a**p,sin:Math.sin,cos:Math.cos};
+function tape(){const val=[],pa=[],pb=[],da=[],db=[],inputs=[];function node(v,a=-1,b=-1,x=0,y=0){const i=val.length;val.push(v);pa.push(a);pb.push(b);da.push(x);db.push(y);return i;}const op={c:x=>node(x),input:x=>{const i=node(x);inputs.push(i);return i;},add:(a,b)=>node(val[a]+val[b],a,b,1,1),sub:(a,b)=>node(val[a]-val[b],a,b,1,-1),mul:(a,b)=>node(val[a]*val[b],a,b,val[b],val[a]),div:(a,b)=>node(val[a]/val[b],a,b,1/val[b],-val[a]/val[b]**2),pow:(a,p)=>node(val[a]**p,a,-1,p*val[a]**(p-1)),sin:a=>node(Math.sin(val[a]),a,-1,Math.cos(val[a])),cos:a=>node(Math.cos(val[a]),a,-1,-Math.sin(val[a]))};
+function forward(seed){const d=new Float64Array(val.length);inputs.forEach((i,k)=>d[i]=seed[k]||0);for(let i=0;i&lt;val.length;i++){if(pa[i]>=0)d[i]+=da[i]*d[pa[i]];if(pb[i]>=0)d[i]+=db[i]*d[pb[i]];}return d;}
+function reverse(outputs,seeds){const w=new Float64Array(val.length);outputs.forEach((i,k)=>w[i]+=seeds[k]);for(let i=val.length-1;i>=0;i--){if(pa[i]>=0)w[pa[i]]+=da[i]*w[i];if(pb[i]>=0)w[pb[i]]+=db[i]*w[i];}return inputs.map(i=>w[i]);}
+return {op,val,forward,reverse};}
+const complex={c:x=>[x,0],add:(a,b)=>[a[0]+b[0],a[1]+b[1]],sub:(a,b)=>[a[0]-b[0],a[1]-b[1]],mul:(a,b)=>[a[0]*b[0]-a[1]*b[1],a[0]*b[1]+a[1]*b[0]],div:(a,b)=>{const d=b[0]**2+b[1]**2;return [(a[0]*b[0]+a[1]*b[1])/d,(a[1]*b[0]-a[0]*b[1])/d];},pow:(a,p)=>{const r=Math.hypot(...a)**p,t=p*Math.atan2(a[1],a[0]);return [r*Math.cos(t),r*Math.sin(t)];},sin:a=>[Math.sin(a[0])*Math.cosh(a[1]),Math.cos(a[0])*Math.sinh(a[1])],cos:a=>[Math.cos(a[0])*Math.cosh(a[1]),-Math.sin(a[0])*Math.sinh(a[1])]};
+function mesh(level=1){ // level 1 is indexed-identical to the scalar pages
+ const nt=8*level,X=[],C=[],fractions=[0,.45,1];
+ for(let r=0;r&lt;=2*level;r++){const k=r/level,z=k&lt;=1?.45*k:.45+.55*(k-1);for(let j=0;j&lt;nt;j++){const t=2*Math.PI*j/nt,rad=.55*(1+.28*Math.cos(t)+.12*Math.sin(2*t)),b=[.1+rad*Math.cos(t),-.04+rad*Math.sin(t)],o=[1.9*Math.cos(t),1.9*Math.sin(t)];X.push(b.map((x,d)=>(1-z)*x+z*o[d]));}}
+ const id=(r,j)=>r*nt+(j%nt);for(let r=0;r&lt;2*level;r++)for(let j=0;j&lt;nt;j++){const a=id(r,j),b=id(r,j+1),c=id(r+1,j+1),d=id(r+1,j);if(r&lt;level)C.push([a,d,c,b]);else C.push([a,d,c],[a,c,b]);}return {X,C,nt,level};}
+function topology(mesh,scheme){const edges=[],map=new Map();mesh.C.forEach((cell,c)=>cell.forEach((a,k)=>{const b=cell[(k+1)%cell.length],key=[Math.min(a,b),Math.max(a,b)].join('-');if(map.has(key))edges[map.get(key)].R=c;else{map.set(key,edges.length);edges.push({a,b,L:c,R:-1});}}));for(const e of edges)e.bc=e.R>=0?'interior':e.a&lt;mesh.nt&amp;&amp;e.b&lt;mesh.nt?'wall':'far';
+ let faces;if(scheme==='cell')faces=edges.map(e=>({...e,terms:[[e.a,e.b,1]],segs:[[e.a,e.b]]}));
+ else{const off=mesh.X.length;faces=edges.map(e=>{const a=Math.min(e.a,e.b),b=Math.max(e.a,e.b),mid=off+mesh.C.length+edges.indexOf(e),terms=[],segs=[];for(const c of [e.L,e.R].filter(i=>i>=0)){const cell=mesh.C[c],s=cell[(cell.indexOf(a)+1)%cell.length]===b?1:-1;terms.push([mid,off+c,s]);segs.push([mid,off+c]);}return {a,b,L:a,R:b,bc:'interior',terms,segs};});for(const e of edges.filter(e=>e.R&lt;0)){const mid=off+mesh.C.length+edges.indexOf(e);for(const a of [e.a,e.b])faces.push({L:a,R:-1,bc:e.bc,terms:[[e.a,e.b,.5]],segs:[[a,mid]]});}}
+ const rank={interior:0,wall:1,far:2};faces.sort((a,b)=>rank[a.bc]-rank[b.bc]||a.L-b.L||a.R-b.R);return {edges,faces};}
+function model({scheme='cell',level=1,M=.2,angle=10,objective='lift',coords}={}){
+ if(!['cell','node'].includes(scheme)||!Number.isInteger(level)||level&lt;1||level>4||!Number.isFinite(M)||M&lt;0||M>.3||!Number.isFinite(angle))throw Error('Unsupported Euler model settings');
+ const grid=mesh(level);if(coords)grid.X=coords.map(p=>p.slice());const topo=topology(grid,scheme),nc=scheme==='cell'?grid.C.length:grid.X.length,nd=4*nc,params=[M,angle*Math.PI/180,...grid.X.flat()];
+ // Incoming entropy/vorticity branch is tied to the BASE free-stream normal.
+ const geo=geometry(real,params.slice(2));topo.faces.forEach((f,i)=>f.inflow=geo.faces[i].n[0]*Math.cos(params[1])+geo.faces[i].n[1]*Math.sin(params[1])&lt;0);
+ function geometry(o,Xflat){const {c,add,sub,mul,pow}=o,scale=(a,s)=>a.map(v=>mul(v,c(s))),avg=pts=>[0,1].map(k=>mul(pts.reduce((s,p)=>add(s,p[k]),c(0)),c(1/pts.length))),X=Array.from({length:grid.X.length},(_,i)=>Xflat.slice(2*i,2*i+2)),cent=grid.C.map(cell=>avg(cell.map(i=>X[i]))),mid=topo.edges.map(e=>avg([X[e.a],X[e.b]])),points=[...X,...cent,...mid];
+ const area=poly=>mul(poly.reduce((s,p,i)=>{const q=poly[(i+1)%poly.length];return add(s,sub(mul(p[0],q[1]),mul(p[1],q[0])));},c(0)),c(.5)),vol=Array.from({length:nc},()=>c(0)),polys=Array.from({length:nc},()=>[]);
+ grid.C.forEach((cell,j)=>{if(scheme==='cell'){vol[j]=area(cell.map(i=>X[i]));polys[j].push(cell.map(i=>X[i]));}else cell.forEach((a,k)=>{const next=cell[(k+1)%cell.length],prev=cell[(k-1+cell.length)%cell.length],poly=[X[a],avg([X[a],X[next]]),cent[j],avg([X[prev],X[a]])];vol[a]=add(vol[a],area(poly));polys[a].push(poly);});});
+ const faces=topo.faces.map(f=>{let n=[c(0),c(0)];for(const [a,b,s] of f.terms){n[0]=add(n[0],mul(sub(points[b][1],points[a][1]),c(s)));n[1]=sub(n[1],mul(sub(points[b][0],points[a][0]),c(s)));}return {n,len:pow(add(mul(n[0],n[0]),mul(n[1],n[1])),.5),segs:f.segs.map(([a,b])=>[points[a],points[b]])};});return {X,cent,points,vol,polys,faces,locations:scheme==='cell'?cent:X};}
+ function physics(o){const {c,add,sub,mul,div,pow,sin,cos}=o,scale=(v,s)=>v.map(x=>mul(x,s)),sum=(a,b)=>a.map((x,i)=>add(x,b[i]));
+ function prim(U){const rho=U[0],u=div(U[1],rho),v=div(U[2],rho),p=mul(c(gamma-1),sub(U[3],mul(c(.5),add(mul(U[1],u),mul(U[2],v))))),a=pow(div(mul(c(gamma),p),rho),.5);return {rho,u,v,p,a};}
+ function cons(r,u,v,p){return [r,mul(r,u),mul(r,v),add(div(p,c(gamma-1)),mul(mul(c(.5),r),add(mul(u,u),mul(v,v))))];}
+ function physical(U,n){const q=prim(U),un=add(mul(q.u,n[0]),mul(q.v,n[1]));return [mul(q.rho,un),add(mul(U[1],un),mul(q.p,n[0])),add(mul(U[2],un),mul(q.p,n[1])),mul(add(U[3],q.p),un)];}
+ function far(UL,UI,n,len,inflow){const q=prim(UL),z=prim(UI),nx=div(n[0],len),ny=div(n[1],len),normal=q=>add(mul(q.u,nx),mul(q.v,ny)),tan=q=>sub(mul(q.v,nx),mul(q.u,ny)),rp=add(normal(q),mul(c(2/(gamma-1)),q.a)),rm=sub(normal(z),mul(c(2/(gamma-1)),z.a)),un=mul(c(.5),add(rp,rm)),sound=mul(c((gamma-1)/4),sub(rp,rm)),up=inflow?z:q,S=div(up.p,pow(up.rho,gamma)),rho=pow(div(mul(sound,sound),mul(c(gamma),S)),1/(gamma-1)),ut=tan(up),u=sub(mul(un,nx),mul(ut,ny)),v=add(mul(un,ny),mul(ut,nx));return cons(rho,u,v,mul(S,pow(rho,gamma)));}
+ function free(p){return cons(c(1),mul(mul(p[0],c(Math.sqrt(gamma))),cos(p[1])),mul(mul(p[0],c(Math.sqrt(gamma))),sin(p[1])),c(1));}
+ function flux(UL,UR,f,g,UI){const q=prim(UL);if(f.bc==='wall')return {H:[c(0),mul(q.p,g.n[0]),mul(q.p,g.n[1]),c(0)],UR:UL};const B=f.R>=0?UR:far(UL,UI,g.n,g.len,f.inflow),FL=physical(UL,g.n),FR=physical(B,g.n);return {UR:B,H:FL.map((x,k)=>sub(mul(c(.5),add(x,FR[k])),mul(mul(c(alpha/2),g.len),sub(B[k],UL[k]))))};}
+ return {prim,cons,physical,far,free,flux};}
+ function evaluate(o,U,p){const {c,add,sub,mul}=o,g=geometry(o,p.slice(2)),ph=physics(o),UI=ph.free(p),R=Array.from({length:nd},()=>c(0)),local=[];let J=c(0);
+ topo.faces.forEach((f,j)=>{const L=U.slice(4*f.L,4*f.L+4),RR=f.R>=0?U.slice(4*f.R,4*f.R+4):null,q=ph.flux(L,RR,f,g.faces[j],UI);q.H.forEach((h,k)=>{R[4*f.L+k]=add(R[4*f.L+k],h);if(f.R>=0)R[4*f.R+k]=sub(R[4*f.R+k],h);});if(f.bc==='wall')J=add(J,mul(ph.prim(L).p,g.faces[j].n[objective==='drag'?0:1]));local.push({...q,UL:L});});return {R,J,g,local};}
+ function linearize(U,p=params){const t=tape(),u=U.map(t.op.input),pp=p.map(t.op.input),out=evaluate(t.op,u,pp),outids=[...out.R,out.J];return {R:out.R.map(i=>t.val[i]),J:t.val[out.J],size:t.val.length,faceVjp:(j,w)=>{const b=t.reverse(out.local[j].H,w);return {U:b.slice(0,nd),p:b.slice(nd)};},jvp:(v,dp=zeros(p.length))=>{const d=t.forward([...v,...dp]);return {R:out.R.map(i=>d[i]),J:d[out.J],faces:out.local.map(q=>q.H.map(i=>d[i]))};},vjp:(w,bJ=0)=>{const b=t.reverse(outids,[...w,bJ]);return {U:b.slice(0,nd),p:b.slice(nd)};}};}
+ function initial(p=params){return Array.from({length:nc},()=>physics(real).free(p)).flat();}
+ function valid(U,p=params){const ph=physics(real);return Array.from({length:nc},(_,i)=>ph.prim(U.slice(i*4,i*4+4))).every(q=>q.rho>.05&amp;&amp;q.p>.05&amp;&amp;Math.hypot(q.u,q.v)/q.a&lt;.85);}
+ function precondition(g,transpose=false){const diag=zeros(nc),lower=Array.from({length:nc},()=>[]);topo.faces.forEach((f,j)=>{const a=alpha*g.faces[j].len/2;diag[f.L]+=a;if(f.R>=0){diag[f.R]+=a;const l=Math.max(f.L,f.R),r=Math.min(f.L,f.R);lower[l].push([r,-a]);}});return rhs=>{const z=rhs.slice();if(transpose){for(let i=nc-1;i>=0;i--)for(let k=0;k&lt;4;k++){z[4*i+k]/=diag[i];for(const [j,c] of lower[i])z[4*j+k]-=c*z[4*i+k];}return z;}for(let i=0;i&lt;nc;i++)for(let k=0;k&lt;4;k++){for(const [j,c] of lower[i])z[4*i+k]-=c*z[4*j+k];z[4*i+k]/=diag[i];}return z;};}
+ function diagnostics(U,p=params){const out=evaluate(real,U,p),ph=physics(real);let maxSpeed=0,maxMach=0,minRho=Infinity,minP=Infinity,mismatches=0;
+ out.local.forEach((q,j)=>[q.UL,q.UR].forEach((u,k)=>{const z=ph.prim(u),g=out.g.faces[j],un=(z.u*g.n[0]+z.v*g.n[1])/g.len;maxSpeed=Math.max(maxSpeed,Math.abs(un)+z.a);maxMach=Math.max(maxMach,Math.hypot(z.u,z.v)/z.a);minRho=Math.min(minRho,z.rho);minP=Math.min(minP,z.p);if(k===1&amp;&amp;topo.faces[j].bc==='far'&amp;&amp;(un&lt;0)!==topo.faces[j].inflow)mismatches++;}));return {maxSpeed,maxMach,minRho,minP,mismatches,minVolume:Math.min(...out.g.vol)};}
+ function solve(p=params,start){let U=start?start.slice():initial(p);const history=[],states=[],P=precondition(geometry(real,p.slice(2)));for(let it=0;it&lt;35;it++){const A=linearize(U,p),rn=norm(A.R);history.push(rn);states.push(U.slice());if(rn&lt;3e-12){const check=diagnostics(U,p);if(!(check.maxSpeed&lt;alpha&amp;&amp;check.maxMach&lt;.85&amp;&amp;check.minRho>.05&amp;&amp;check.minP>.05&amp;&amp;check.minVolume>0&amp;&amp;check.mismatches===0))throw Error('State leaves supported smooth subsonic boundary branch');return {U,J:A.J,history,states,converged:true,A,diagnostics:check};}const l=gmres(v=>A.jvp(v).R,A.R.map(x=>-x),P,Math.min(1e-12,rn*1e-3),nd);if(!l.converged&amp;&amp;l.residual>rn*.01)throw Error('Euler Newton linear solve failed: '+l.residual);let step=1,next;while(step>1e-7){next=U.map((x,i)=>x+step*l.x[i]);if(valid(next,p)&amp;&amp;norm(evaluate(real,next,p).R)&lt;(1-1e-4*step)*rn)break;step*=.5;}if(step&lt;=1e-7)throw Error('Euler positivity/residual line search failed');U=next;}throw Error('Euler primal did not converge');}
+ function sensitivities(sol,p=params){const A=sol.A||linearize(sol.U,p),P=precondition(geometry(real,p.slice(2)),true),Jg=A.vjp(zeros(nd),1),adj=gmres(v=>A.vjp(v).U,Jg.U.map(x=>-x),P,2e-12,nd);if(!adj.converged)throw Error('Euler adjoint failed');const total=A.vjp(adj.x,1);return {psi:adj.x,gradient:total.p,history:adj.history,residual:adj.residual};}
+ function tangent(sol,k,p=params){const A=sol.A||linearize(sol.U,p),dp=zeros(p.length);dp[k]=1;const direct=A.jvp(zeros(nd),dp),P=precondition(geometry(real,p.slice(2))),l=gmres(v=>A.jvp(v).R,direct.R.map(x=>-x),P,2e-12,nd);if(!l.converged)throw Error('Euler tangent failed');return {...l,gradient:A.jvp(l.x,dp).J};}
+ function complexGradient(sol,k,h=1e-25,p=params){const A=sol.A||linearize(sol.U,p),pp=p.map((x,i)=>[x,i===k?h:0]),U=sol.U.map(x=>[x,0]),P=precondition(geometry(real,p.slice(2)));let im=zeros(nd),history=[];for(let it=0;it&lt;4;it++){const out=evaluate(complex,U,pp),rhs=out.R.map(x=>-x[1]/h),rn=norm(rhs);history.push(rn);if(rn&lt;2e-12)break;const l=gmres(v=>A.jvp(v).R,rhs,P,1e-12,nd);im=im.map((x,i)=>x+l.x[i]);U.forEach((x,i)=>x[1]=h*im[i]);}const out=evaluate(complex,U,pp),residual=norm(out.R.map(x=>x[1]/h));if(residual>2e-10)throw Error('complex residual not converged');return {gradient:out.J[1]/h,residual,history};}
+ return {scheme,grid,topo,nc,nd,params,diagnostics,preconditioner:transpose=>precondition(geo,transpose),geometry:()=>geometry(real,params.slice(2)),geometryAt:p=>geometry(real,p.slice(2)),physics:physics(real),evaluate:(U,p=params)=>evaluate(real,U,p),linearize,initial,solve,sensitivities,tangent,complexGradient,valid};
+}
+function gmres(A,b,P=x=>x.slice(),tol=1e-11,max=b.length){const n=b.length,beta=norm(b);if(beta&lt;=tol)return {x:zeros(n),residual:beta,history:[beta],converged:true};const V=[b.map(x=>x/beta)],Z=[],H=Array.from({length:max+1},()=>zeros(max)),cs=zeros(max),sn=zeros(max),g=zeros(max+1),history=[beta];g[0]=beta;let m=0;
+ for(let j=0;j&lt;max;j++){Z.push(P(V[j]));let w=A(Z[j]);for(let pass=0;pass&lt;2;pass++)for(let i=0;i&lt;=j;i++){const h=dot(V[i],w);H[i][j]+=h;w=w.map((x,k)=>x-h*V[i][k]);}H[j+1][j]=norm(w);const nextnorm=H[j+1][j];if(nextnorm>1e-16)V.push(w.map(x=>x/nextnorm));for(let i=0;i&lt;j;i++){const a=H[i][j],b=H[i+1][j];H[i][j]=cs[i]*a+sn[i]*b;H[i+1][j]=-sn[i]*a+cs[i]*b;}const a=H[j][j],bb=H[j+1][j],r=Math.hypot(a,bb);cs[j]=r?a/r:1;sn[j]=r?bb/r:0;H[j][j]=r;H[j+1][j]=0;g[j+1]=-sn[j]*g[j];g[j]*=cs[j];m=j+1;history.push(Math.abs(g[j+1]));if(Math.abs(g[j+1])&lt;tol||nextnorm&lt;=1e-16)break;}
+ const y=zeros(m);for(let i=m-1;i>=0;i--){let a=g[i];for(let j=i+1;j&lt;m;j++)a-=H[i][j]*y[j];y[i]=a/H[i][i];}const x=zeros(n);for(let i=0;i&lt;m;i++)for(let j=0;j&lt;n;j++)x[j]+=Z[i][j]*y[i];const residual=norm(A(x).map((z,i)=>z-b[i]));return {x,residual,history,converged:residual&lt;=Math.max(tol*5,1e-13)};}
+const api={model,mesh,gamma,alpha,gmres,dot,norm,real,complex,tape};if(typeof module!=='undefined')module.exports=api;else root.Euler2D=api;
+})(typeof window!=='undefined'?window:globalThis);
+</pre></details></section></main><footer class="foot">© 2026 Yisheng Gao · <a href="LICENSE">CC BY 4.0</a> · <a href="adjoint_euler_node.html"><span lang="zh">切换格心／格点</span><span lang="en">Switch cell/node</span></a> · <a href="adjoint_cell.html"><span lang="zh">二维标量</span><span lang="en">2D scalar</span></a> · <a href="adjoint_q1d_cell.html"><span lang="zh">拟一维 Euler</span><span lang="en">Quasi-1D Euler</span></a></footer></div><script>window.EULER_STUDIES={
+  "cell": [
+    {
+      "level": 1,
+      "n": 24,
+      "nodes": 24,
+      "lift": 0.007009138967242423,
+      "drag": 0.19486272602090082,
+      "residual": 2.0941078252386047e-12,
+      "maxMach": 0.2355039905978944,
+      "minRho": 0.898010676922684,
+      "minP": 0.8690536061303328
+    },
+    {
+      "level": 2,
+      "n": 96,
+      "nodes": 80,
+      "lift": 0.0037736426802199158,
+      "drag": 0.264781140878278,
+      "residual": 1.0183861329376025e-13,
+      "maxMach": 0.25743713829408804,
+      "minRho": 0.8520485895015103,
+      "minP": 0.8177239383450864
+    },
+    {
+      "level": 3,
+      "n": 216,
+      "nodes": 168,
+      "lift": 0.005473280949690962,
+      "drag": 0.2600307311924662,
+      "residual": 8.856954868978727e-13,
+      "maxMach": 0.2726019628672971,
+      "minRho": 0.8530386683376262,
+      "minP": 0.8234328231916838
+    }
+  ],
+  "node": [
+    {
+      "level": 1,
+      "n": 24,
+      "nodes": 24,
+      "lift": 0.011559180497916682,
+      "drag": 0.253560390006167,
+      "residual": 6.792255220656949e-15,
+      "maxMach": 0.2177585064878315,
+      "minRho": 0.866165374933562,
+      "minP": 0.8281078415651099
+    },
+    {
+      "level": 2,
+      "n": 80,
+      "nodes": 80,
+      "lift": 0.006099983482403128,
+      "drag": 0.3302434519625214,
+      "residual": 8.893397357393568e-13,
+      "maxMach": 0.2439171240225696,
+      "minRho": 0.8294820717098595,
+      "minP": 0.7881693439934896
+    },
+    {
+      "level": 3,
+      "n": 168,
+      "nodes": 168,
+      "lift": 0.007527614799957789,
+      "drag": 0.31211707911054465,
+      "residual": 8.495706558419877e-13,
+      "maxMach": 0.260257259614264,
+      "minRho": 0.8315417638876592,
+      "minP": 0.7959863218353161
+    }
+  ]
+};
+/* Language switch.
+
+   Chinese is the canonical text; English is carried ALONGSIDE it in sibling
+   elements marked lang="en", and the page simply shows one set and hides the
+   other. Nothing is translated at runtime.
+
+   Why siblings rather than swapping strings: figure labels are placed by a
+   box-measuring pass at build time (figlabels.js moves a label off a stroke
+   using its measured width). English boxes are a different size, so a single
+   SVG cannot be laid out correctly for both languages -- each language needs
+   its own rendering, which sibling elements give for free.               */
+(function () {
+  "use strict";
+  var KEY = "adjlang";
+  var root = document.documentElement;
+
+  /* every host the demos append into: they build once, so a language switch
+     has to clear them before re-running boot, or content would double up */
+  var HOSTS = ["explorer-mesh", "explorer-info", "flux-plot", "flux-table",
+    "flux-code", "fluxd-code", "fluxb-code", "bc-code", "dual-code",
+    /* dual-mesh and dual-ctl are appended into, not overwritten: the node
+       page builds a MeshView into dual-mesh and a Player control bar into
+       dual-ctl. Leaving them out meant bootDemos() added a SECOND mesh and a
+       second control bar to the median-dual demo on every language switch. */
+    "dual-mesh", "dual-ctl",
+    "newton-mesh", "newton-code", "newton-status", "newton-plot",
+    "newton-lanes", "newton-stage-ctl", "newton-ctl", "newton-info",
+    "loop-primal", "loop-tangent", "loop-adjoint", "dot-out",
+    "jacobi-mesh", "jacobi-lanes", "jacobi-plot", "jacobi-status",
+    "jacobi-info", "jacobi-code", "jacobi-face-ctl", "jacobi-ctl",
+    /* the forward solve of Section 9 is the same demo in tangent mode and
+       appends into the same kinds of host; without these a switch stacked a
+       second panel under the first, the first in the old language */
+    "tan-mesh", "tan-lanes", "tan-plot", "tan-status", "tan-info",
+    "tan-code", "tan-face-ctl", "tan-ctl",
+    "grad-mesh", "grad-out",
+    /* the merged step-size sweep: both are appended into, so a
+       language switch would otherwise stack a second plot and a
+       second control row on top of the first. */
+    "hsweep-ctl", "hsweep-plot"];
+
+  function current() {
+    return root.getAttribute("data-lang") === "en" ? "en" : "zh";
+  }
+
+  function paintButton(lang) {
+    var btn = document.getElementById("langtoggle");
+    if (!btn) return;
+    btn.textContent = lang === "en" ? "中文" : "English";
+    btn.setAttribute("aria-label",
+      lang === "en" ? "切换到中文" : "Switch to English");
+  }
+
+  /* Two things the sibling/CSS trick cannot reach, so they are set here:
+
+       - attribute values (aria-label), which CSS cannot select on;
+       - the text of <option>, because display:none on an option is not
+         honoured consistently across browsers, so a hidden sibling option
+         would still appear in the dropdown.
+
+     Both are declared on the element itself and swapped at switch time:
+       <option data-zh="中心差分" data-en="Central difference">
+       <select data-zh-aria="差分格式" data-en-aria="Difference scheme">
+     paintButton() already does exactly this for the toggle's own label. */
+  function paintDeclared(lang) {
+    var k = lang === "en" ? "en" : "zh";
+    Array.prototype.forEach.call(
+      document.querySelectorAll("[data-zh][data-en]"), function (el) {
+        var v = el.getAttribute("data-" + k);
+        if (v !== null) el.textContent = v;
+      });
+    Array.prototype.forEach.call(
+      document.querySelectorAll("[data-zh-aria][data-en-aria]"), function (el) {
+        var v = el.getAttribute("data-" + k + "-aria");
+        if (v !== null) el.setAttribute("aria-label", v);
+      });
+  }
+
+  /* Text built once by an inline page script (the u* summary) lives in no
+     demo host, so clearing HOSTS would never refresh it. Such a script
+     registers its own repainter here and it is re-run on every switch. */
+  window.REPAINT = window.REPAINT || [];
+  function repaint() {
+    window.REPAINT.forEach(function (fn) {
+      try { fn(); }
+      catch (e) { if (window.console) console.error("[i18n] repaint", e); }
+    });
+  }
+
+  function apply(lang, rebuild) {
+    root.setAttribute("data-lang", lang);
+    root.setAttribute("lang", lang === "en" ? "en" : "zh-CN");
+    try { localStorage.setItem(KEY, lang); } catch (e) { /* private mode */ }
+    paintButton(lang);
+    /* these run on the initial apply() too: a page restored as lang=en would
+       otherwise open with Chinese option text and Chinese aria-labels */
+    paintDeclared(lang);
+    repaint();
+    if (!rebuild) return;
+    /* figure numbers are stamped into captions once and guarded against
+       re-stamping, so drop them before renumbering in the new language */
+    Array.prototype.forEach.call(document.querySelectorAll(".figno"),
+      function (b) { b.parentNode.removeChild(b); });
+    if (window.bootDemos) {
+      HOSTS.forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.replaceChildren();
+      });
+      try { window.bootDemos(); }
+      catch (e) { if (window.console) console.error("[i18n] rebuild", e); }
+    }
+  }
+
+  window.LANG = current;
+  window.t = function (zh, en) { return current() === "en" ? en : zh; };
+
+  function init() {
+    var saved = null;
+    try { saved = localStorage.getItem(KEY); } catch (e) { /* ignore */ }
+    apply(saved === "en" ? "en" : "zh", false);
+    var btn = document.getElementById("langtoggle");
+    if (btn) {
+      btn.addEventListener("click", function () {
+        apply(current() === "en" ? "zh" : "en", true);
+      });
+    }
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else { init(); }
+})();
+
+/* Smooth 2-D Euler: a scalar-operation tape gives exact matrix-free JVP/VJP.
+   Scalar face algebra also runs with independent complex arithmetic. */
+(function(root){'use strict';
+const gamma=1.4,alpha=2,zeros=n=>Array(n).fill(0),dot=(a,b)=>a.reduce((s,x,i)=>s+x*b[i],0),norm=a=>Math.sqrt(dot(a,a));
+const real={c:x=>x,add:(a,b)=>a+b,sub:(a,b)=>a-b,mul:(a,b)=>a*b,div:(a,b)=>a/b,pow:(a,p)=>a**p,sin:Math.sin,cos:Math.cos};
+function tape(){const val=[],pa=[],pb=[],da=[],db=[],inputs=[];function node(v,a=-1,b=-1,x=0,y=0){const i=val.length;val.push(v);pa.push(a);pb.push(b);da.push(x);db.push(y);return i;}const op={c:x=>node(x),input:x=>{const i=node(x);inputs.push(i);return i;},add:(a,b)=>node(val[a]+val[b],a,b,1,1),sub:(a,b)=>node(val[a]-val[b],a,b,1,-1),mul:(a,b)=>node(val[a]*val[b],a,b,val[b],val[a]),div:(a,b)=>node(val[a]/val[b],a,b,1/val[b],-val[a]/val[b]**2),pow:(a,p)=>node(val[a]**p,a,-1,p*val[a]**(p-1)),sin:a=>node(Math.sin(val[a]),a,-1,Math.cos(val[a])),cos:a=>node(Math.cos(val[a]),a,-1,-Math.sin(val[a]))};
+function forward(seed){const d=new Float64Array(val.length);inputs.forEach((i,k)=>d[i]=seed[k]||0);for(let i=0;i<val.length;i++){if(pa[i]>=0)d[i]+=da[i]*d[pa[i]];if(pb[i]>=0)d[i]+=db[i]*d[pb[i]];}return d;}
+function reverse(outputs,seeds){const w=new Float64Array(val.length);outputs.forEach((i,k)=>w[i]+=seeds[k]);for(let i=val.length-1;i>=0;i--){if(pa[i]>=0)w[pa[i]]+=da[i]*w[i];if(pb[i]>=0)w[pb[i]]+=db[i]*w[i];}return inputs.map(i=>w[i]);}
+return {op,val,forward,reverse};}
+const complex={c:x=>[x,0],add:(a,b)=>[a[0]+b[0],a[1]+b[1]],sub:(a,b)=>[a[0]-b[0],a[1]-b[1]],mul:(a,b)=>[a[0]*b[0]-a[1]*b[1],a[0]*b[1]+a[1]*b[0]],div:(a,b)=>{const d=b[0]**2+b[1]**2;return [(a[0]*b[0]+a[1]*b[1])/d,(a[1]*b[0]-a[0]*b[1])/d];},pow:(a,p)=>{const r=Math.hypot(...a)**p,t=p*Math.atan2(a[1],a[0]);return [r*Math.cos(t),r*Math.sin(t)];},sin:a=>[Math.sin(a[0])*Math.cosh(a[1]),Math.cos(a[0])*Math.sinh(a[1])],cos:a=>[Math.cos(a[0])*Math.cosh(a[1]),-Math.sin(a[0])*Math.sinh(a[1])]};
+function mesh(level=1){ // level 1 is indexed-identical to the scalar pages
+ const nt=8*level,X=[],C=[],fractions=[0,.45,1];
+ for(let r=0;r<=2*level;r++){const k=r/level,z=k<=1?.45*k:.45+.55*(k-1);for(let j=0;j<nt;j++){const t=2*Math.PI*j/nt,rad=.55*(1+.28*Math.cos(t)+.12*Math.sin(2*t)),b=[.1+rad*Math.cos(t),-.04+rad*Math.sin(t)],o=[1.9*Math.cos(t),1.9*Math.sin(t)];X.push(b.map((x,d)=>(1-z)*x+z*o[d]));}}
+ const id=(r,j)=>r*nt+(j%nt);for(let r=0;r<2*level;r++)for(let j=0;j<nt;j++){const a=id(r,j),b=id(r,j+1),c=id(r+1,j+1),d=id(r+1,j);if(r<level)C.push([a,d,c,b]);else C.push([a,d,c],[a,c,b]);}return {X,C,nt,level};}
+function topology(mesh,scheme){const edges=[],map=new Map();mesh.C.forEach((cell,c)=>cell.forEach((a,k)=>{const b=cell[(k+1)%cell.length],key=[Math.min(a,b),Math.max(a,b)].join('-');if(map.has(key))edges[map.get(key)].R=c;else{map.set(key,edges.length);edges.push({a,b,L:c,R:-1});}}));for(const e of edges)e.bc=e.R>=0?'interior':e.a<mesh.nt&&e.b<mesh.nt?'wall':'far';
+ let faces;if(scheme==='cell')faces=edges.map(e=>({...e,terms:[[e.a,e.b,1]],segs:[[e.a,e.b]]}));
+ else{const off=mesh.X.length;faces=edges.map(e=>{const a=Math.min(e.a,e.b),b=Math.max(e.a,e.b),mid=off+mesh.C.length+edges.indexOf(e),terms=[],segs=[];for(const c of [e.L,e.R].filter(i=>i>=0)){const cell=mesh.C[c],s=cell[(cell.indexOf(a)+1)%cell.length]===b?1:-1;terms.push([mid,off+c,s]);segs.push([mid,off+c]);}return {a,b,L:a,R:b,bc:'interior',terms,segs};});for(const e of edges.filter(e=>e.R<0)){const mid=off+mesh.C.length+edges.indexOf(e);for(const a of [e.a,e.b])faces.push({L:a,R:-1,bc:e.bc,terms:[[e.a,e.b,.5]],segs:[[a,mid]]});}}
+ const rank={interior:0,wall:1,far:2};faces.sort((a,b)=>rank[a.bc]-rank[b.bc]||a.L-b.L||a.R-b.R);return {edges,faces};}
+function model({scheme='cell',level=1,M=.2,angle=10,objective='lift',coords}={}){
+ if(!['cell','node'].includes(scheme)||!Number.isInteger(level)||level<1||level>4||!Number.isFinite(M)||M<0||M>.3||!Number.isFinite(angle))throw Error('Unsupported Euler model settings');
+ const grid=mesh(level);if(coords)grid.X=coords.map(p=>p.slice());const topo=topology(grid,scheme),nc=scheme==='cell'?grid.C.length:grid.X.length,nd=4*nc,params=[M,angle*Math.PI/180,...grid.X.flat()];
+ // Incoming entropy/vorticity branch is tied to the BASE free-stream normal.
+ const geo=geometry(real,params.slice(2));topo.faces.forEach((f,i)=>f.inflow=geo.faces[i].n[0]*Math.cos(params[1])+geo.faces[i].n[1]*Math.sin(params[1])<0);
+ function geometry(o,Xflat){const {c,add,sub,mul,pow}=o,scale=(a,s)=>a.map(v=>mul(v,c(s))),avg=pts=>[0,1].map(k=>mul(pts.reduce((s,p)=>add(s,p[k]),c(0)),c(1/pts.length))),X=Array.from({length:grid.X.length},(_,i)=>Xflat.slice(2*i,2*i+2)),cent=grid.C.map(cell=>avg(cell.map(i=>X[i]))),mid=topo.edges.map(e=>avg([X[e.a],X[e.b]])),points=[...X,...cent,...mid];
+ const area=poly=>mul(poly.reduce((s,p,i)=>{const q=poly[(i+1)%poly.length];return add(s,sub(mul(p[0],q[1]),mul(p[1],q[0])));},c(0)),c(.5)),vol=Array.from({length:nc},()=>c(0)),polys=Array.from({length:nc},()=>[]);
+ grid.C.forEach((cell,j)=>{if(scheme==='cell'){vol[j]=area(cell.map(i=>X[i]));polys[j].push(cell.map(i=>X[i]));}else cell.forEach((a,k)=>{const next=cell[(k+1)%cell.length],prev=cell[(k-1+cell.length)%cell.length],poly=[X[a],avg([X[a],X[next]]),cent[j],avg([X[prev],X[a]])];vol[a]=add(vol[a],area(poly));polys[a].push(poly);});});
+ const faces=topo.faces.map(f=>{let n=[c(0),c(0)];for(const [a,b,s] of f.terms){n[0]=add(n[0],mul(sub(points[b][1],points[a][1]),c(s)));n[1]=sub(n[1],mul(sub(points[b][0],points[a][0]),c(s)));}return {n,len:pow(add(mul(n[0],n[0]),mul(n[1],n[1])),.5),segs:f.segs.map(([a,b])=>[points[a],points[b]])};});return {X,cent,points,vol,polys,faces,locations:scheme==='cell'?cent:X};}
+ function physics(o){const {c,add,sub,mul,div,pow,sin,cos}=o,scale=(v,s)=>v.map(x=>mul(x,s)),sum=(a,b)=>a.map((x,i)=>add(x,b[i]));
+ function prim(U){const rho=U[0],u=div(U[1],rho),v=div(U[2],rho),p=mul(c(gamma-1),sub(U[3],mul(c(.5),add(mul(U[1],u),mul(U[2],v))))),a=pow(div(mul(c(gamma),p),rho),.5);return {rho,u,v,p,a};}
+ function cons(r,u,v,p){return [r,mul(r,u),mul(r,v),add(div(p,c(gamma-1)),mul(mul(c(.5),r),add(mul(u,u),mul(v,v))))];}
+ function physical(U,n){const q=prim(U),un=add(mul(q.u,n[0]),mul(q.v,n[1]));return [mul(q.rho,un),add(mul(U[1],un),mul(q.p,n[0])),add(mul(U[2],un),mul(q.p,n[1])),mul(add(U[3],q.p),un)];}
+ function far(UL,UI,n,len,inflow){const q=prim(UL),z=prim(UI),nx=div(n[0],len),ny=div(n[1],len),normal=q=>add(mul(q.u,nx),mul(q.v,ny)),tan=q=>sub(mul(q.v,nx),mul(q.u,ny)),rp=add(normal(q),mul(c(2/(gamma-1)),q.a)),rm=sub(normal(z),mul(c(2/(gamma-1)),z.a)),un=mul(c(.5),add(rp,rm)),sound=mul(c((gamma-1)/4),sub(rp,rm)),up=inflow?z:q,S=div(up.p,pow(up.rho,gamma)),rho=pow(div(mul(sound,sound),mul(c(gamma),S)),1/(gamma-1)),ut=tan(up),u=sub(mul(un,nx),mul(ut,ny)),v=add(mul(un,ny),mul(ut,nx));return cons(rho,u,v,mul(S,pow(rho,gamma)));}
+ function free(p){return cons(c(1),mul(mul(p[0],c(Math.sqrt(gamma))),cos(p[1])),mul(mul(p[0],c(Math.sqrt(gamma))),sin(p[1])),c(1));}
+ function flux(UL,UR,f,g,UI){const q=prim(UL);if(f.bc==='wall')return {H:[c(0),mul(q.p,g.n[0]),mul(q.p,g.n[1]),c(0)],UR:UL};const B=f.R>=0?UR:far(UL,UI,g.n,g.len,f.inflow),FL=physical(UL,g.n),FR=physical(B,g.n);return {UR:B,H:FL.map((x,k)=>sub(mul(c(.5),add(x,FR[k])),mul(mul(c(alpha/2),g.len),sub(B[k],UL[k]))))};}
+ return {prim,cons,physical,far,free,flux};}
+ function evaluate(o,U,p){const {c,add,sub,mul}=o,g=geometry(o,p.slice(2)),ph=physics(o),UI=ph.free(p),R=Array.from({length:nd},()=>c(0)),local=[];let J=c(0);
+ topo.faces.forEach((f,j)=>{const L=U.slice(4*f.L,4*f.L+4),RR=f.R>=0?U.slice(4*f.R,4*f.R+4):null,q=ph.flux(L,RR,f,g.faces[j],UI);q.H.forEach((h,k)=>{R[4*f.L+k]=add(R[4*f.L+k],h);if(f.R>=0)R[4*f.R+k]=sub(R[4*f.R+k],h);});if(f.bc==='wall')J=add(J,mul(ph.prim(L).p,g.faces[j].n[objective==='drag'?0:1]));local.push({...q,UL:L});});return {R,J,g,local};}
+ function linearize(U,p=params){const t=tape(),u=U.map(t.op.input),pp=p.map(t.op.input),out=evaluate(t.op,u,pp),outids=[...out.R,out.J];return {R:out.R.map(i=>t.val[i]),J:t.val[out.J],size:t.val.length,faceVjp:(j,w)=>{const b=t.reverse(out.local[j].H,w);return {U:b.slice(0,nd),p:b.slice(nd)};},jvp:(v,dp=zeros(p.length))=>{const d=t.forward([...v,...dp]);return {R:out.R.map(i=>d[i]),J:d[out.J],faces:out.local.map(q=>q.H.map(i=>d[i]))};},vjp:(w,bJ=0)=>{const b=t.reverse(outids,[...w,bJ]);return {U:b.slice(0,nd),p:b.slice(nd)};}};}
+ function initial(p=params){return Array.from({length:nc},()=>physics(real).free(p)).flat();}
+ function valid(U,p=params){const ph=physics(real);return Array.from({length:nc},(_,i)=>ph.prim(U.slice(i*4,i*4+4))).every(q=>q.rho>.05&&q.p>.05&&Math.hypot(q.u,q.v)/q.a<.85);}
+ function precondition(g,transpose=false){const diag=zeros(nc),lower=Array.from({length:nc},()=>[]);topo.faces.forEach((f,j)=>{const a=alpha*g.faces[j].len/2;diag[f.L]+=a;if(f.R>=0){diag[f.R]+=a;const l=Math.max(f.L,f.R),r=Math.min(f.L,f.R);lower[l].push([r,-a]);}});return rhs=>{const z=rhs.slice();if(transpose){for(let i=nc-1;i>=0;i--)for(let k=0;k<4;k++){z[4*i+k]/=diag[i];for(const [j,c] of lower[i])z[4*j+k]-=c*z[4*i+k];}return z;}for(let i=0;i<nc;i++)for(let k=0;k<4;k++){for(const [j,c] of lower[i])z[4*i+k]-=c*z[4*j+k];z[4*i+k]/=diag[i];}return z;};}
+ function diagnostics(U,p=params){const out=evaluate(real,U,p),ph=physics(real);let maxSpeed=0,maxMach=0,minRho=Infinity,minP=Infinity,mismatches=0;
+ out.local.forEach((q,j)=>[q.UL,q.UR].forEach((u,k)=>{const z=ph.prim(u),g=out.g.faces[j],un=(z.u*g.n[0]+z.v*g.n[1])/g.len;maxSpeed=Math.max(maxSpeed,Math.abs(un)+z.a);maxMach=Math.max(maxMach,Math.hypot(z.u,z.v)/z.a);minRho=Math.min(minRho,z.rho);minP=Math.min(minP,z.p);if(k===1&&topo.faces[j].bc==='far'&&(un<0)!==topo.faces[j].inflow)mismatches++;}));return {maxSpeed,maxMach,minRho,minP,mismatches,minVolume:Math.min(...out.g.vol)};}
+ function solve(p=params,start){let U=start?start.slice():initial(p);const history=[],states=[],P=precondition(geometry(real,p.slice(2)));for(let it=0;it<35;it++){const A=linearize(U,p),rn=norm(A.R);history.push(rn);states.push(U.slice());if(rn<3e-12){const check=diagnostics(U,p);if(!(check.maxSpeed<alpha&&check.maxMach<.85&&check.minRho>.05&&check.minP>.05&&check.minVolume>0&&check.mismatches===0))throw Error('State leaves supported smooth subsonic boundary branch');return {U,J:A.J,history,states,converged:true,A,diagnostics:check};}const l=gmres(v=>A.jvp(v).R,A.R.map(x=>-x),P,Math.min(1e-12,rn*1e-3),nd);if(!l.converged&&l.residual>rn*.01)throw Error('Euler Newton linear solve failed: '+l.residual);let step=1,next;while(step>1e-7){next=U.map((x,i)=>x+step*l.x[i]);if(valid(next,p)&&norm(evaluate(real,next,p).R)<(1-1e-4*step)*rn)break;step*=.5;}if(step<=1e-7)throw Error('Euler positivity/residual line search failed');U=next;}throw Error('Euler primal did not converge');}
+ function sensitivities(sol,p=params){const A=sol.A||linearize(sol.U,p),P=precondition(geometry(real,p.slice(2)),true),Jg=A.vjp(zeros(nd),1),adj=gmres(v=>A.vjp(v).U,Jg.U.map(x=>-x),P,2e-12,nd);if(!adj.converged)throw Error('Euler adjoint failed');const total=A.vjp(adj.x,1);return {psi:adj.x,gradient:total.p,history:adj.history,residual:adj.residual};}
+ function tangent(sol,k,p=params){const A=sol.A||linearize(sol.U,p),dp=zeros(p.length);dp[k]=1;const direct=A.jvp(zeros(nd),dp),P=precondition(geometry(real,p.slice(2))),l=gmres(v=>A.jvp(v).R,direct.R.map(x=>-x),P,2e-12,nd);if(!l.converged)throw Error('Euler tangent failed');return {...l,gradient:A.jvp(l.x,dp).J};}
+ function complexGradient(sol,k,h=1e-25,p=params){const A=sol.A||linearize(sol.U,p),pp=p.map((x,i)=>[x,i===k?h:0]),U=sol.U.map(x=>[x,0]),P=precondition(geometry(real,p.slice(2)));let im=zeros(nd),history=[];for(let it=0;it<4;it++){const out=evaluate(complex,U,pp),rhs=out.R.map(x=>-x[1]/h),rn=norm(rhs);history.push(rn);if(rn<2e-12)break;const l=gmres(v=>A.jvp(v).R,rhs,P,1e-12,nd);im=im.map((x,i)=>x+l.x[i]);U.forEach((x,i)=>x[1]=h*im[i]);}const out=evaluate(complex,U,pp),residual=norm(out.R.map(x=>x[1]/h));if(residual>2e-10)throw Error('complex residual not converged');return {gradient:out.J[1]/h,residual,history};}
+ return {scheme,grid,topo,nc,nd,params,diagnostics,preconditioner:transpose=>precondition(geo,transpose),geometry:()=>geometry(real,params.slice(2)),geometryAt:p=>geometry(real,p.slice(2)),physics:physics(real),evaluate:(U,p=params)=>evaluate(real,U,p),linearize,initial,solve,sensitivities,tangent,complexGradient,valid};
+}
+function gmres(A,b,P=x=>x.slice(),tol=1e-11,max=b.length){const n=b.length,beta=norm(b);if(beta<=tol)return {x:zeros(n),residual:beta,history:[beta],converged:true};const V=[b.map(x=>x/beta)],Z=[],H=Array.from({length:max+1},()=>zeros(max)),cs=zeros(max),sn=zeros(max),g=zeros(max+1),history=[beta];g[0]=beta;let m=0;
+ for(let j=0;j<max;j++){Z.push(P(V[j]));let w=A(Z[j]);for(let pass=0;pass<2;pass++)for(let i=0;i<=j;i++){const h=dot(V[i],w);H[i][j]+=h;w=w.map((x,k)=>x-h*V[i][k]);}H[j+1][j]=norm(w);const nextnorm=H[j+1][j];if(nextnorm>1e-16)V.push(w.map(x=>x/nextnorm));for(let i=0;i<j;i++){const a=H[i][j],b=H[i+1][j];H[i][j]=cs[i]*a+sn[i]*b;H[i+1][j]=-sn[i]*a+cs[i]*b;}const a=H[j][j],bb=H[j+1][j],r=Math.hypot(a,bb);cs[j]=r?a/r:1;sn[j]=r?bb/r:0;H[j][j]=r;H[j+1][j]=0;g[j+1]=-sn[j]*g[j];g[j]*=cs[j];m=j+1;history.push(Math.abs(g[j+1]));if(Math.abs(g[j+1])<tol||nextnorm<=1e-16)break;}
+ const y=zeros(m);for(let i=m-1;i>=0;i--){let a=g[i];for(let j=i+1;j<m;j++)a-=H[i][j]*y[j];y[i]=a/H[i][i];}const x=zeros(n);for(let i=0;i<m;i++)for(let j=0;j<n;j++)x[j]+=Z[i][j]*y[i];const residual=norm(A(x).map((z,i)=>z-b[i]));return {x,residual,history,converged:residual<=Math.max(tol*5,1e-13)};}
+const api={model,mesh,gamma,alpha,gmres,dot,norm,real,complex,tape};if(typeof module!=='undefined')module.exports=api;else root.Euler2D=api;
+})(typeof window!=='undefined'?window:globalThis);
+
+(function(){'use strict';const E=Euler2D,$=id=>document.getElementById(id),tr=(z,e)=>window.t(z,e),fmt=x=>Number(x).toExponential(5),names=['ρ','ρu','ρv','ρE'];let S,selectedCell=0,selectedFace=0,activeParam=0,field=0,fdCache=new Map();
+function table(head,rows){return '<div class="tablewrap"><table class="kv"><thead><tr>'+head.map(x=>'<th>'+x+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(x=>'<td>'+x+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';}
+const option=(v,label)=>`<option value="${v}">${label}</option>`;
+function params(){const items=[[0,'M∞'],[1,tr('攻角 θ（弧度）','Incidence θ (radian)')]];for(let i=0;i<S.F.grid.nt;i++)for(let k=0;k<2;k++)items.push([2+2*i+k,`X[${i}].${k?'y':'x'}`]);return items;}
+function select(id,items,value){return `<select id="${id}">${items.map(([v,n])=>`<option value="${v}"${+v===+value?' selected':''}>${n}</option>`).join('')}</select>`;}
+function mesh(values,{face=-1,cell=-1,arrows=false,geom=false}={}){const {F,g}=S,X=x=>230+105*x,Y=y=>230-105*y,lo=Math.min(...values),hi=Math.max(...values),color=x=>{const t=hi-lo>1e-15?(x-lo)/(hi-lo):.5;return `hsl(${225-205*t} 50% 82%)`;};let h='<svg viewBox="0 0 460 495" role="img" aria-label="Euler mesh and computed field">';g.polys.forEach((polys,i)=>polys.forEach(poly=>{h+=`<polygon data-volume="${i}" points="${poly.map(p=>X(p[0])+','+Y(p[1])).join(' ')}" fill="${color(values[i])}" stroke="none"/>`;}));F.grid.C.forEach(c=>{h+=`<polygon points="${c.map(i=>X(g.X[i][0])+','+Y(g.X[i][1])).join(' ')}" fill="none" stroke="var(--grid)" stroke-width="1"/>`;});
+F.topo.faces.forEach((f,i)=>{for(const [a,b] of g.faces[i].segs)h+=`<path data-face="${i}" d="M${X(a[0])} ${Y(a[1])}L${X(b[0])} ${Y(b[1])}" stroke="${i===face?'#8a3dbe':f.bc==='wall'?'#ad7400':'#788699'}" stroke-width="${i===face?4:f.bc==='wall'?2:1}" ${F.scheme==='node'&&f.bc==='interior'?'stroke-dasharray="3 3"':''}/>`;});
+g.locations.forEach((p,i)=>{h+=`<circle data-volume="${i}" cx="${X(p[0])}" cy="${Y(p[1])}" r="${i===cell?5:2}" fill="${i===cell?'#9c38b8':'#35445c'}"/><text x="${X(p[0])+4}" y="${Y(p[1])-4}" font-size="10" fill="var(--ink)">${i}</text>`;if(arrows){const q=F.physics.prim(S.sol.U.slice(i*4,i*4+4));h+=`<path d="M${X(p[0])} ${Y(p[1])}l${55*q.u} ${-55*q.v}" stroke="#243449" stroke-width="1.5"/>`;}});
+if(face>=0){const f=g.faces[face],a=f.segs[0][0],b=f.segs.at(-1)[1],p=a.map((v,i)=>(v+b[i])/2),end=p.map((v,i)=>v+.3*f.n[i]/f.len);h+=`<path d="M${X(p[0])} ${Y(p[1])}L${X(end[0])} ${Y(end[1])}" stroke="#8024ba" stroke-width="2"/><circle cx="${X(end[0])}" cy="${Y(end[1])}" r="3" fill="#8024ba"/><text x="${X(end[0])+4}" y="${Y(end[1])}" font-size="12">n${face}</text>`;}
+if(geom){const scale=.6/Math.max(...S.adj.gradient.slice(2).map(Math.abs),1e-12);for(let i=0;i<F.grid.nt;i++){const p=g.X[i],v=S.adj.gradient.slice(2+2*i,4+2*i);h+=`<path d="M${X(p[0])} ${Y(p[1])}l${105*scale*v[0]} ${-105*scale*v[1]}" stroke="#b8432a" stroke-width="2"/>`;}}
+h+=`<text x="20" y="475" font-size="12" fill="var(--ink)">min=${fmt(lo)}   max=${fmt(hi)}</text></svg>`;return h;}
+function chart(series,labels,title,log=true){const X=i=>55+650*i/Math.max(1,Math.max(...series.map(a=>a.length))-1),trans=x=>log?Math.log10(Math.max(Math.abs(x),1e-18)):x,all=series.flat().map(trans),lo=Math.min(...all),hi=Math.max(...all),Y=y=>180-130*(trans(y)-lo)/(hi-lo||1),colors=['#2f5e9e','#b8432a','#0b7a69'];return '<figure><figcaption>'+title+'</figcaption><svg viewBox="0 0 760 220" role="img" aria-label="'+title+'"><path d="M55 45V180H710" fill="none" stroke="#a0aabb"/>'+series.map((a,j)=>`<path d="${a.map((v,i)=>(i?'L':'M')+X(i)+','+Y(v)).join(' ')}" fill="none" stroke="${colors[j]}" stroke-width="2"/><text x="${55+j*215}" y="25" font-size="12" fill="${colors[j]}">${labels[j]}</text>`).join('')+`<text x="2" y="52" font-size="11">${hi.toFixed(1)}</text><text x="2" y="183" font-size="11">${lo.toFixed(1)}</text><text x="320" y="211" font-size="12">${log?'log₁₀ |value|; ':''}${tr('横轴：序号','horizontal: sample index')}</text></svg></figure>`;}
+function component(U,k=field){return Array.from({length:S.F.nc},(_,i)=>U[4*i+k]);}
+function trace(id,mode){const {F,sol}=S,seed=sol.U.map((_,i)=>Math.sin(.3+i)),weight=seed.map((_,i)=>Math.cos(.7*i)),jv=sol.A.jvp(seed),steps=4*F.topo.faces.length;let idx=0,comp=0;$(id).innerHTML=`<div class="controls"><button class="btn" id="${id}-prev">${tr('上一步','Previous')}</button><button class="btn" id="${id}-next">${tr('下一步','Next')}</button><label>${tr('执行步骤','Execution step')}<input id="${id}-step" type="range" min="0" max="${steps-1}" value="0"></label>${select(id+'-comp',names.map((n,i)=>[i,n]),0)}</div><div id="${id}-view"></div>`;
+function draw(){const fi=Math.floor(idx/4),stage=idx%4,acc=Array(F.nd).fill(0),q=S.out.local[fi],f=F.topo.faces[fi];let local;
+for(let j=0;j<=fi;j++){const face=F.topo.faces[j],stop=j<fi?3:stage;if(mode==='adjoint'){const eta=weight.slice(4*face.L,4*face.L+4).map((v,k)=>v-(face.R>=0?weight[4*face.R+k]:0)),b=sol.A.faceVjp(j,eta).U;if(j===fi)local=eta;if(stop>=2)for(let k=0;k<4;k++)acc[4*face.L+k]+=b[4*face.L+k];if(stop>=3&&face.R>=0)for(let k=0;k<4;k++)acc[4*face.R+k]+=b[4*face.R+k];}else{const H=mode==='primal'?S.out.local[j].H:jv.faces[j];if(j===fi)local=H;if(stop>=2)for(let k=0;k<4;k++)acc[4*face.L+k]+=H[k];if(stop>=3&&face.R>=0)for(let k=0;k<4;k++)acc[4*face.R+k]-=H[k];}}
+const lines=mode==='adjoint'?['η = w[L] − w[R] (exterior: 0)','b = face_vjp(face, η), including boundary chain','y[L,:] += b[L,:]','if R ≥ 0: y[R,:] += b[R,:]']:['UL, UR = gather state and boundary inputs',mode==='primal'?'H = flux_or_wall(UL,UR,n)':'δH = face_jvp(UL,UR,δUL,δUR)','y[L,:] += '+(mode==='primal'?'H':'δH'),'if R ≥ 0: y[R,:] -= '+(mode==='primal'?'H':'δH')];
+$(id+'-view').innerHTML=`<p>${idx+1}/${steps} · face ${fi} · ${f.bc} · L=${f.L}, R=${f.R}</p><ol class="execution-code">${lines.map((l,i)=>`<li${i===stage?' class="active"':''}>${l.replace(/</g,'&lt;')}</li>`).join('')}</ol><div class="mesh-pair"><figure><figcaption>${mode==='primal'?'U':mode==='tangent'?'v':'w'} · ${names[comp]}</figcaption>${mesh(component(mode==='primal'?sol.U:mode==='tangent'?seed:weight,comp),{face:fi})}</figure><figure><figcaption>${tr('当前累加输出','Current accumulated output')} · ${names[comp]}</figcaption>${mesh(component(acc,comp),{face:fi})}</figure></div>`+table(['component',mode==='adjoint'?'η':mode==='primal'?'H':'δH'],names.map((n,k)=>[n,stage>=1||mode==='adjoint'?fmt(local[k]):'—']));
+$(id+'-prev').disabled=idx===0;$(id+'-next').disabled=idx===steps-1;}
+$(id+'-prev').onclick=()=>{idx=Math.max(0,idx-1);$(id+'-step').value=idx;draw();};$(id+'-next').onclick=()=>{idx=Math.min(steps-1,idx+1);$(id+'-step').value=idx;draw();};$(id+'-step').oninput=e=>{idx=+e.target.value;draw();};$(id+'-comp').onchange=e=>{comp=+e.target.value;draw();};draw();}
+function paintMesh(){const {F,sol,g,out}=S,i=selectedCell,f=F.topo.faces[selectedFace],q=F.physics.prim(sol.U.slice(4*i,4*i+4));$('mesh-lab').innerHTML=`<div class="controls"><label>${tr('控制体','Volume')}${select('cell-pick',g.locations.map((_,i)=>[i,''+i]),i)}</label><label>${tr('面','Face')}${select('face-pick',F.topo.faces.map((f,i)=>[i,i+' '+f.bc]),selectedFace)}</label></div><div class="mesh-pair"><div id="mesh-pick">${mesh(component(sol.U,0),{face:selectedFace,cell:i,arrows:true})}</div><div>`+table(['i','V','ρ','u','v','p','Mach'],[[i,fmt(g.vol[i]),fmt(q.rho),fmt(q.u),fmt(q.v),fmt(q.p),fmt(Math.hypot(q.u,q.v)/q.a)]])+table(['f','L','R','nx','ny','length'],[[selectedFace,f.L,f.R,...g.faces[selectedFace].n.map(fmt),fmt(g.faces[selectedFace].len)]])+`<p>${tr('颜色：密度；短线：速度。选择面会显示其面积法向方向。','Colour: density; short lines: velocity. Selecting a face shows its area-normal direction.')}</p></div></div>`;
+$('cell-pick').onchange=e=>{selectedCell=+e.target.value;paintMesh();};$('face-pick').onchange=e=>{selectedFace=+e.target.value;paintMesh();};$('mesh-pick').onclick=e=>{const a=e.target.getAttribute('data-face'),b=e.target.getAttribute('data-volume');if(a!==null)selectedFace=+a;if(b!==null)selectedCell=+b;if(a!==null||b!==null)paintMesh();};
+const H=out.local[selectedFace];$('flux-lab').innerHTML=`<p>face ${selectedFace}: ${f.bc}. ${tr('在第 1 节选择面，此处同步更新。','Select a face in Section 1 to update this table.')}</p>`+table(['component','UL','UR / Ub','H'],names.map((n,k)=>[n,fmt(H.UL[k]),fmt(H.UR[k]),fmt(H.H[k])]))+mesh(component(sol.U,0),{face:selectedFace});}
+function tangentPaint(){const {F,sol}=S,t=F.tangent(sol,activeParam);S.tangent=t;$('tangent-solve-lab').innerHTML=`<div class="controls"><label>${tr('设计变量','Design variable')}${select('tangent-param',params(),activeParam)}</label><label>${tr('状态分量','State component')}${select('state-comp',names.map((n,i)=>[i,n]),field)}</label></div>`+mesh(component(t.x),{})+table(['dJ/db tangent','dJ/db adjoint','difference','||Av+Rb||'],[[fmt(t.gradient),fmt(S.adj.gradient[activeParam]),fmt(t.gradient-S.adj.gradient[activeParam]),fmt(t.residual)]])+chart([t.history],['||Av+Rb||'],tr('前向线性求解','Tangent linear solve'));
+$('tangent-param').onchange=e=>{activeParam=+e.target.value;tangentPaint();};$('state-comp').onchange=e=>{field=+e.target.value;tangentPaint();};}
+function fdCompute(k,h){const key=k+':'+h;if(fdCache.has(key))return fdCache.get(key);const {F,sol}=S,p=F.params.slice(),m=p.slice();p[k]+=h;m[k]-=h;const plus=F.solve(p,sol.U),minus=F.solve(m,sol.U),v={k,h,plus,minus,forward:(plus.J-sol.J)/h,central:(plus.J-minus.J)/(2*h)};fdCache.set(key,v);return v;}
+function fdPanel(){const items=[[-1,tr('全部变量','All variables')],...params()];$('fd-lab').innerHTML=`<div class="controls"><label>${tr('变量','Variable')}${select('fd-variable',items,0)}</label><label>${tr('误差','Error')}<select id="fd-metric"><option value="absolute">${tr('绝对','Absolute')}</option><option value="relative">${tr('分量相对','Component relative')}</option></select></label><label>h <input id="fd-step" type="number" min="1e-12" max="0.01" value="0.00001" step="any"></label><button class="btn" id="fd-run">${tr('扫描并重算','Sweep & solve')}</button></div><div id="fd-output"></div>`;
+function run(){try{const k=+$('fd-variable').value,h=+$('fd-step').value;if(!Number.isFinite(h)||h<1e-12||h>.01)throw Error(tr('h 应在 10⁻¹² 与 10⁻² 之间','h must lie between 1e-12 and 1e-2'));const keys=k<0?params().map(x=>x[0]):[k],rel=$('fd-metric').value==='relative',err=(v,k)=>Math.abs(v-S.adj.gradient[k])/(rel?Math.max(Math.abs(S.adj.gradient[k]),1e-14):1),steps=[1e-2,1e-3,1e-4,1e-5,1e-6,1e-7,1e-8,1e-10,1e-12],scan=steps.map(h=>{const rows=keys.map(k=>fdCompute(k,h));return {h,f:Math.max(...rows.map(v=>err(v.forward,v.k))),c:Math.max(...rows.map(v=>err(v.central,v.k)))};}),rows=keys.map(k=>fdCompute(k,h));$('fd-output').innerHTML=chart([scan.map(v=>v.f),scan.map(v=>v.c)],[tr('前向误差','Forward error'),tr('中心误差','Central error')],tr('步长扫描（从大到小，全部模式取最大分量误差）','Step sweep (largest to smallest; all mode takes maximum component error)'))+table(['h','forward error','central error'],scan.map(v=>[fmt(v.h),fmt(v.f),fmt(v.c)]))+table(['parameter','J+','J−','||R+||','||R−||','forward','central','adjoint'],rows.map(v=>[params().find(x=>x[0]===v.k)[1],fmt(v.plus.J),fmt(v.minus.J),fmt(v.plus.history.at(-1)),fmt(v.minus.history.at(-1)),fmt(v.forward),fmt(v.central),fmt(S.adj.gradient[v.k])]))+(k>=0?'<div class="mesh-pair"><figure><figcaption>ρ(b+h)</figcaption>'+mesh(component(rows[0].plus.U,0))+'</figure><figure><figcaption>δρ / δb (central)</figcaption>'+mesh(component(rows[0].plus.U.map((x,i)=>(x-rows[0].minus.U[i])/(2*h)),0))+'</figure></div>':'');}catch(e){$('fd-output').textContent=e.message;}}
+$('fd-run').onclick=run;$('fd-metric').onchange=run;run();}
+function complexPanel(){const {F,sol}=S;$('complex-lab').innerHTML=`<div class="controls"><label>${tr('变量','Variable')}${select('complex-param',params(),0)}</label><button class="btn" id="complex-run">${tr('计算复数残差','Compute complex residual')}</button></div><div id="complex-output"></div>`;function run(){try{const k=+$('complex-param').value,c=F.complexGradient(sol,k);$('complex-output').innerHTML=table(['h','complex gradient','adjoint','difference','||Im R / h||'],[['1e-25',fmt(c.gradient),fmt(S.adj.gradient[k]),fmt(c.gradient-S.adj.gradient[k]),fmt(c.residual)]]);}catch(e){$('complex-output').textContent=e.message;}}$('complex-run').onclick=run;run();}
+function paint(){if(!S)return;const {F,sol,g,out,adj}=S,qs=Array.from({length:F.nc},(_,i)=>F.physics.prim(sol.U.slice(4*i,4*i+4))),maxM=Math.max(...qs.map(q=>Math.hypot(q.u,q.v)/q.a));let bound=0,mismatch=0;F.topo.faces.forEach((f,j)=>{for(const U of [out.local[j].UL,out.local[j].UR]){const q=F.physics.prim(U),un=(q.u*g.faces[j].n[0]+q.v*g.faces[j].n[1])/g.faces[j].len;bound=Math.max(bound,Math.abs(un)+q.a);if(f.bc==='far'&&U===out.local[j].UR&&(un<0)!==f.inflow)mismatch++;}});
+$('euler-status').textContent=`${tr('已收敛','Converged')}: ||R||₂=${fmt(sol.history.at(-1))}; min ρ=${Math.min(...qs.map(q=>q.rho)).toFixed(5)}, min p=${Math.min(...qs.map(q=>q.p)).toFixed(5)}, max Mach=${maxM.toFixed(5)}; max(|un|+c)=${bound.toFixed(5)} < α=2; ${tr('远场分支不匹配数','far-field branch mismatches')}=${mismatch}.`;
+paintMesh();$('boundary-lab').innerHTML=table(['face','kind','un interior','un boundary','c boundary','entropy source'],F.topo.faces.flatMap((f,j)=>{if(f.bc==='interior')return [];const q=F.physics.prim(out.local[j].UL),b=F.physics.prim(out.local[j].UR),n=g.faces[j].n,len=g.faces[j].len;return [[j,f.bc,fmt((q.u*n[0]+q.v*n[1])/len),f.bc==='wall'?'0 (flux)':fmt((b.u*n[0]+b.v*n[1])/len),fmt(b.a),f.bc==='wall'?'—':f.inflow?'∞':'interior']];}));
+$('primal-lab').innerHTML=chart([sol.history],['||R||₂'],tr('Newton 非线性残差','Newton nonlinear residual'))+table(['iteration','||R||₂'],sol.history.map((v,i)=>[i,fmt(v)]));
+$('objective-lab').innerHTML=`<p>J=${fmt(sol.J)} · ${F.params[0]} Mach, θ=${(F.params[1]*180/Math.PI).toFixed(1)}°</p>`+table(['wall face','p','nx','ny','p n_d'],F.topo.faces.flatMap((f,j)=>f.bc==='wall'?[[j,fmt(qs[f.L].p),...g.faces[j].n.map(fmt),fmt(qs[f.L].p*g.faces[j].n[$('objective').value==='drag'?0:1])]]:[]));
+trace('residual-lab','primal');trace('tangent-lab','tangent');trace('adjoint-lab','adjoint');const v=sol.U.map((_,i)=>Math.sin(i+.3)),w=v.map((_,i)=>Math.cos(.7*i)),doterr=Math.abs(E.dot(w,sol.A.jvp(v).R)-E.dot(v,sol.A.vjp(w).U));$('adjoint-lab').insertAdjacentHTML('beforeend',`<p>|wᵀAv − vᵀAᵀw| = ${fmt(doterr)}; ${tr('计算图运算节点数','scalar tape nodes')}=${sol.A.size}</p>`);
+tangentPaint();$('adjoint-solve-lab').innerHTML=`<div class="controls">${select('adjoint-comp',names.map((n,i)=>[i,n]),0)}</div><div id="adjoint-field">${mesh(component(adj.psi,0))}</div>`+chart([adj.history],['||Aᵀψ+J_U||'],tr('伴随线性求解','Adjoint linear solve'))+`<p>${tr('真实最终残差','True final residual')}: ${fmt(adj.residual)}</p>`;$('adjoint-comp').onchange=e=>$('adjoint-field').innerHTML=mesh(component(adj.psi,+e.target.value));
+$('geometry-lab').innerHTML='<div class="mesh-pair"><div>'+mesh(qs.map(q=>q.p),{geom:true})+'</div><div>'+table(['parameter','dJ/db'],params().map(([k,n])=>[n,fmt(adj.gradient[k])]))+'</div></div><p>'+tr('红线为物面节点梯度向量，长度统一缩放以便阅读；内网格固定。','Red lines show body-coordinate gradients with a common visual scale; interior nodes stay fixed.')+'</p>';
+fdPanel();complexPanel();const data=EULER_STUDIES[F.scheme];$('refinement-lab').innerHTML='<p>M∞=0.2, θ=10° · '+tr('独立固定基准；不随页首切换','Independent fixed benchmark; unaffected by header controls')+'</p>'+table(['level','nodes','volumes','Jx','Jy','max Mach','min ρ','min p','||R||'],data.map(r=>[r.level,r.nodes,r.n,fmt(r.drag),fmt(r.lift),r.maxMach.toFixed(5),r.minRho.toFixed(5),r.minP.toFixed(5),fmt(r.residual)]))+chart([data.map(r=>r.drag),data.map(r=>r.lift)],['Jx','Jy'],tr('压力合力随网格变化；不据此拟合精度阶','Pressure forces by mesh; no order fitted'),false);
+}
+function solve(){try{$('euler-status').textContent=tr('正在计算…','Computing…');const F=E.model({scheme:document.body.dataset.scheme,M:+$('mach').value,angle:+$('angle').value,objective:$('objective').value}),sol=F.solve(),adj=F.sensitivities(sol);S={F,sol,adj,g:F.geometry(),out:F.evaluate(sol.U)};fdCache.clear();paint();}catch(e){$('euler-status').textContent=tr('计算失败：','Computation failed: ')+e.message;}}
+document.addEventListener('DOMContentLoaded',()=>{$('solve').onclick=solve;solve();});window.REPAINT=window.REPAINT||[];window.REPAINT.push(paint);
+})();
+
+/* ---- side-nav collapse + current-section highlight ---- */
+(function () {
+  /* window.t comes from i18n.js, which both builders list first in
+     SCRIPTS; the guard keeps this harmless if loaded standalone. */
+  const TR = (zh, en) => (window.t ? window.t(zh, en) : zh);
+  var nav = document.querySelector("nav.toc");
+  if (!nav) return;
+  var btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "navtoggle";
+  btn.setAttribute("aria-controls", "toc-list");
+  var list = nav.querySelector("ul");
+  if (list) list.id = "toc-list";
+  function paint() {
+    var hid = document.body.classList.contains("navhid");
+    btn.textContent = hid ? "\u00bb" : TR("\u00ab \u6536\u8d77\u76ee\u5f55", "\u00ab hide contents");
+    btn.setAttribute("aria-expanded", hid ? "false" : "true");
+    btn.title = hid ? TR("\u5c55\u5f00\u76ee\u5f55", "show contents") : TR("\u6536\u8d77\u76ee\u5f55", "hide contents");
+  }
+  btn.addEventListener("click", function () {
+    document.body.classList.toggle("navhid");
+    try { localStorage.setItem("navhid", document.body.classList.contains("navhid") ? "1" : "0"); } catch (e) {}
+    paint();
+  });
+  try { if (localStorage.getItem("navhid") === "1") document.body.classList.add("navhid"); } catch (e) {}
+  nav.insertBefore(btn, nav.firstChild);
+  paint();
+  /* A language switch never touches this button: it owns no demo host, so
+     it is not in i18n.js's HOSTS, and paint() otherwise runs only on load
+     and on click. REPAINT is the hook i18n.js provides for precisely this
+     -- text built once by a script with no host of its own. */
+  window.REPAINT = window.REPAINT || [];
+  window.REPAINT.push(paint);
+
+  var links = [].slice.call(nav.querySelectorAll('a[href^="#"]'));
+  var secs = links.map(function (a) { return document.getElementById(a.getAttribute("href").slice(1)); });
+  function spy() {
+    var best = -1, bestTop = -1e9;
+    for (var i = 0; i < secs.length; i++) {
+      if (!secs[i]) continue;
+      var t = secs[i].getBoundingClientRect().top - 90;
+      if (t <= 0 && t > bestTop) { bestTop = t; best = i; }
+    }
+    links.forEach(function (a, i) {
+      if (i === best) a.setAttribute("aria-current", "true");
+      else a.removeAttribute("aria-current");
+    });
+  }
+  addEventListener("scroll", spy, { passive: true });
+  spy();
+})();
+
+
+  (function () {
+    var el = document.getElementById("ustar");
+    function paint() {
+      if (!el || !window.FV) return;
+      var FV = window.FV;
+      var r = FV.residual(FV.U);
+      var t = window.t || function (zh) { return zh; };
+      el.innerHTML = FV.U.map(function (v, i) { return "u<sub>" + (i + 1) + "</sub> = " + FV.fmt(v, 3); }).join(t("　", "   ")) +
+        "<br><span style=\"color:var(--muted)\">‖R(u*)‖ = " + FV.rms(r).toExponential(1).replace("e-", "e−") +
+        t("（均方根）　·　", " (rms) · ") + t("Jacobi 判据 ‖R‖ &lt; 10⁻¹³ 在 k = " + FV.PRIMAL_BASE.iters + " 时满足（固定跑 " + FV.PRIMAL_SWEEPS + " 轮）",
+          "the Jacobi criterion ‖R‖ &lt; 10⁻¹³ is met at k = " + FV.PRIMAL_BASE.iters + " (a fixed " + FV.PRIMAL_SWEEPS + " sweeps are run)") +
+        "</span>";
+    }
+    (window.REPAINT = window.REPAINT || []).push(paint);
+    paint();
+  })();
+
+
+</script></body></html>
