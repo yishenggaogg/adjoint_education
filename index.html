@@ -192,23 +192,6 @@ code { font-family:var(--font-mono); font-size:.86em; }
     A 中文 / English toggle sits in the top-right corner of each page.
   </p>
 
-  <h3>每页讲什么 / What each page covers</h3>
-  <ul>
-    <li>网格、一维通量与边界条件 &mdash; mesh, the one-dimensional flux, boundary conditions</li>
-    <li>残差 = 一个循环：收集、计算、分发 &mdash; the residual as one gather&ndash;compute&ndash;scatter loop</li>
-    <li>同一个循环改写成 matrix-free 前向 <code>Av</code> 与伴随 <code>A&#8288;<sup>T</sup>w</code>，每一行都能逐句播放</li>
-    <li>前向与伴随求解（Burgers 使用 GS／GS 预处理 GMRES，二维 Euler 使用 GS 预处理 GMRES，其余六页保留 Jacobi）、几何导数 <code>dR/dX</code> 与 <code>dL/dX</code>（一维页是对源项与入口值的设计导数）&mdash; the forward and the adjoint solve (GS / GS-preconditioned GMRES for Burgers, GS-preconditioned GMRES for 2-D Euler; Jacobi on the other six pages), and the geometric derivatives (on the 1-D pages, the design derivatives with respect to the sources and the inflow value)</li>
-    <li>点积测试与有限差分校验，以及差分校验本身的陷阱 &mdash; the dot-product test, and where finite differences mislead</li>
-    <li>复数步长：公式与实现；从收敛流场出发，复数迭代每一轮都等于前向迭代；用它验证梯度 &mdash; the complex step: the formula and how to implement it; started from the converged flow, the complex iteration is the forward iteration at every sweep; the gradient checked by it</li>
-    <li>精度阶与网格加密：构造解、网格族、观测阶；二维 Euler 首版仅报告加密结果，尚不宣称精度阶 &mdash; accuracy and refinement: manufactured solutions and observed orders; the initial 2-D Euler study reports refinement data without claiming an observed order</li>
-    <li>（一维）源项作设计变量、伴随梯度驱动的 BFGS 反设计、离散伴随与连续伴随的对照 &mdash; (1-D) sources as design variables, a BFGS inverse design driven by the adjoint gradient, the discrete adjoint against the continuous one</li>
-    <li>（一维）哪一种检验抓哪一种错误、入口一致性对照与用伴随估计 <code>J</code> 的误差 &mdash; (1-D) which check catches which bug, an inflow-consistency comparison and an adjoint-based estimate of the error in <code>J</code></li>
-    <li>（全部页面，第 15 节）伴随一致性；连续方程、边界条件与网格加密对照。二维纯对流另设特征边界对照，并说明原零通量内壁的限制。原八页附录 A 提供完整推导、实现与交互；二维 Euler 首版仅给出形式连续分析及验证范围 / The original eight pages include Appendix A; the new 2-D Euler pair provides formal continuous analysis and explicit validation limits &mdash; continuous dual equations, boundary conditions and refinement; a separate characteristic-boundary contrast for 2-D advection.</li>
-    <li>（对流扩散）最小二乘梯度、两遍循环、伸到邻居的邻居的精确 Jacobian、强加的 Dirichlet 壁面 &mdash; (advection&ndash;diffusion) least-squares gradients, two loops, an exact Jacobian reaching the neighbours of neighbours, a strongly imposed Dirichlet wall</li>
-    <li>（二维 Euler）四分量面循环、压力壁面、特征旋转、计算图正反传播与固定边界分支 / Four-component face loops, pressure walls, characteristic rotations and forward/reverse computational graphs.</li>
-    <li>（拟一维）源项、特征边界条件、3×3 块 &mdash; (quasi-1-D) the source term, characteristic boundary conditions, 3&times;3 blocks</li>
-  </ul>
-
   <h3>页面上的数字都是实测的 / Every number is measured</h3>
   <p class="lede" style="font-size:.95rem;margin-bottom:0">
     离散交互与 Burgers 连续求积在浏览器现场计算；其他连续参考及加密图浏览独立求解后内嵌的离线结果。正文数值均来自实际计算。
