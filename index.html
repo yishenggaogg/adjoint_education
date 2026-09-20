@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>离散伴随教学页 / Discrete adjoint, taught page by page</title>
-<meta name="description" content="十个单文件、可交互的网页，把有限体积法的全离散伴随从头到尾讲一遍：一维 Burgers 方程、二维标量对流方程、二维标量对流扩散方程、拟一维 Euler 方程与二维 Euler 方程，各有格心与格点两版，并排对照。">
+<meta name="description" content="十二个单文件、可交互的网页，把有限体积法的全离散伴随从头到尾讲一遍：一维 Burgers 方程、二维标量对流方程、二维标量对流扩散方程、拟一维 Euler 方程、一维层流 N–S 方程与二维 Euler 方程，各有格心与格点两版，并排对照。">
 <style>
 :root {
   --ground:#F3F5F7; --surface:#FFFFFF; --sunken:#EAEEF2;
@@ -68,15 +68,15 @@ code { font-family:var(--font-mono); font-size:.86em; }
 <div class="wrap">
 
   <h1>离散伴随教学页</h1>
-<div class="note"><p><b>教学主线与目标：</b>面向学过微积分、线性代数和数值方法的本科生，从小模型的残差、前向和伴随逐句实现，走向工业级非结构网格 RANS 的完整离散伴随。RANS 是后续目标，当前页面是通向这一目标的基础算例。</p><p><b>Learning path:</b> for undergraduates familiar with calculus, linear algebra and numerical methods, develop residuals, tangents and adjoints statement by statement, toward a complete industrial unstructured-grid RANS discrete adjoint. RANS is a future destination; the current lessons are foundational cases.</p><p>连续伴随用于简单算例的独立验证与对比。正文保留结论，完整推导、实现、图和交互均在原八页附录 A；二维 Euler 首版仅给形式连续分析与验证范围。工业求解器的完整离散流程不能简单地由形式连续伴随作严格参照；验证重点是实际残差与目标的精确导数。</p><p>Continuous adjoints provide independent comparisons for simple cases. Main chapters retain conclusions; the original eight pages’ Appendix A holds derivations, implementations, figures and interaction. The initial 2-D Euler pair provides formal continuous analysis and validation limits. A formal continuous adjoint is not automatically a strict reference for a complete industrial discrete solver; verification targets the implemented residual and objective derivatives.</p></div>
+<div class="note"><p><b>教学主线与目标：</b>面向学过微积分、线性代数和数值方法的本科生，从小模型的残差、前向和伴随逐句实现，走向工业级非结构网格 RANS 的完整离散伴随。RANS 是后续目标，当前页面是通向这一目标的基础算例。</p><p><b>Learning path:</b> for undergraduates familiar with calculus, linear algebra and numerical methods, develop residuals, tangents and adjoints statement by statement, toward a complete industrial unstructured-grid RANS discrete adjoint. RANS is a future destination; the current lessons are foundational cases.</p><p>连续伴随用于简单算例的独立验证与对比。正文保留结论，完整推导、实现、图和交互均在原八页及新增一维 N–S 页的附录 A；二维 Euler 首版仅给形式连续分析与验证范围。工业求解器的完整离散流程不能简单地由形式连续伴随作严格参照；验证重点是实际残差与目标的精确导数。</p><p>Continuous adjoints provide independent comparisons for simple cases. Main chapters retain conclusions; Appendix A of the original eight pages and the new 1-D N–S pair holds derivations, implementations, figures and interaction. The initial 2-D Euler pair provides formal continuous analysis and validation limits. A formal continuous adjoint is not automatically a strict reference for a complete industrial discrete solver; verification targets the implemented residual and objective derivatives.</p></div>
   <p class="sub">Discrete adjoint, taught page by page &middot; 中文 / English</p>
 
   <p class="lede">
-    十个<b>单文件、可交互</b>的网页，把有限体积法的<b>全离散伴随</b>从头到尾讲一遍：
+    十二个<b>单文件、可交互</b>的网页，把有限体积法的<b>全离散伴随</b>从头到尾讲一遍：
     从一个面上的一维通量开始，把同一个循环依次改写成 primal、matrix-free 前向与 matrix-free 伴随，
     再做前向与伴随求解、几何导数，最后用有限差分与复数步长逐项校验。
-    五组算例（<b>一维 Burgers</b>、<b>二维标量对流</b>、<b>二维标量对流扩散</b>、<b>拟一维 Euler</b>与<b>二维 Euler</b>）各有<b>格心</b>与<b>格点</b>两版，
-    <b>十页教学主题相互对应</b>，可以任意两两并排对照。第一次接触离散伴随，请从一维 Burgers 那一对读起。
+    六组算例（<b>一维 Burgers</b>、<b>二维标量对流</b>、<b>二维标量对流扩散</b>、<b>拟一维 Euler</b>、<b>一维层流 N–S</b>与<b>二维 Euler</b>）各有<b>格心</b>与<b>格点</b>两版，
+    <b>十二页教学主题相互对应</b>，可以任意两两并排对照。第一次接触离散伴随，请从一维 Burgers 那一对读起。
   </p>
 
   <h3 style="margin-top:30px">一维 Burgers 方程/ The one-dimensional Burgers equation</h3>
@@ -169,6 +169,22 @@ code { font-family:var(--font-mono); font-size:.86em; }
     </a>
   </div>
 
+  <h3 style="margin-top:30px">一维层流 Navier–Stokes 方程 / One-dimensional laminar Navier–Stokes</h3>
+  <p style="margin:0 0 14px;color:var(--muted);font-size:.93rem">
+    等截面的光滑可压缩流：在 Euler 基础上加入轴向黏性应力、黏性功与热传导，不含湍流模型。
+    常物性／Sutherland 物性、一阶／二阶重构、局部加热和制造解，完整求导梯度、物性与边界。<br>
+    Smooth constant-area compressible flow with molecular stress, viscous work and conduction, without turbulence.
+    Explore constant/Sutherland transport, first/second-order convection, heating and manufactured solutions, with exact derivatives of gradients, transport and boundaries.
+  </p>
+  <div class="cards">
+    <a class="card" href="adjoint_ns1d_cell.html"><h2>格心格式</h2><p class="en">Cell-centred laminar N–S</p>
+      <p>逐面演示对流、应力和热流的装配与反传；完整差分、复数残差、独立连续伴随及 LU 对照。</p>
+      <p class="facts">12 个单元 &middot; 36 个未知量 &middot; 一阶／二阶 &middot; matrix-free<br>adjoint_ns1d_cell.html</p></a>
+    <a class="card node" href="adjoint_ns1d_node.html"><h2>格点格式</h2><p class="en">Node-centred laminar N–S</p>
+      <p>真实对偶控制体与端点梯度；入口三条、出口两条约束行，完整保留边界转置。</p>
+      <p class="facts">13 个节点 &middot; 39 个未知量 &middot; 五条约束行<br>adjoint_ns1d_node.html</p></a>
+  </div>
+
   <h3 style="margin-top:30px">二维 Euler 方程（无激波） / Two-dimensional Euler (shock-free)</h3>
   <p style="margin:0 0 14px;color:var(--muted);font-size:.93rem">
     沿用二维标量的同一张混合 O 型网格，承接拟一维 Euler 的热力学与特征边界。低马赫数绕流，滑移壁面保留压力动量通量；
@@ -186,9 +202,9 @@ code { font-family:var(--font-mono); font-size:.86em; }
   </div>
 
   <p class="note">
-十个页面都是<b>自包含的单个 HTML 文件</b>：不联网、不需要构建、不需要服务器，直接打开即可。
+十二个页面都是<b>自包含的单个 HTML 文件</b>：不联网、不需要构建、不需要服务器，直接打开即可。
     页面右上角可切换中文 / English。<br>
-    All ten are <b>self-contained single HTML files</b> — no network, no build step, no server.
+    All twelve are <b>self-contained single HTML files</b> — no network, no build step, no server.
     A 中文 / English toggle sits in the top-right corner of each page.
   </p>
 

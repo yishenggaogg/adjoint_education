@@ -1,0 +1,1006 @@
+<!doctype html>
+<html lang="zh-CN" data-lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="一维可压缩层流 N–S，黏性与热传导的完整离散伴随，格心／格点、一阶／二阶、连续参考及交互教学。">
+<title>一维层流 Navier–Stokes 离散伴随：格点</title>
+<script>
+  /* restore the saved language BEFORE first paint, so an English reader
+     never sees a flash of Chinese */
+  try {
+    var L = localStorage.getItem("adjlang");
+    if (L === "en") { document.documentElement.setAttribute("data-lang", "en");
+      document.documentElement.setAttribute("lang", "en"); }
+  } catch (e) {}
+</script>
+<style>
+:root {
+  --ground: #F3F5F7;
+  --surface: #FFFFFF;
+  --sunken: #EAEEF2;
+  --ink: #18202B;
+  --ink2: #3A4553;
+  --muted: #667283;
+  --rule: #D3DAE2;
+  --grid: #C4CCD6;
+  --primal: #2F5E9E;
+  --primal-soft: #E1EAF6;
+  --tangent: #0B7A69;
+  --tangent-soft: #DAF0EB;
+  --adjoint: #B8432A;
+  --adjoint-soft: #F7E3DC;
+  --amber: #B97809;
+  --amber-soft: #FBEFD6;
+  /* amber marks the wall and nothing else; highlights and accents are violet */
+  --violet: #7A4CB0;
+  --violet-soft: #EFE7F8;
+  --hl: #F3ECFB;
+  --shadow: 0 1px 2px rgba(20, 30, 45, .06), 0 6px 18px rgba(20, 30, 45, .05);
+  --font-body: system-ui, -apple-system, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Source Han Sans SC", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
+  --font-display: Georgia, "Times New Roman", "Songti SC", "SimSun", "Noto Serif CJK SC", "Source Han Serif SC", serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", "DejaVu Sans Mono", monospace;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #0F141A;
+    --surface: #161C24;
+    --sunken: #1C2430;
+    --ink: #E6EAF0;
+    --ink2: #C3CBD6;
+    --muted: #8F9BAB;
+    --rule: #2A3441;
+    --grid: #3A4656;
+    --primal: #8DB3EA;
+    --primal-soft: #1C2A3D;
+    --tangent: #4CC3AE;
+    --tangent-soft: #14302B;
+    --adjoint: #F0876C;
+    --adjoint-soft: #3A221C;
+    --amber: #E8B04A;
+    --amber-soft: #3A2E17;
+    --violet: #B79AF0;
+    --violet-soft: #2A2342;
+    --hl: #2B2440;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 18px rgba(0, 0, 0, .25);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --ground: #0F141A;
+  --surface: #161C24;
+  --sunken: #1C2430;
+  --ink: #E6EAF0;
+  --ink2: #C3CBD6;
+  --muted: #8F9BAB;
+  --rule: #2A3441;
+  --grid: #3A4656;
+  --primal: #8DB3EA;
+  --primal-soft: #1C2A3D;
+  --tangent: #4CC3AE;
+  --tangent-soft: #14302B;
+  --adjoint: #F0876C;
+  --adjoint-soft: #3A221C;
+  --amber: #E8B04A;
+  --amber-soft: #3A2E17;
+  --violet: #B79AF0;
+  --violet-soft: #2A2342;
+  --hl: #2B2440;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 18px rgba(0, 0, 0, .25);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.8;
+  padding-inline: 20px;
+  padding-block: 0 80px;
+}
+
+.page { max-width: 1120px; margin: 0 auto; }
+.prose { max-width: 720px; margin: 0 auto; }
+
+h1, h2, h3 { font-family: var(--font-display); font-weight: 600; text-wrap: balance; color: var(--ink); }
+h1 { font-size: clamp(30px, 5vw, 44px); line-height: 1.2; margin: 0 0 14px; letter-spacing: .01em; }
+h2 { font-size: 26px; line-height: 1.3; margin: 0 0 10px; }
+h3 { font-size: 19px; line-height: 1.4; margin: 34px 0 6px; }
+p { margin: 10px 0; }
+b, strong { font-weight: 700; }
+code, .mono { font-family: var(--font-mono); font-size: .88em; }
+code { background: var(--sunken); padding: 1px 5px; border-radius: 4px; }
+
+/* header */
+.masthead { padding-block: 44px 20px; }
+.eyebrow {
+  font-family: var(--font-mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 12px;
+}
+.lede { font-size: 18px; color: var(--ink2); max-width: 720px; }
+.route { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 18px; padding: 0; list-style: none; }
+.route li { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.route a {
+  text-decoration: none; color: var(--ink); border: 1px solid var(--rule); background: var(--surface);
+  padding: 4px 12px; border-radius: 999px;
+}
+.route a:hover { border-color: var(--ink2); }
+.route .sep { color: var(--muted); }
+
+nav.toc {
+  position: sticky; top: 0; z-index: 5; background: var(--ground);
+  border-bottom: 1px solid var(--rule); margin-inline: -20px; padding-inline: 20px;
+}
+nav.toc ul { display: flex; gap: 22px; list-style: none; margin: 0 auto; padding: 10px 0; max-width: 1120px; overflow-x: auto; white-space: nowrap; }
+nav.toc a { color: var(--muted); text-decoration: none; font-size: 14px; }
+nav.toc a:hover, nav.toc a:focus-visible { color: var(--ink); }
+nav.toc .num { font-family: var(--font-mono); color: var(--violet); margin-right: 4px; }
+
+/* ---- collapsible side navigation -------------------------------------
+   The page is long, so on wide screens nav.toc becomes a sticky left rail
+   instead of the horizontal bar. Same markup, same anchors: below 1000px
+   it reverts to the original scrolling bar, so narrow screens are
+   unchanged. The toggle only exists in the rail layout.               */
+.navtoggle { display: none; }
+@media (min-width: 1000px) {
+  body { padding-inline: 20px; }
+  nav.toc {
+    position: fixed; top: 0; left: 0; bottom: 0; width: 248px; z-index: 6;
+    margin-inline: 0; padding: 18px 12px 18px 20px; overflow-y: auto;
+    border-bottom: 0; border-right: 1px solid var(--rule);
+    transition: width .18s ease, padding .18s ease;
+  }
+  nav.toc ul {
+    display: block; max-width: none; padding: 0; margin: 0;
+    white-space: normal; overflow-x: visible;
+  }
+  nav.toc li { margin: 2px 0; }
+  nav.toc a {
+    display: block; padding: 6px 10px; border-radius: 6px; font-size: 14px;
+    line-height: 1.45; overflow: hidden; text-overflow: ellipsis;
+  }
+  nav.toc a:hover, nav.toc a:focus-visible { background: var(--sunken); color: var(--ink); }
+  nav.toc a[aria-current="true"] { background: var(--sunken); color: var(--ink); font-weight: 600; }
+  .navtoggle {
+    display: block; margin: 0 0 10px; width: 100%; text-align: left;
+    font: inherit; font-size: 13px; color: var(--muted); cursor: pointer;
+    background: var(--surface); border: 1px solid var(--rule);
+    border-radius: 6px; padding: 5px 10px;
+  }
+  .navtoggle:hover { border-color: var(--ink2); color: var(--ink); }
+  .page { margin-left: 248px; transition: margin-left .18s ease; }
+  /* collapsed: rail shrinks to a strip, content reclaims the width */
+  body.navhid nav.toc { width: 44px; padding-inline: 6px; }
+  body.navhid nav.toc ul { display: none; }
+  body.navhid .navtoggle { text-align: center; padding-inline: 4px; }
+  body.navhid .page { margin-left: 44px; }
+}
+
+section.sec { padding-block: 56px 8px; border-top: 1px solid var(--rule); margin-top: 40px; }
+section.sec:first-of-type { border-top: 0; margin-top: 0; }
+.secnum { font-family: var(--font-mono); font-size: 13px; color: var(--violet); letter-spacing: .08em; }
+
+.note {
+  background: var(--sunken); border-radius: 8px; padding: 12px 16px; margin: 16px 0; font-size: 15px;
+}
+.note b { color: var(--ink); }
+
+/* role words */
+.r-primal { color: var(--primal); font-weight: 600; }
+.r-tangent { color: var(--tangent); font-weight: 600; }
+.r-adjoint { color: var(--adjoint); font-weight: 600; }
+.r-amber { color: var(--amber); font-weight: 600; }
+.r-violet { color: var(--violet); font-weight: 600; }
+
+/* lab panel */
+.lab {
+  background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; box-shadow: var(--shadow);
+  margin: 24px 0 8px; overflow: hidden;
+}
+.lab-head {
+  display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; justify-content: space-between;
+  padding: 14px 18px 10px; border-bottom: 1px solid var(--rule);
+}
+.lab-title { font-weight: 700; font-size: 15px; }
+.lab-sub { color: var(--muted); font-size: 13px; }
+.lab-body { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 0; }
+.lab-body > * { min-width: 0; }
+.lab-pane { padding: 14px 18px; }
+.lab-pane + .lab-pane { border-left: 1px solid var(--rule); }
+.lab-foot { border-top: 1px solid var(--rule); padding: 12px 18px; }
+@media (max-width: 860px) {
+  .lab-body { grid-template-columns: 1fr; }
+  .lab-pane + .lab-pane { border-left: 0; border-top: 1px solid var(--rule); }
+}
+
+.svgbox { width: 100%; }
+.svgbox svg { width: 100%; height: auto; display: block; }
+.scrollx { overflow-x: auto; }
+.scrollx svg { min-width: 720px; }
+
+/* pseudocode */
+.code {
+  font-family: var(--font-mono); font-size: 13px; line-height: 1.75; background: var(--sunken);
+  border-radius: 8px; padding: 8px 0; overflow-x: auto;
+}
+.code .ln {
+  display: grid; grid-template-columns: 2.4em max-content 1fr; column-gap: 12px; padding: 0 12px 0 0;
+  border-left: 3px solid transparent;
+}
+.code .ln.active { background: var(--hl); border-left-color: var(--violet); }
+.code .no { color: var(--muted); text-align: right; user-select: none; }
+.code .src { white-space: pre; color: var(--ink); }
+.code .cm { font-family: var(--font-body); color: var(--muted); font-size: 12.5px; white-space: normal; min-width: 8em; }
+.code .kw { color: var(--primal); font-weight: 600; }
+.code-static .ln { border-left: 0; }
+
+/* status line under code */
+.status {
+  margin-top: 10px; font-size: 14px; min-height: 3.6em; color: var(--ink2);
+  font-variant-numeric: tabular-nums;
+}
+.status .big { font-family: var(--font-mono); font-size: 13px; color: var(--ink); }
+
+/* controls */
+.controls { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.btn {
+  font: inherit; font-size: 14px; color: var(--ink); background: var(--surface);
+  border: 1px solid var(--rule); border-radius: 8px; padding: 5px 12px; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px; line-height: 1.4;
+}
+.btn:hover { border-color: var(--ink2); }
+.btn:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible {
+  outline: 2px solid var(--violet); outline-offset: 2px;
+}
+.btn.primary { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.btn.primary:hover { opacity: .9; }
+.btn[aria-pressed="true"] { background: var(--violet-soft); border-color: var(--violet); }
+.btn svg { width: 14px; height: 14px; fill: currentColor; }
+input.numinput { font: inherit; font-size: 14px; font-family: var(--font-mono); color: var(--ink);
+  background: var(--surface); border: 1px solid var(--rule); border-radius: 8px;
+  padding: 4px 8px; width: 92px; }
+.range { flex: 1 1 180px; accent-color: var(--violet); min-width: 120px; }
+select { font: inherit; font-size: 14px; color: var(--ink); background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 4px 8px; }
+.counter { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* sliders form */
+.sliders { display: grid; grid-template-columns: max-content 1fr 5.5em; gap: 6px 12px; align-items: center; font-size: 14px; }
+.sliders output { font-family: var(--font-mono); font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; }
+.sliders input[type="range"] { width: 100%; accent-color: var(--violet); }
+
+/* small tables */
+table.kv { border-collapse: collapse; font-size: 13.5px; width: 100%; font-variant-numeric: tabular-nums; }
+table.kv th, table.kv td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+table.kv th { color: var(--muted); font-weight: 500; white-space: nowrap; width: 1%; }
+/* column headers may wrap: a long one (the section-11 table in English) otherwise
+   holds the whole table wider than a phone screen */
+table.kv thead th { white-space: normal; width: auto; }
+/* on a phone the row labels may wrap too (long English labels, e.g. the
+   conservation readouts), so no table is held wider than the screen */
+@media (max-width: 600px) { table.kv th { white-space: normal; } }
+table.kv td.num { font-family: var(--font-mono); font-size: 13px; }
+/* the picked row of a lab table (fd-lab, bug-lab), and the pass/fail marks of bug-lab */
+table.kv tbody tr.picked > * { background: color-mix(in srgb, var(--violet) 14%, transparent); }
+.okmark { color: var(--tangent); font-weight: 700; }
+.badmark { color: var(--adjoint); font-weight: 700; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 12.5px; border: 1px solid var(--rule); border-radius: 999px; padding: 1px 10px; color: var(--ink2); background: var(--surface); }
+
+figure { margin: 22px 0; }
+figcaption { font-size: 13.5px; color: var(--muted); margin-top: 8px; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink2); margin-top: 8px; }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 5px; }
+
+.cmp { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 760px) { .cmp { grid-template-columns: 1fr; } }
+.cmp .col { border: 1px solid var(--rule); border-radius: 10px; padding: 10px 12px; background: var(--surface); }
+.cmp .col h4 { margin: 0 0 6px; font-size: 14px; }
+.cmp .col .code { font-size: 12px; }
+
+.summary { width: 100%; border-collapse: collapse; font-size: 14px; margin: 16px 0; }
+.summary th, .summary td { border-bottom: 1px solid var(--rule); padding: 8px 10px; text-align: left; vertical-align: top; }
+.summary thead th { font-weight: 600; color: var(--ink); border-bottom: 2px solid var(--ink2); }
+.summary tbody th { color: var(--muted); font-weight: 500; white-space: nowrap; }
+.tablewrap { overflow-x: auto; }
+
+mjx-container { color: inherit; }
+mjx-container[display="true"] { overflow-x: auto; overflow-y: hidden; padding-block: 4px; }
+
+.foot { color: var(--muted); font-size: 13px; margin-top: 48px; }
+
+.matwrap { margin-top: 14px; border-top: 1px solid var(--rule); padding-top: 10px; }
+.matwrap > summary { cursor: pointer; font-size: 13.5px; color: var(--ink2); font-weight: 600;
+  list-style: none; display: flex; align-items: center; gap: 6px; }
+.matwrap > summary::before { content: "▾"; color: var(--violet); font-size: 11px; }
+.matwrap:not([open]) > summary::before { content: "▸"; }
+.matwrap > summary::-webkit-details-marker { display: none; }
+.matwrap > .svgbox { margin-top: 8px; }
+
+.errbar { background: var(--adjoint-soft); color: var(--adjoint); border: 1px solid var(--adjoint);
+  border-radius: 8px; padding: 10px 14px; margin: 16px 0; font-size: 14px; }
+
+a.fref { color: var(--violet); text-decoration: none; border-bottom: 1px dashed var(--violet);
+  white-space: nowrap; padding: 0 1px; }
+a.fref:hover { color: var(--ink); border-bottom-color: var(--ink); }
+.figno { color: var(--violet); font-weight: 700; }
+
+/* ---- language switch: one set shown, the other hidden ---- */
+html[data-lang="zh"] [lang="en"] { display: none; }
+html[data-lang="en"] [lang="zh"] { display: none; }
+.langtoggle { float: right; margin-left: 16px; font-size: 13px; padding: 3px 10px; }
+/* back to the index of all pages: beside the language button (a float after
+   it lands to its left), and first in the contents, which stay in view */
+.homebtn { float: right; margin-left: 10px; font-size: 13px; padding: 3px 10px; text-decoration: none; }
+nav.toc li.tochome .num { color: var(--muted); }
+@media (min-width: 1000px) {
+  nav.toc li.tochome { border-bottom: 1px solid var(--rule); padding-bottom: 6px; margin-bottom: 8px; }
+}
+
+/* ---- plain HTML math (no external renderer) ---- */
+.eq, .eqd { font-family: var(--font-display); white-space: nowrap;
+  display: inline-flex; align-items: baseline; vertical-align: baseline; }
+/* vertical-align was middle, which centres the formula's BOX on the line: a
+   formula with a fraction has a box that reaches far below its baseline, so
+   it rode up off the text line (all 173 inline formulas on the cell page sat
+   off the baseline, the worst by 31.6px). An inline-flex box whose items align
+   on their baselines has exactly that shared baseline, so baseline alignment
+   puts every formula on the line. */
+/* Georgia on macOS and Windows has old-style figures only (measured: the
+   lining-nums feature changes nothing), so a 0 in a vector read as the letter
+   o and a 4 dropped below the baseline. Digits use a serif with lining ones. */
+.dg { font-family: "Times New Roman", Times, "Liberation Serif", "Noto Serif", serif;
+  font-style: normal; }
+.eq { font-size: 1.02em; }
+/* a formula and the punctuation next to it stay on one line (build_1d.py glue) */
+.nw { white-space: nowrap; }
+.eqwrap { margin: 16px 0; text-align: center; overflow-x: auto; overflow-y: hidden; }
+.eqd { font-size: 1.12em; padding: 2px 0 1.35em; }
+.eq i, .eqd i { font-style: italic; }
+.eq sub, .eqd sub, .eq sup, .eqd sup { font-size: .72em; font-style: normal; }
+.eq .op, .eqd .op { padding: 0 .16em; }
+.sp1 { display: inline-block; width: 1em; }
+.sp2 { display: inline-block; width: 1.8em; }
+.spt { display: inline-block; width: .18em; }
+/* The fraction column (.fcol) is raised by vertical-align inside an
+   inline-block (.frac) that holds it on one line box. The raise therefore
+   counts in layout and the row grows to contain the numerator. As a flex item
+   or inline, .frac presents the baseline of that line box, so both contexts
+   use the same markup and the same single offset. It used to be a relative
+   shift (top: -0.665em) on flex items, which moves the drawing but not the
+   box: every numerator stuck ~0.665em out of its row, and .eqwrap (overflow-y
+   hidden) cut the top off a lining superscript 2 in a^2/(gamma-1). */
+.frac { display: inline-block; margin: 0 .16em; }
+/* \sqrt, for one-line arguments. A radical GLYPH has a font-dependent
+   height, so its top never met a bar drawn over the argument (measured: a
+   gap of ~0.4em). Instead the sign is a small SVG laid over the left
+   padding and sized to exactly the argument's box, and the bar is the
+   argument's top border: the sign ends where the bar starts, in any font.
+   The SVG is out of flow, so the argument alone sets the height and the
+   baseline, and the construct sits on the line like the text around it. */
+.sqrt { display: inline-flex; position: relative; padding-left: .6em; margin: 0 .08em; }
+.sqrt .rad { position: absolute; left: 0; top: 0; width: .6em; height: 100%; overflow: visible; }
+.sqrt .rad path { fill: none; stroke: currentColor; stroke-width: 1.1; stroke-linejoin: round;
+  stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.sqrt .rarg { line-height: 1.15; border-top: 1px solid currentColor; padding: .02em .08em 0 .06em; }
+.frac .fcol { display: inline-flex; flex-direction: column; vertical-align: 0.663em;
+  text-align: center; }
+.frac .num { border-bottom: 1px solid currentColor; padding: 0 .3em 1px; line-height: 1.25; }
+/* A fraction is placed by its numerator's baseline, and the bar is the
+   numerator's bottom edge, so anything that deepens the numerator's line box
+   lowers the bar. A subscript did exactly that: the bar of a_0^2/(gamma-1)
+   sat 0.157em below the two bars beside it in the same equation. With no
+   line height of its own a subscript no longer moves the bar. */
+.frac .num sub { line-height: 0; }
+.frac .den { padding: 1px .3em 0; line-height: 1.25; }
+/* .eq/.eqd align their children on the BASELINE, not centred: an .ub group is
+   2.08em to 3.17em tall depending on its content, and only baseline alignment
+   puts its interior text on the row baseline at every height (measured: 0.000
+   for all of them). Everything below is then a fixed offset from that baseline,
+   measured in Chrome. A fraction bar belongs on the math axis, 0.25em above the
+   baseline; at rest its bar sits 0.413em BELOW, in every context, and .fcol's
+   vertical-align lifts it there (see .frac above). */
+/* sub/sup are flex items in .eq/.eqd, so their default vertical-align is
+   dropped and align-items:center renders subscripts and superscripts at the
+   SAME height. Put them back on the baseline and offset them explicitly. */
+/* Leave them centred by align-items (deterministic: zero spread) and
+   offset from there. align-self:baseline is NOT usable here - with only
+   sub/sup opting in, the flex line baseline varies per formula. */
+.eq > sub, .eqd > sub, .eq > sup, .eqd > sup { position: relative; }
+/* Measured in Chrome: centred, a sub/sup baseline sits 0.083em ABOVE the
+   parent baseline, so sub is indistinguishable from sup. Shift each onto the
+   position the browser itself uses for a sub/sup in normal inline flow
+   (measured on nested ones: sub +0.230em, sup -0.361em), so direct children
+   and nested ones agree. top is in the child's own em, ie 0.72 of parent. */
+.eq > sub, .eqd > sub { top: 0.317em; }
+.eq > sup, .eqd > sup { top: -0.501em; }
+/* A bare grid has no meaningful baseline, so it stays centred. A matrix
+   (.pmat) now carries one of its own and takes part in the row's baseline
+   alignment like everything else. */
+.eq > .mgrid, .eqd > .mgrid { align-self: center; }
+.ub { position: relative; display: inline-block; margin: 0 .14em;
+  border-bottom: 2px solid var(--muted); padding-bottom: 2px; }
+.ub .ubx { display: inline-block; }
+.ub .ubl { position: absolute; left: 50%; top: calc(100% + 3px);
+  transform: translateX(-50%); font-size: .6em; color: var(--muted);
+  font-style: normal; font-family: var(--font-body); white-space: nowrap; }
+.pmat { display: inline-flex; align-items: stretch; vertical-align: baseline; margin: 0 .12em; }
+/* The baseline of a flex container none of whose items align on baselines is
+   the baseline of its FIRST item. That item is this zero-width strut, centred
+   on the grid, so the matrix's baseline sits a fixed distance below its
+   centre and the row puts the centre on the math axis, level with the
+   fraction bars beside it, instead of hanging the matrix from its first row.
+   The margin moves the centre from 0.349em above the baseline (Georgia's
+   (ascent - descent)/2) down to the fraction-bar height. */
+.pmat .pstrut { align-self: center; width: 0; margin-bottom: .094em; }
+/* Drawn parentheses: a one-sided border stretches with the grid however many
+   rows it has, and tapers to nothing at both ends like a typeset one. */
+.pmat .lp, .pmat .rp { flex: none; width: .3em; border: 0 solid var(--ink2); }
+.pmat .lp { border-left-width: .07em; border-radius: 100% 0 0 100% / 50% 0 0 50%; }
+.pmat .rp { border-right-width: .07em; border-radius: 0 100% 100% 0 / 0 50% 50% 0; }
+.mgrid { display: inline-grid; gap: 2px 14px; align-items: center; justify-items: center; padding: 0 .2em; }
+.mcell { font-size: .92em; }
+
+
+/* ---- advection-diffusion pages ---- */
+.passes { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; font-size: 12.5px; }
+.passes span { padding: 2px 9px; border-radius: 10px; border: 1px solid var(--rule); color: var(--muted); }
+.passes span.on { background: var(--violet-soft); color: var(--violet); border-color: var(--violet); font-weight: 600; }
+table.lsqtab { font-size: 12.5px; }
+/* the order-of-accuracy tables of section 12 */
+table.ordtab { border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; margin: 8px 0 14px; }
+table.ordtab th, table.ordtab td { padding: 4px 9px; border-bottom: 1px solid var(--rule); text-align: right; white-space: nowrap; }
+table.ordtab thead th { color: var(--muted); font-weight: 500; }
+table.ordtab th.grp { text-align: center; border-bottom: 1px solid var(--grid); }
+table.ordtab td.num { font-family: var(--font-mono); font-size: 12.5px; }
+table.ordtab td.ord { font-family: var(--font-mono); font-size: 12.5px; color: var(--ink2); }
+table.lsqtab th { text-align: left; font-weight: 600; color: var(--ink2); padding-right: 8px; }
+table.lsqtab td { padding-right: 8px; }
+
+.nslab{padding:20px;min-width:0}.nslab svg[role="img"]{display:block;width:100%;height:auto}.nslab svg text{font:11px var(--font-mono);fill:var(--ink2)}.nslab button{white-space:nowrap}.controls{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:15px 0}.controls label{display:flex;gap:6px;align-items:center}.controls input[type=number]{width:90px}.controls input[type=range]{width:180px}.tablewrap{overflow:auto;max-height:360px}.kv{width:100%;border-collapse:collapse;font:12px var(--font-mono)}.kv td,.kv th{white-space:nowrap;padding:8px;border-bottom:1px solid var(--rule);text-align:left}.equation{overflow:auto;background:var(--surface);border-left:3px solid var(--violet);padding:18px;margin:24px 0}.equation math{display:block;min-width:100%;width:max-content}.algorithm,.source-code{overflow:auto;max-height:500px;padding:18px;background:var(--sunken);font:12px/1.8 var(--font-mono)}.error{color:#a22}.ns-figure{margin:24px 0}.ns-figure svg{display:block;width:100%;height:auto}.ns-figure text{font:13px var(--font-body);fill:var(--ink2)}@media(max-width:700px){.nslab{overflow:auto}.nslab svg[role="img"]{min-width:560px}.ns-figure{overflow:auto}.ns-figure svg{min-width:640px}}</style>
+</head>
+<body data-scheme="node"><div class="page"><header class="masthead"><button class="btn langtoggle" id="langtoggle">English</button><a class="btn homebtn" href="index.html"><span lang="zh">← 首页</span><span lang="en">← Home</span></a><h1 lang="zh">一维层流 Navier–Stokes 方程的离散伴随：格点格式</h1><h1 lang="en">Discrete adjoints for 1D laminar Navier–Stokes: node-centred</h1><p lang="zh">从 Euler 的守恒通量继续，加入分子黏性、黏性功和热传导。我们在等截面的光滑可压缩流中逐步构造残差、matrix-free tangent 与 adjoint，再求温度和热流目标对热源及物性参数的导数。面向学过微积分、线性代数和数值方法的本科生；全部图和播放器来自本页实际计算。</p><p lang="en">Continue from Euler fluxes by adding molecular viscosity, viscous work and heat conduction. For smooth compressible flow of constant area, build residuals, matrix-free tangents and adjoints, then differentiate temperature and heat-flux objectives with respect to heating and transport. Calculus, linear algebra and numerical methods are the prerequisites. Plots and players use the actual computations on this page.</p><ol class="route"><li><a href="#s1">1 <span lang="zh">网格与未知量</span><span lang="en">Mesh and unknowns</span></a><span class="sep">→</span></li><li><a href="#s2">2 <span lang="zh">方程、物性与重构</span><span lang="en">Equations, transport and reconstruction</span></a><span class="sep">→</span></li><li><a href="#s3">3 <span lang="zh">边界条件</span><span lang="en">Boundary conditions</span></a><span class="sep">→</span></li><li><a href="#s4">4 <span lang="zh">守恒残差</span><span lang="en">Conservative residual</span></a><span class="sep">→</span></li><li><a href="#s5">5 <span lang="zh">Jacobian 与块 GS</span><span lang="en">Jacobian and block GS</span></a><span class="sep">→</span></li><li><a href="#s6">6 <span lang="zh">目标函数</span><span lang="en">Objectives</span></a><span class="sep">→</span></li><li><a href="#s7">7 <span lang="zh">前向 tangent</span><span lang="en">Forward tangent</span></a><span class="sep">→</span></li><li><a href="#s8">8 <span lang="zh">反向 adjoint</span><span lang="en">Reverse adjoint</span></a><span class="sep">→</span></li><li><a href="#s9">9 <span lang="zh">前向方程求解</span><span lang="en">Tangent solve</span></a><span class="sep">→</span></li><li><a href="#s10">10 <span lang="zh">伴随方程求解</span><span lang="en">Adjoint solve</span></a><span class="sep">→</span></li><li><a href="#s11">11 <span lang="zh">设计参数与总导数</span><span lang="en">Design parameters and total derivatives</span></a><span class="sep">→</span></li><li><a href="#s12">12 <span lang="zh">有限差分与 Taylor 检验</span><span lang="en">Finite differences and Taylor tests</span></a><span class="sep">→</span></li><li><a href="#s13">13 <span lang="zh">复数步长</span><span lang="en">Complex step</span></a><span class="sep">→</span></li><li><a href="#s14">14 <span lang="zh">一阶与二阶精度</span><span lang="en">First- and second-order accuracy</span></a><span class="sep">→</span></li><li><a href="#s15">15 <span lang="zh">连续参考与一致性</span><span lang="en">Continuous reference and consistency</span></a><span class="sep">→</span></li><li><a href="#s16">16 <span lang="zh">GS 与 GMRES</span><span lang="en">GS and GMRES</span></a><span class="sep">→</span></li><li><a href="#s17">17 <span lang="zh">总结</span><span lang="en">Summary</span></a><span class="sep">→</span></li><li><a href="#appendix-a">A <span lang="zh">连续伴随</span><span lang="en">Continuous adjoint</span></a><span class="sep">→</span></li><li><a href="#appendix-b">B <span lang="zh">局部黏性求导</span><span lang="en">Local viscous derivatives</span></a><span class="sep">→</span></li><li><a href="#appendix-c">C <span lang="zh">LU 直接法</span><span lang="en">Direct LU</span></a></li></ol><div class="controls"><label><span lang="zh">算例</span><span lang="en">Case</span><select id="case"><option value="heat" data-zh="局部加热" data-en="Local heating" selected>局部加热</option><option value="mms" data-zh="制造解" data-en="Manufactured solution">制造解</option></select></label><label><span lang="zh">对流精度</span><span lang="en">Convective order</span><select id="order"><option value="1" data-zh="一阶" data-en="First order">一阶</option><option value="2" data-zh="二阶" data-en="Second order" selected>二阶</option></select></label><label><span lang="zh">物性</span><span lang="en">Transport</span><select id="transport"><option value="constant" data-zh="常物性" data-en="Constant" selected>常物性</option><option value="variable" data-zh="Sutherland" data-en="Sutherland">Sutherland</option></select></label><label><span lang="zh">网格区间</span><span lang="en">Grid intervals</span><select id="grid-n"><option value="8" data-zh="8" data-en="8">8</option><option value="12" data-zh="12" data-en="12" selected>12</option><option value="24" data-zh="24" data-en="24">24</option></select></label><label><span lang="zh">目标</span><span lang="en">Objective</span><select id="objective"><option value="tracking" data-zh="温度跟踪" data-en="Temperature tracking" selected>温度跟踪</option><option value="outlet" data-zh="出口温度" data-en="Outlet temperature">出口温度</option><option value="heatflux" data-zh="入口热流" data-en="Inlet heat flux">入口热流</option></select></label><label>μ_ref <input id="mu" type="number" min="0.08" max="0.3" step="0.01" value="0.15"/></label><label>Pr <input id="pr" type="number" min="0.5" max="1.2" step="0.02" value="0.72"/></label><label><span lang="zh">加热幅度</span><span lang="en">Heat amplitude</span><input id="heating" type="number" min="0" max="0.06" step="0.01" value="0.03"/></label><label><span lang="zh">前向／连续对照方向</span><span lang="en">Tangent / reference direction</span><select id="parameter"><option value="0" data-zh="a₀" data-en="a₀" selected>a₀</option><option value="1" data-zh="a₁" data-en="a₁">a₁</option><option value="2" data-zh="μ_ref" data-en="μ_ref">μ_ref</option><option value="3" data-zh="Pr" data-en="Pr">Pr</option><option value="4" data-zh="T_in" data-en="T_in">T_in</option><option value="5" data-zh="出口参数" data-en="Outlet parameter">出口参数</option></select></label><button class="btn" id="solve"><span lang="zh">计算与更新</span><span lang="en">Solve & update</span></button></div><p lang="zh">制造解模式不使用顶部加热幅度：默认制造热源固定，a₀/a₁ 仍可在差分节作为附加热源扰动。参数修改后点击计算。</p><p lang="en">Manufactured mode ignores the top heat amplitude: its baseline forcing is fixed, while a₀/a₁ remain additional heat-source perturbations in the difference panel. Click Solve after changes.</p><p id="status" role="status"></p></header><nav class="toc"><ul><li><a href="index.html"><span lang="zh">首页</span><span lang="en">Home</span></a></li><li><a href="#s1"><span class="num">1</span><span lang="zh">网格与未知量</span><span lang="en">Mesh and unknowns</span></a></li><li><a href="#s2"><span class="num">2</span><span lang="zh">方程、物性与重构</span><span lang="en">Equations, transport and reconstruction</span></a></li><li><a href="#s3"><span class="num">3</span><span lang="zh">边界条件</span><span lang="en">Boundary conditions</span></a></li><li><a href="#s4"><span class="num">4</span><span lang="zh">守恒残差</span><span lang="en">Conservative residual</span></a></li><li><a href="#s5"><span class="num">5</span><span lang="zh">Jacobian 与块 GS</span><span lang="en">Jacobian and block GS</span></a></li><li><a href="#s6"><span class="num">6</span><span lang="zh">目标函数</span><span lang="en">Objectives</span></a></li><li><a href="#s7"><span class="num">7</span><span lang="zh">前向 tangent</span><span lang="en">Forward tangent</span></a></li><li><a href="#s8"><span class="num">8</span><span lang="zh">反向 adjoint</span><span lang="en">Reverse adjoint</span></a></li><li><a href="#s9"><span class="num">9</span><span lang="zh">前向方程求解</span><span lang="en">Tangent solve</span></a></li><li><a href="#s10"><span class="num">10</span><span lang="zh">伴随方程求解</span><span lang="en">Adjoint solve</span></a></li><li><a href="#s11"><span class="num">11</span><span lang="zh">设计参数与总导数</span><span lang="en">Design parameters and total derivatives</span></a></li><li><a href="#s12"><span class="num">12</span><span lang="zh">有限差分与 Taylor 检验</span><span lang="en">Finite differences and Taylor tests</span></a></li><li><a href="#s13"><span class="num">13</span><span lang="zh">复数步长</span><span lang="en">Complex step</span></a></li><li><a href="#s14"><span class="num">14</span><span lang="zh">一阶与二阶精度</span><span lang="en">First- and second-order accuracy</span></a></li><li><a href="#s15"><span class="num">15</span><span lang="zh">连续参考与一致性</span><span lang="en">Continuous reference and consistency</span></a></li><li><a href="#s16"><span class="num">16</span><span lang="zh">GS 与 GMRES</span><span lang="en">GS and GMRES</span></a></li><li><a href="#s17"><span class="num">17</span><span lang="zh">总结</span><span lang="en">Summary</span></a></li><li><a href="#appendix-a"><span class="num">A</span><span lang="zh">连续伴随</span><span lang="en">Continuous adjoint</span></a></li><li><a href="#appendix-b"><span class="num">B</span><span lang="zh">局部黏性求导</span><span lang="en">Local viscous derivatives</span></a></li><li><a href="#appendix-c"><span class="num">C</span><span lang="zh">LU 直接法</span><span lang="en">Direct LU</span></a></li></ul></nav><main><section class="sec" id="s1"><div class="secnum"><span lang="zh">第 1 节</span><span lang="en">Section 1</span></div><h2 lang="zh">网格与未知量</h2><h2 lang="en">Mesh and unknowns</h2><p lang="zh">从 Euler 到 N–S，未知量仍是密度、动量和总能量。新增困难来自面通量需要相邻状态的梯度，而不是新增一个“黏性未知量”。本页只考虑沿 x 方向变化的可压缩层流，横向速度为零、截面恒定；它不解析管壁边界层，也不包含湍流模型。</p><p lang="en">The unknowns remain density, momentum and total energy. The new difficulty is that face fluxes depend on state gradients, not a new “viscous unknown”. This is plane one-dimensional compressible laminar flow with zero transverse velocity and constant area. It resolves neither duct-wall boundary layers nor turbulence.</p><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>U</mi><mo>=</mo><mo stretchy="false">(</mo><mi>ρ</mi><mo separator="true">,</mo><mi>ρ</mi><mi>u</mi><mo separator="true">,</mo><mi>ρ</mi><mi>E</mi><msup><mo stretchy="false">)</mo><mi>T</mi></msup><mo separator="true">,</mo><mspace width="1em"/><mi>E</mi><mo>=</mo><msub><mi>c</mi><mi>v</mi></msub><mi>T</mi><mo>+</mo><mstyle scriptlevel="0" displaystyle="false"><mfrac><mn>1</mn><mn>2</mn></mfrac></mstyle><msup><mi>u</mi><mn>2</mn></msup><mo separator="true">,</mo><mspace width="1em"/><mi>p</mi><mo>=</mo><mi>ρ</mi><mi>T</mi><mo separator="true">,</mo><mspace width="1em"/><msub><mi>c</mi><mi>v</mi></msub><mo>=</mo><mn>2.5</mn><mo separator="true">,</mo><mtext> </mtext><msub><mi>c</mi><mi>p</mi></msub><mo>=</mo><mn>3.5.</mn></mrow><annotation encoding="application/x-tex">U=(\rho,\rho u,\rho E)^T,\quad E=c_vT+\tfrac12u^2,\quad p=\rho T,\quad c_v=2.5,\ c_p=3.5.</annotation></semantics></math></span></div><p lang="zh">本版把 U 放在 N+1 个节点上。内部对偶面是相邻节点中点，两个端点的控制体宽度为 h/2。入口替换三条状态约束；出口保留质量平衡，另外两行施加速度／温度或应力／热流条件。被替换的行不再是守恒平衡，伴随必须先清除其旧种子。</p><p lang="en">This version places U on N+1 nodes. Interior dual faces lie at midpoints and endpoint volumes have width h/2. Three inlet rows impose state constraints. At the outlet the mass balance remains, while two rows impose velocity/temperature or stress/heat-flux conditions. Replaced rows are no longer balances: their old adjoint seeds must be masked.</p><div class="lab nslab" id="mesh-lab"></div><figure class="ns-figure"><svg role="img" aria-label="图 1：同一条计算链，前向传播扰动，反向累加伴随。" viewBox="0 0 800 160"><rect x="15" y="30" width="210" height="70" rx="8" fill="var(--surface)" stroke="var(--primal)"/><rect x="295" y="30" width="210" height="70" rx="8" fill="var(--surface)" stroke="var(--tangent)"/><rect x="575" y="30" width="210" height="70" rx="8" fill="var(--surface)" stroke="var(--violet)"/><text x="30" y="60">U → ρ, u, T</text><text x="30" y="85">nodes / dual volumes</text><text x="310" y="60">uₓ, Tₓ, μ(T), κ(T)</text><text x="310" y="85">τ, q, uτ−q</text><text x="590" y="60">H = Fᶜ − Fᵛ</text><text x="590" y="85">R → J → gradient</text><text x="240" y="65">→</text><text x="520" y="65">→</text><text x="80" y="135">tangent →</text><text x="610" y="135">← adjoint</text></svg><figcaption><span lang="zh">图 1：同一条计算链，前向传播扰动，反向累加伴随。</span><span lang="en">Figure 1: one computational chain, forward perturbations and reverse adjoint accumulation.</span></figcaption></figure></section><section class="sec" id="s2"><div class="secnum"><span lang="zh">第 2 节</span><span lang="en">Section 2</span></div><h2 lang="zh">方程、物性与重构</h2><h2 lang="en">Equations, transport and reconstruction</h2><p lang="zh">质量方程没有物理黏性扩散；动量通过轴向正应力传递，总能量通过黏性功和热传导交换。先把物理通量与数值耗散分开：Rusanov 的耗散用于对流离散，不能解释成分子黏度。</p><p lang="en">There is no physical mass diffusion. Axial normal stress transfers momentum; viscous work and heat conduction transfer energy. Rusanov dissipation belongs to the convective discretization and is not molecular viscosity.</p><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>U</mi><mi>t</mi></msub><mo>+</mo><mo stretchy="false">(</mo><msup><mi>F</mi><mi>c</mi></msup><mo>−</mo><msup><mi>F</mi><mi>v</mi></msup><msub><mo stretchy="false">)</mo><mi>x</mi></msub><mo>=</mo><mi>S</mi><mo separator="true">,</mo><mspace width="1em"/><msup><mi>F</mi><mi>c</mi></msup><mo>=</mo><mrow><mo fence="true">[</mo><mtable rowspacing="0.16em" columnalign="center" columnspacing="1em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mi>ρ</mi><mi>u</mi></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mi>ρ</mi><msup><mi>u</mi><mn>2</mn></msup><mo>+</mo><mi>p</mi></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mi>u</mi><mo stretchy="false">(</mo><mi>ρ</mi><mi>E</mi><mo>+</mo><mi>p</mi><mo stretchy="false">)</mo></mrow></mstyle></mtd></mtr></mtable><mo fence="true">]</mo></mrow><mo separator="true">,</mo><mspace width="1em"/><msup><mi>F</mi><mi>v</mi></msup><mo>=</mo><mrow><mo fence="true">[</mo><mtable rowspacing="0.16em" columnalign="center" columnspacing="1em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mn>0</mn></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mi>τ</mi></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mi>u</mi><mi>τ</mi><mo>−</mo><mi>q</mi></mrow></mstyle></mtd></mtr></mtable><mo fence="true">]</mo></mrow><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">U_t+(F^c-F^v)_x=S,\quad F^c=\begin{bmatrix}\rho u\\\rho u^2+p\\u(\rho E+p)\end{bmatrix},\quad F^v=\begin{bmatrix}0\\\tau\\u\tau-q\end{bmatrix}.</annotation></semantics></math></span></div><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>τ</mi><mo>=</mo><mstyle scriptlevel="0" displaystyle="false"><mfrac><mn>4</mn><mn>3</mn></mfrac></mstyle><mi>μ</mi><msub><mi>u</mi><mi>x</mi></msub><mo separator="true">,</mo><mspace width="1em"/><mi>q</mi><mo>=</mo><mo>−</mo><mi>κ</mi><msub><mi>T</mi><mi>x</mi></msub><mo separator="true">,</mo><mspace width="1em"/><mi>κ</mi><mo>=</mo><mi>μ</mi><msub><mi>c</mi><mi>p</mi></msub><mi mathvariant="normal">/</mi><mi>P</mi><mi>r</mi><mo separator="true">,</mo><mspace width="1em"/><mi>μ</mi><mo stretchy="false">(</mo><mi>T</mi><mo stretchy="false">)</mo><mo>=</mo><msub><mi>μ</mi><mrow><mi>r</mi><mi>e</mi><mi>f</mi></mrow></msub><mfrac><mrow><mn>1.4</mn><msup><mi>T</mi><mrow><mn>3</mn><mi mathvariant="normal">/</mi><mn>2</mn></mrow></msup></mrow><mrow><mi>T</mi><mo>+</mo><mn>0.4</mn></mrow></mfrac><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">\tau=\tfrac43\mu u_x,\quad q=-\kappa T_x,\quad \kappa=\mu c_p/Pr,\quad \mu(T)=\mu_{ref}\frac{1.4T^{3/2}}{T+0.4}.</annotation></semantics></math></span></div><p lang="zh">4/3 来自三维 Newton 应力在平面一维运动下的 Stokes 假设。常物性模式令 μ=μ_ref；变物性模式使用上面的无量纲 Sutherland 形式。尺度取长度 L_ref、密度 ρ_ref、温度 T_ref 和速度 √(R_g T_ref)，因此代码中的 μ_ref 已除以 ρ_ref L_ref √(R_g T_ref)，不再另乘 1/Re。γ=1.4，气体常数在这些单位下为 1。</p><p lang="en">The factor 4/3 follows from the three-dimensional Newtonian stress with Stokes’ hypothesis restricted to plane motion. Constant transport sets μ=μ_ref; variable transport uses the displayed nondimensional Sutherland law. Scales are L_ref, ρ_ref, T_ref and velocity √(R_g T_ref). The coded μ_ref is already divided by ρ_ref L_ref √(R_g T_ref); no extra 1/Re is applied. Gamma is 1.4 and the scaled gas constant is one.</p><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msup><mover accent="true"><mi>F</mi><mo stretchy="true">^</mo></mover><mi>c</mi></msup><mo>=</mo><mstyle scriptlevel="0" displaystyle="false"><mfrac><mn>1</mn><mn>2</mn></mfrac></mstyle><mo stretchy="false">(</mo><msup><mi>F</mi><mi>c</mi></msup><mo stretchy="false">(</mo><msup><mi>U</mi><mo>−</mo></msup><mo stretchy="false">)</mo><mo>+</mo><msup><mi>F</mi><mi>c</mi></msup><mo stretchy="false">(</mo><msup><mi>U</mi><mo>+</mo></msup><mo stretchy="false">)</mo><mo stretchy="false">)</mo><mo>−</mo><mstyle scriptlevel="0" displaystyle="false"><mfrac><mi>α</mi><mn>2</mn></mfrac></mstyle><mo stretchy="false">(</mo><msup><mi>U</mi><mo>+</mo></msup><mo>−</mo><msup><mi>U</mi><mo>−</mo></msup><mo stretchy="false">)</mo><mo separator="true">,</mo><mspace width="1em"/><mi>α</mi><mo>=</mo><mstyle scriptlevel="0" displaystyle="false"><mfrac><mn>1</mn><mn>2</mn></mfrac></mstyle><mo stretchy="false">(</mo><msup><mi>u</mi><mo>−</mo></msup><mo>+</mo><msup><mi>c</mi><mo>−</mo></msup><mo>+</mo><msup><mi>u</mi><mo>+</mo></msup><mo>+</mo><msup><mi>c</mi><mo>+</mo></msup><mo stretchy="false">)</mo><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">\widehat F^c=\tfrac12(F^c(U^-)+F^c(U^+))-\tfrac\alpha2(U^+-U^-),\quad\alpha=\tfrac12(u^-+c^-+u^++c^+).</annotation></semantics></math></span></div><p lang="zh">当前参数限制在正向亚声速，因此这个平均速度在光滑重构下用作 Rusanov 形式的数值耗散；不宣称它是任意跳跃的最大波速界。一阶为常值重构；二阶为无 limiter 的中心线性重构，边界单元用单侧线性模板。两种模式均保留中心黏性梯度及二阶边界梯度，开关改变的是对流重构。</p><p lang="en">Parameters are restricted to positive subsonic flow. This averaged speed supplies Rusanov-form dissipation for smooth traces; it is not claimed to bound waves for arbitrary jumps. First order uses constant reconstruction; second order uses unlimited centred linear reconstruction with one-sided endpoint stencils. Both retain centred viscous gradients and second-order boundary gradients: the switch changes convective reconstruction.</p><div class="lab nslab" id="flux-lab"></div></section><section class="sec" id="s3"><div class="secnum"><span lang="zh">第 3 节</span><span lang="en">Section 3</span></div><h2 lang="zh">边界条件</h2><h2 lang="en">Boundary conditions</h2><p lang="zh">黏性 N–S 不能直接复制 Euler 的入口总量和出口压力条件。热传导需要热边界，应力也参与出口闭合。本页物理加热问题采用入口 ρ=1、u=0.35、T=T_in；出口 p−τ=p_b、q=0。出口不是同时指定 p=p_b 和 τ=0。初始均匀状态与零热源、T_in=p_b=1 相容；小幅热源给出光滑分支。</p><p lang="en">Viscous N–S cannot simply copy Euler inlet-total/outlet-pressure conditions. Conduction needs a thermal condition and stress enters the outlet closure. The heated case prescribes inlet ρ=1, u=0.35, T=T_in and outlet p−τ=p_b, q=0. It does not prescribe both p=p_b and τ=0. A uniform zero-heating state is compatible with T_in=p_b=1; small heating develops a smooth branch.</p><p lang="zh">制造解采用同一入口条件，出口改为 u=0.35、T=T_out。两种边界配置是不同问题。格心入口使用规定状态的物理通量；黏性梯度由边界值及前两个单元作二次插值。格点用端点二阶单侧梯度，并替换相应边界行。页顶参数改变后，点击计算才更新所有图。</p><p lang="en">The manufactured case uses the same inlet but prescribes u=0.35 and T=T_out at the outlet. These are different boundary-value problems. Cell-centred inlet convection uses the prescribed physical state; viscous gradients use a quadratic through the boundary and first two cells. Nodes use second-order one-sided endpoint gradients and replace the relevant rows. After changing top controls, use Solve to update every panel.</p><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mo stretchy="false">(</mo><msub><mi>u</mi><mi>x</mi></msub><msub><mo stretchy="false">)</mo><mn>0</mn></msub><mo>≈</mo><mfrac><mrow><mo>−</mo><mfrac><mn>8</mn><mn>3</mn></mfrac><msub><mi>u</mi><mi>b</mi></msub><mo>+</mo><mn>3</mn><msub><mi>u</mi><mn>0</mn></msub><mo>−</mo><mfrac><mn>1</mn><mn>3</mn></mfrac><msub><mi>u</mi><mn>1</mn></msub></mrow><mi>h</mi></mfrac><mspace width="1em"/><mtext>(cell)</mtext><mo separator="true">,</mo><mspace width="2em"/><mo stretchy="false">(</mo><msub><mi>u</mi><mi>x</mi></msub><msub><mo stretchy="false">)</mo><mn>0</mn></msub><mo>≈</mo><mfrac><mrow><mo>−</mo><mn>3</mn><msub><mi>u</mi><mn>0</mn></msub><mo>+</mo><mn>4</mn><msub><mi>u</mi><mn>1</mn></msub><mo>−</mo><msub><mi>u</mi><mn>2</mn></msub></mrow><mrow><mn>2</mn><mi>h</mi></mrow></mfrac><mspace width="1em"/><mtext>(node)</mtext><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">(u_x)_0\approx\frac{-\frac83u_b+3u_0-\frac13u_1}{h}\quad\text{(cell)},\qquad (u_x)_0\approx\frac{-3u_0+4u_1-u_2}{2h}\quad\text{(node)}.</annotation></semantics></math></span></div><p lang="zh">对流—扩散系统的可解性不能仅靠数边界条件判定。这里通过独立连续边值解、真实残差、状态正值和加密对照验证所开放的光滑分支。接近声速、负温度或失败的 Newton 更新会报告失败，不能裁剪状态后继续宣称求解了原方程。</p><p lang="en">Counting boundary conditions alone does not prove well-posedness. An independent continuous BVP, true residuals, positive states and refinement test the exposed smooth branch. Sonic approaches, negative temperatures or failed Newton updates are reported, not silently clipped into a different equation.</p><div class="lab nslab" id="bc-lab"></div></section><section class="sec" id="s4"><div class="secnum"><span lang="zh">第 4 节</span><span lang="en">Section 4</span></div><h2 lang="zh">守恒残差</h2><h2 lang="en">Conservative residual</h2><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>R</mi><mi>i</mi></msub><mo>=</mo><msub><mi>H</mi><mrow><mi>i</mi><mo>+</mo><mn>1</mn><mi mathvariant="normal">/</mi><mn>2</mn></mrow></msub><mo>−</mo><msub><mi>H</mi><mrow><mi>i</mi><mo>−</mo><mn>1</mn><mi mathvariant="normal">/</mi><mn>2</mn></mrow></msub><mo>−</mo><msub><mi>S</mi><mi>i</mi></msub><mo separator="true">,</mo><mspace width="1em"/><mi>H</mi><mo>=</mo><msup><mover accent="true"><mi>F</mi><mo stretchy="true">^</mo></mover><mi>c</mi></msup><mo>−</mo><msup><mi>F</mi><mi>v</mi></msup><mo separator="true">,</mo><mspace width="1em"/><msub><mi>S</mi><mi>i</mi></msub><mo>=</mo><msub><mo>∫</mo><msub><mi>I</mi><mi>i</mi></msub></msub><mi>S</mi><mtext> </mtext><mi>d</mi><mi>x</mi><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">R_i=H_{i+1/2}-H_{i-1/2}-S_i,\quad H=\widehat F^c-F^v,\quad S_i=\int_{I_i}S\,dx.</annotation></semantics></math></span></div><p lang="zh">每个面先重构对流状态，再从相邻单元／节点形成黏性梯度。这里内部面物性在左右守恒状态平均值对应的温度上求值，梯度取原始变量差除以距离。这两个步骤不相同，求导时都要保留。源项使用两点 Gauss 积分。</p><p lang="en">Reconstruct convective traces, then form viscous gradients from neighbouring states. Interior transport coefficients use the temperature converted from the average conservative state, while gradients use primitive-variable differences divided by distance. These are different operations and both must be differentiated. Sources use two-point Gauss quadrature.</p><pre class="algorithm">R[:] = 0
+for each face f:
+    gather states; reconstruct Uminus, Uplus
+    convert U to rho, u, T
+    form ux, Tx; evaluate mu(T), kappa(T)
+    tau = (4/3)*mu*ux; q = -kappa*Tx
+    H = convective_flux - [0, tau, u*tau-q]
+    R[left] += H; R[right] -= H
+for each control volume: R -= integrated_source
+node only: replace five boundary rows</pre><p lang="zh">播放器的数组更新来自这一次实际计算。可查看每个面上的对流、黏性和净通量，再检查左右分发。格点模式最后显示被替换的边界行；全域通量收支必须区分原始平衡行和最终约束行。</p><p lang="en">The player uses updates from the actual computation. Inspect convective, viscous and net fluxes, then their left/right scatter. Node mode ends with replaced boundary rows; global flux accounting distinguishes raw balances from final constraints.</p><div class="lab nslab" id="residual-player"></div></section><section class="sec" id="s5"><div class="secnum"><span lang="zh">第 5 节</span><span lang="en">Section 5</span></div><h2 lang="zh">Jacobian 与块 GS</h2><h2 lang="en">Jacobian and block GS</h2><p lang="zh">A=R_U 是完整离散残差的 Jacobian：它包含对流重构、状态转换、黏性梯度、温度物性、边界和目标需要的耦合。matrix-free 指用局部链式法则算 Av 或 Aᵀw，不表示这些导数不存在。</p><p lang="en">A=R_U is the full residual Jacobian, including reconstruction, state conversion, gradients, temperature-dependent transport and boundaries. Matrix-free means evaluating Av or Aᵀw through local chain rules, not omitting those derivatives.</p><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>A</mi><mi mathvariant="normal">Δ</mi><mi>U</mi><mo>=</mo><mo>−</mo><mi>R</mi><mo separator="true">,</mo><mspace width="1em"/><mi>P</mi><mo>=</mo><mi>D</mi><mo>+</mo><mi>L</mi><mo>+</mo><msub><mi>U</mi><mrow><mi>u</mi><mi>p</mi><mi>p</mi><mi>e</mi><mi>r</mi></mrow></msub><mo separator="true">,</mo><mspace width="1em"/><mo stretchy="false">(</mo><mi>D</mi><mo>+</mo><mi>L</mi><mo stretchy="false">)</mo><mi>z</mi><mo>=</mo><mi>r</mi><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">A\Delta U=-R,\quad P=D+L+U_{upper},\quad (D+L)z=r.</annotation></semantics></math></span></div><p lang="zh">P 用当前状态的一阶对流残差构造，但保留完整黏性与热传导。每个位置是 3×3 块。一次前向块 GS 是 B=(D+L)⁻¹；伴随使用 Bᵀ，即反向扫描并转置每个块。小型教学实现显式存储 P；精确二阶算子仍通过计算图乘积调用。下面额外组装 A 仅用于观察结构。</p><p lang="en">P uses first-order convection at the current state but retains viscosity and conduction. Each position is a 3×3 block. One forward block sweep is B=(D+L)⁻¹; its adjoint is Bᵀ, with reverse order and transposed blocks. This small teaching implementation stores P explicitly; the exact second-order operator is still applied by graph products. The extra assembled A below is for inspection.</p><div class="lab nslab" id="primal-lab"></div><div class="lab nslab" id="matrix-lab"></div></section><section class="sec" id="s6"><div class="secnum"><span lang="zh">第 6 节</span><span lang="en">Section 6</span></div><h2 lang="zh">目标函数</h2><h2 lang="en">Objectives</h2><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>J</mi><mi>T</mi></msub><mo>=</mo><mstyle scriptlevel="0" displaystyle="false"><mfrac><mn>1</mn><mn>2</mn></mfrac></mstyle><msubsup><mo>∫</mo><mn>0</mn><mn>1</mn></msubsup><mo stretchy="false">(</mo><mi>T</mi><mo>−</mo><msubsup><mi>T</mi><mo>∗</mo><mrow><mi>t</mi><mi>a</mi><mi>r</mi><mi>g</mi><mi>e</mi><mi>t</mi></mrow></msubsup><msup><mo stretchy="false">)</mo><mn>2</mn></msup><mi>d</mi><mi>x</mi><mo separator="true">,</mo><mspace width="1em"/><msubsup><mi>T</mi><mo>∗</mo><mrow><mi>t</mi><mi>a</mi><mi>r</mi><mi>g</mi><mi>e</mi><mi>t</mi></mrow></msubsup><mo>=</mo><mn>1</mn><mo>+</mo><mn>0.04</mn><mi>sin</mi><mo>⁡</mo><mo stretchy="false">(</mo><mi>π</mi><mi>x</mi><mo stretchy="false">)</mo><mo separator="true">,</mo><mspace width="1em"/><msub><mi>J</mi><mrow><mi>o</mi><mi>u</mi><mi>t</mi></mrow></msub><mo>=</mo><mi>T</mi><mo stretchy="false">(</mo><mn>1</mn><mo stretchy="false">)</mo><mo separator="true">,</mo><mspace width="1em"/><msub><mi>J</mi><mi>q</mi></msub><mo>=</mo><mi>q</mi><mo stretchy="false">(</mo><mn>0</mn><mo stretchy="false">)</mo><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">J_T=\tfrac12\int_0^1(T-T_*^{target})^2dx,\quad T_*^{target}=1+0.04\sin(\pi x),\quad J_{out}=T(1),\quad J_q=q(0).</annotation></semantics></math></span></div><p lang="zh">温度跟踪是默认目标，固定解析目标在改变设计参数和网格时不变。出口温度是端点目标；入口导热通量含梯度和物性，因此有更长的显式依赖链。制造解的出口温度由边界给定，其对热源的导数应为零，这是有用的退化检查。</p><p lang="en">Tracking uses a fixed analytic target under parameter changes and mesh refinement. Outlet temperature is an endpoint objective. Inlet heat flux depends on gradients and transport coefficients, giving a longer explicit dependency chain. In the manufactured case outlet temperature is prescribed, so its heat-source derivative should vanish: a useful degenerate check.</p><div class="lab nslab" id="objective-lab"></div></section><section class="sec" id="s7"><div class="secnum"><span lang="zh">第 7 节</span><span lang="en">Section 7</span></div><h2 lang="zh">前向 tangent</h2><h2 lang="en">Forward tangent</h2><p lang="zh">给状态一个扰动 v，沿实际计算链传播。先用商法则从守恒量得到 δu、δT，再对梯度、物性和通量应用乘积法则。新增的项不是高阶小量，不能省略。</p><p lang="en">Perturb the state by v and follow the actual computational chain. Use quotient rules to obtain δu and δT from conservative variables, then differentiate gradients, transport and fluxes by product rules. The new terms are not negligible higher-order terms.</p><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>δ</mi><mi>u</mi><mo>=</mo><mfrac><mrow><mi>δ</mi><mo stretchy="false">(</mo><mi>ρ</mi><mi>u</mi><mo stretchy="false">)</mo><mo>−</mo><mi>u</mi><mi>δ</mi><mi>ρ</mi></mrow><mi>ρ</mi></mfrac><mo separator="true">,</mo><mspace width="1em"/><mi>δ</mi><mi>T</mi><mo>=</mo><mfrac><mrow><mi>δ</mi><mo stretchy="false">(</mo><mi>ρ</mi><mi>E</mi><mo stretchy="false">)</mo><mo>−</mo><mi>E</mi><mi>δ</mi><mi>ρ</mi></mrow><mrow><mi>ρ</mi><msub><mi>c</mi><mi>v</mi></msub></mrow></mfrac><mo>−</mo><mfrac><mrow><mi>u</mi><mi>δ</mi><mi>u</mi></mrow><msub><mi>c</mi><mi>v</mi></msub></mfrac><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">\delta u=\frac{\delta(\rho u)-u\delta\rho}{\rho},\quad \delta T=\frac{\delta(\rho E)-E\delta\rho}{\rho c_v}-\frac{u\delta u}{c_v}.</annotation></semantics></math></span></div><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>δ</mi><mi>τ</mi><mo>=</mo><mstyle scriptlevel="0" displaystyle="false"><mfrac><mn>4</mn><mn>3</mn></mfrac></mstyle><mo stretchy="false">(</mo><mi>μ</mi><mi>δ</mi><msub><mi>u</mi><mi>x</mi></msub><mo>+</mo><msub><mi>u</mi><mi>x</mi></msub><mi>δ</mi><mi>μ</mi><mo stretchy="false">)</mo><mo separator="true">,</mo><mspace width="1em"/><mi>δ</mi><mi>q</mi><mo>=</mo><mo>−</mo><mi>κ</mi><mi>δ</mi><msub><mi>T</mi><mi>x</mi></msub><mo>−</mo><msub><mi>T</mi><mi>x</mi></msub><mi>δ</mi><mi>κ</mi><mo separator="true">,</mo><mspace width="1em"/><mi>δ</mi><mo stretchy="false">(</mo><mi>u</mi><mi>τ</mi><mo>−</mo><mi>q</mi><mo stretchy="false">)</mo><mo>=</mo><mi>τ</mi><mi>δ</mi><mi>u</mi><mo>+</mo><mi>u</mi><mi>δ</mi><mi>τ</mi><mo>−</mo><mi>δ</mi><mi>q</mi><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">\delta\tau=\tfrac43(\mu\delta u_x+u_x\delta\mu),\quad \delta q=-\kappa\delta T_x-T_x\delta\kappa,\quad\delta(u\tau-q)=\tau\delta u+u\delta\tau-\delta q.</annotation></semantics></math></span></div><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>δ</mi><mi>μ</mi><mo>=</mo><msub><mi>μ</mi><mi>T</mi></msub><mi>δ</mi><mi>T</mi><mo>+</mo><mfrac><mi>μ</mi><msub><mi>μ</mi><mrow><mi>r</mi><mi>e</mi><mi>f</mi></mrow></msub></mfrac><mi>δ</mi><msub><mi>μ</mi><mrow><mi>r</mi><mi>e</mi><mi>f</mi></mrow></msub><mo separator="true">,</mo><mspace width="1em"/><msub><mi>μ</mi><mi>T</mi></msub><mo>=</mo><mi>μ</mi><mrow><mo fence="true">(</mo><mfrac><mn>3</mn><mrow><mn>2</mn><mi>T</mi></mrow></mfrac><mo>−</mo><mfrac><mn>1</mn><mrow><mi>T</mi><mo>+</mo><mn>0.4</mn></mrow></mfrac><mo fence="true">)</mo></mrow><mo separator="true">,</mo><mspace width="1em"/><mi>δ</mi><mi>κ</mi><mo>=</mo><mfrac><msub><mi>c</mi><mi>p</mi></msub><mrow><mi>P</mi><mi>r</mi></mrow></mfrac><mi>δ</mi><mi>μ</mi><mo>−</mo><mfrac><mi>κ</mi><mrow><mi>P</mi><mi>r</mi></mrow></mfrac><mi>δ</mi><mi>P</mi><mi>r</mi><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">\delta\mu=\mu_T\delta T+\frac{\mu}{\mu_{ref}}\delta\mu_{ref},\quad \mu_T=\mu\left(\frac{3}{2T}-\frac1{T+0.4}\right),\quad\delta\kappa=\frac{c_p}{Pr}\delta\mu-\frac{\kappa}{Pr}\delta Pr.</annotation></semantics></math></span></div><p lang="zh">常物性模式只有 μ_T=0，设计变量 μ_ref 的导数仍需保留。以下播放器使用固定非零状态种子 v_i=sin(i+1)，计算 Av，不把它与求解出的设计 tangent 混淆。</p><p lang="en">Constant transport sets only μ_T=0; derivatives with respect to μ_ref remain. The player uses the fixed nonzero state seed v_i=sin(i+1) to evaluate Av, distinct from the solved design tangent.</p><div class="lab nslab" id="tangent-player"></div></section><section class="sec" id="s8"><div class="secnum"><span lang="zh">第 8 节</span><span lang="en">Section 8</span></div><h2 lang="zh">反向 adjoint</h2><h2 lang="en">Reverse adjoint</h2><p lang="zh">伴随不是重新推导一个相似通量，而是反转同一个计算图。内部面的种子为 w_left−w_right。先反传净通量，再反传黏性功、应力、热流、面物性、梯度，最后回到守恒状态。每条共享路径都使用累加。</p><p lang="en">The adjoint reverses the same graph rather than inventing a similar flux. An interior face receives w_left−w_right. Reverse the net flux, viscous work, stress, heat flux, transport, gradients and finally conservative states. Every shared dependency accumulates contributions.</p><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>g</mi><mi>f</mi></msub><mo>=</mo><mo stretchy="false">(</mo><msub><mi>u</mi><mi>R</mi></msub><mo>−</mo><msub><mi>u</mi><mi>L</mi></msub><mo stretchy="false">)</mo><mi mathvariant="normal">/</mi><mi>h</mi><mo>:</mo><mspace width="1em"/><msub><mover accent="true"><mi>u</mi><mo>ˉ</mo></mover><mi>L</mi></msub><mo>−</mo><mo>=</mo><msub><mover accent="true"><mi>g</mi><mo>ˉ</mo></mover><mi>f</mi></msub><mi mathvariant="normal">/</mi><mi>h</mi><mo separator="true">,</mo><mspace width="1em"/><msub><mover accent="true"><mi>u</mi><mo>ˉ</mo></mover><mi>R</mi></msub><mo>+</mo><mo>=</mo><msub><mover accent="true"><mi>g</mi><mo>ˉ</mo></mover><mi>f</mi></msub><mi mathvariant="normal">/</mi><mi>h</mi><mo separator="true">,</mo><mspace width="2em"/><msup><mi>w</mi><mi>T</mi></msup><mi>A</mi><mi>v</mi><mo>=</mo><msup><mi>v</mi><mi>T</mi></msup><msup><mi>A</mi><mi>T</mi></msup><mi>w</mi><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">g_f=(u_R-u_L)/h:\quad \bar u_L\mathrel{-}=\bar g_f/h,\quad \bar u_R\mathrel{+}=\bar g_f/h,\qquad w^TAv=v^TA^Tw.</annotation></semantics></math></span></div><p lang="zh">例如 e_v=uτ−q：先累加 ū+=τ ē_v、τ̄+=u ē_v、q̄−=ē_v。再由 q=−κT_x 累加 κ̄−=T_x q̄、T̄_x−=κq̄。这解释了为什么冻结 κ(T) 会得到错误的完整梯度，即使那套冻结算子仍能通过自己的转置测试。</p><p lang="en">For e_v=uτ−q, accumulate ū+=τ ē_v, τ̄+=u ē_v and q̄−=ē_v. Then q=−κT_x gives κ̄−=T_x q̄ and T̄_x−=κq̄. Freezing κ(T) changes the full derivative even if the frozen operator passes its own transpose test.</p><div class="lab nslab" id="adjoint-player"></div></section><section class="sec" id="s9"><div class="secnum"><span lang="zh">第 9 节</span><span lang="en">Section 9</span></div><h2 lang="zh">前向方程求解</h2><h2 lang="en">Tangent solve</h2><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>R</mi><mo stretchy="false">(</mo><mi>U</mi><mo stretchy="false">(</mo><mi>a</mi><mo stretchy="false">)</mo><mo separator="true">,</mo><mi>a</mi><mo stretchy="false">)</mo><mo>=</mo><mn>0</mn><mtext> </mtext><mo>⇒</mo><mtext> </mtext><mi>A</mi><mi>v</mi><mo>=</mo><mo>−</mo><msub><mi>R</mi><mi>a</mi></msub><mi>δ</mi><mi>a</mi><mo separator="true">,</mo><mspace width="2em"/><mi>δ</mi><mi>J</mi><mo>=</mo><msub><mi>J</mi><mi>U</mi></msub><mi>v</mi><mo>+</mo><msub><mi>J</mi><mi>a</mi></msub><mi>δ</mi><mi>a</mi><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">R(U(a),a)=0\ \Rightarrow\ Av=-R_a\delta a,\qquad\delta J=J_Uv+J_a\delta a.</annotation></semantics></math></span></div><p lang="zh">先收敛原始流场，再固定该状态建立线性系统。右端来自参数对残差的显式影响，包括热源、入口温度和出口闭合。一个参数方向需要一次 tangent 求解；它给出整条密度、速度和温度响应，不只是一个目标梯度。</p><p lang="en">Converge the primal before forming the fixed linear system. The right-hand side includes explicit parameter effects in heating, inlet temperature and outlet closure. Each design direction needs one tangent solve and gives a complete field response, not just one objective derivative.</p><div class="lab nslab" id="tangent-solve"></div></section><section class="sec" id="s10"><div class="secnum"><span lang="zh">第 10 节</span><span lang="en">Section 10</span></div><h2 lang="zh">伴随方程求解</h2><h2 lang="en">Adjoint solve</h2><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi mathvariant="script">L</mi><mo>=</mo><mi>J</mi><mo>+</mo><msup><mi>ψ</mi><mi>T</mi></msup><mi>R</mi><mo separator="true">,</mo><mspace width="1em"/><msup><mi>A</mi><mi>T</mi></msup><mi>ψ</mi><mo>=</mo><mo>−</mo><msubsup><mi>J</mi><mi>U</mi><mi>T</mi></msubsup><mo separator="true">,</mo><mspace width="1em"/><mi>d</mi><mi>J</mi><mi mathvariant="normal">/</mi><mi>d</mi><mi>a</mi><mo>=</mo><msub><mi>J</mi><mi>a</mi></msub><mo>+</mo><msubsup><mi>R</mi><mi>a</mi><mi>T</mi></msubsup><mi>ψ</mi><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">\mathcal L=J+\psi^TR,\quad A^T\psi=-J_U^T,\quad dJ/da=J_a+R_a^T\psi.</annotation></semantics></math></span></div><p lang="zh">一次伴随求解覆盖全部六个参数。这里的 ψ 对应积分残差；若把残差除以控制体体积，乘子必须相应缩放。格点的边界约束乘子也不能当作同位置的连续场值。图按状态分量显示离散乘子，并显示 Aᵀψ+J_Uᵀ 的真实残差。</p><p lang="en">One adjoint solve covers all six parameters. These multipliers correspond to integrated residuals; volume-normalized residuals require rescaling. Node boundary-constraint multipliers are not point samples of a continuous field. The plot shows component multipliers and the true residual Aᵀψ+J_Uᵀ.</p><div class="lab nslab" id="adjoint-solve"></div></section><section class="sec" id="s11"><div class="secnum"><span lang="zh">第 11 节</span><span lang="en">Section 11</span></div><h2 lang="zh">设计参数与总导数</h2><h2 lang="en">Design parameters and total derivatives</h2><p lang="zh">参数依次是两个热源幅度 a₀、a₁、μ_ref、Pr、入口温度，以及出口应力 p_b（制造解中改为 T_out）。热源形状为 sin²(πx)、sin²(2πx)。黏度参数会同时改变动量和能量通量；Pr 只改变导热系数。</p><p lang="en">Parameters are two heat amplitudes a₀,a₁, μ_ref, Pr, inlet temperature and outlet stress p_b (T_out for the manufactured case). Heat shapes are sin²(πx) and sin²(2πx). Viscosity affects both momentum and energy fluxes; Pr changes conduction.</p><p lang="zh">制造源项在建立当前模型时由当前基准 μ_ref、Pr 和物性模式生成，随后在该模型的所有参数差分中固定。改变顶部物性再建立模型会生成新的制造算例。局部设计导数不重新制造源项，也不重新生成目标函数。</p><p lang="en">Manufactured forcing is generated with the current baseline μ_ref, Pr and transport mode when creating the model, then held fixed for every parameter perturbation of that model. Changing top-level transport creates a new manufactured case. Local design derivatives never regenerate forcing or the objective target.</p><div class="lab nslab" id="gradient-lab"></div></section><section class="sec" id="s12"><div class="secnum"><span lang="zh">第 12 节</span><span lang="en">Section 12</span></div><h2 lang="zh">有限差分与 Taylor 检验</h2><h2 lang="en">Finite differences and Taylor tests</h2><p lang="zh">每一个差分点都重新求解完整原始问题。选择参数和步长，比较前向、后向、中心差分；同时显示扰动后的真实原始残差。小步长可能暴露求解容差和舍入误差，不能只看一行差分结果。所有差分共用基准的固定目标和固定制造源项。</p><p lang="en">Every finite-difference point re-solves the full primal. Select a parameter and step to compare forward, backward and centred differences, including perturbed primal residuals. Small steps expose solve tolerances and roundoff. All perturbations share the baseline fixed target and manufactured forcing.</p><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msubsup><mi>D</mi><mi>h</mi><mi>c</mi></msubsup><mi>J</mi><mo>=</mo><mfrac><mrow><mi>J</mi><mo stretchy="false">(</mo><mi>a</mi><mo>+</mo><mi>h</mi><msub><mi>e</mi><mi>k</mi></msub><mo stretchy="false">)</mo><mo>−</mo><mi>J</mi><mo stretchy="false">(</mo><mi>a</mi><mo>−</mo><mi>h</mi><msub><mi>e</mi><mi>k</mi></msub><mo stretchy="false">)</mo></mrow><mrow><mn>2</mn><mi>h</mi></mrow></mfrac><mo separator="true">,</mo><mspace width="1em"/><msub><mi>E</mi><mn>1</mn></msub><mo stretchy="false">(</mo><mi>h</mi><mo stretchy="false">)</mo><mo>=</mo><mi mathvariant="normal">∣</mi><mi>J</mi><mo stretchy="false">(</mo><mi>a</mi><mo>+</mo><mi>h</mi><msub><mi>e</mi><mi>k</mi></msub><mo stretchy="false">)</mo><mo>−</mo><mi>J</mi><mo stretchy="false">(</mo><mi>a</mi><mo stretchy="false">)</mo><mi mathvariant="normal">∣</mi><mo separator="true">,</mo><mspace width="1em"/><msub><mi>E</mi><mn>2</mn></msub><mo stretchy="false">(</mo><mi>h</mi><mo stretchy="false">)</mo><mo>=</mo><mi mathvariant="normal">∣</mi><mi>J</mi><mo stretchy="false">(</mo><mi>a</mi><mo>+</mo><mi>h</mi><msub><mi>e</mi><mi>k</mi></msub><mo stretchy="false">)</mo><mo>−</mo><mi>J</mi><mo stretchy="false">(</mo><mi>a</mi><mo stretchy="false">)</mo><mo>−</mo><mi>h</mi><msub><mi>g</mi><mi>k</mi></msub><mi mathvariant="normal">∣</mi><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">D_h^cJ=\frac{J(a+he_k)-J(a-he_k)}{2h},\quad E_1(h)=|J(a+he_k)-J(a)|,\quad E_2(h)=|J(a+he_k)-J(a)-hg_k|.</annotation></semantics></math></span></div><p lang="zh">在可微且误差未被求解容差掩盖的区间，E₁ 通常为 O(h)，E₂ 为 O(h²)。零梯度目标可能有不同的首项，应先检查具体目标再解读斜率。</p><p lang="en">For a differentiable map above the solve-error floor, E₁ is usually O(h) and E₂ is O(h²). A zero-gradient objective can have a different leading term; inspect the objective before interpreting slopes.</p><div class="lab nslab" id="fd-lab"></div></section><section class="sec" id="s13"><div class="secnum"><span lang="zh">第 13 节</span><span lang="en">Section 13</span></div><h2 lang="zh">复数步长</h2><h2 lang="en">Complex step</h2><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>g</mi><mi>k</mi></msub><mo>≈</mo><mi mathvariant="normal">Im</mi><mo>⁡</mo><mi>J</mi><mo stretchy="false">(</mo><mi>U</mi><mo stretchy="false">(</mo><mi>a</mi><mo>+</mo><mi>i</mi><mi>h</mi><msub><mi>e</mi><mi>k</mi></msub><mo stretchy="false">)</mo><mo separator="true">,</mo><mi>a</mi><mo>+</mo><mi>i</mi><mi>h</mi><msub><mi>e</mi><mi>k</mi></msub><mo stretchy="false">)</mo><mi mathvariant="normal">/</mi><mi>h</mi><mo separator="true">,</mo><mspace width="2em"/><mi>h</mi><mo>=</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>25</mn></mrow></msup><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">g_k\approx\operatorname{Im}J(U(a+ih e_k),a+ih e_k)/h,\qquad h=10^{-25}.</annotation></semantics></math></span></div><p lang="zh">正温度分支上的 Sutherland 幂函数可以解析延拓。本实现用独立复数算术重新计算全部残差与目标，并迭代复数残差的缩放虚部至收敛；它不是把 tangent 结果换一个标签。正值检查在实基态上进行，复数算术中不对复数执行大小比较。</p><p lang="en">On the positive-temperature branch the Sutherland power has an analytic continuation. Independent complex arithmetic evaluates the entire residual and objective and iterates the scaled imaginary residual to convergence; it is not a relabelled tangent result. Admissibility checks use the real base state, not ordering comparisons on complex numbers.</p><div class="lab nslab" id="complex-lab"></div></section><section class="sec" id="s14"><div class="secnum"><span lang="zh">第 14 节</span><span lang="en">Section 14</span></div><h2 lang="zh">一阶与二阶精度</h2><h2 lang="en">First- and second-order accuracy</h2><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>u</mi><mo>∗</mo></msub><mo>=</mo><mn>0.35</mn><mo>+</mo><mn>0.03</mn><mi>sin</mi><mo>⁡</mo><mi>π</mi><mi>x</mi><mo>+</mo><mn>0.01</mn><mi>sin</mi><mo>⁡</mo><mn>2</mn><mi>π</mi><mi>x</mi><mo separator="true">,</mo><mspace width="1em"/><msub><mi>T</mi><mo>∗</mo></msub><mo>=</mo><mn>1</mn><mo>+</mo><mn>0.05</mn><mi>sin</mi><mo>⁡</mo><mi>π</mi><mi>x</mi><mo>+</mo><mn>0.02</mn><mi>sin</mi><mo>⁡</mo><mn>2</mn><mi>π</mi><mi>x</mi><mo separator="true">,</mo><mspace width="1em"/><msub><mi>ρ</mi><mo>∗</mo></msub><mo>=</mo><mn>0.35</mn><mi mathvariant="normal">/</mi><msub><mi>u</mi><mo>∗</mo></msub><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">u_*=0.35+0.03\sin\pi x+0.01\sin2\pi x,\quad T_*=1+0.05\sin\pi x+0.02\sin2\pi x,\quad \rho_*=0.35/u_*.</annotation></semantics></math></span></div><p lang="zh">把解析函数代入总动量／能量通量并对 x 求导，得到独立制造源项；质量源为零。数值解仍由残差求出。下面独立运行制造解，不受顶部加热模式影响；保留当前物性模式及 μ_ref、Pr。一阶误差可能很慢才进入渐近区间，不把粗网格斜率改写成理论阶数。</p><p lang="en">Differentiate analytic total momentum/energy fluxes to obtain manufactured forcing; mass forcing is zero. The numerical state is still solved from residuals. This panel independently runs the manufactured case regardless of the top heating mode, retaining current transport, μ_ref and Pr. First-order errors may approach their asymptotic regime slowly; coarse-grid slopes are not replaced by theoretical rates.</p><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>E</mi><mi>h</mi></msub><mo>=</mo><msup><mrow><mo fence="true">(</mo><munder><mo>∑</mo><mi>i</mi></munder><msub><mi>V</mi><mi>i</mi></msub><mi mathvariant="normal">∥</mi><msub><mi>U</mi><mi>i</mi></msub><mo>−</mo><msub><mi>U</mi><mrow><mo>∗</mo><mo separator="true">,</mo><mi>i</mi></mrow></msub><msubsup><mi mathvariant="normal">∥</mi><mn>2</mn><mn>2</mn></msubsup><mo fence="true">)</mo></mrow><mrow><mn>1</mn><mi mathvariant="normal">/</mi><mn>2</mn></mrow></msup><mo separator="true">,</mo><mspace width="2em"/><msub><mi>p</mi><mi>h</mi></msub><mo>=</mo><msub><mrow><mi>log</mi><mo>⁡</mo></mrow><mn>2</mn></msub><mo stretchy="false">(</mo><msub><mi>E</mi><mi>h</mi></msub><mi mathvariant="normal">/</mi><msub><mi>E</mi><mrow><mi>h</mi><mi mathvariant="normal">/</mi><mn>2</mn></mrow></msub><mo stretchy="false">)</mo><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">E_h=\left(\sum_iV_i\|U_i-U_{*,i}\|_2^2\right)^{1/2},\qquad p_h=\log_2(E_h/E_{h/2}).</annotation></semantics></math></span></div><p lang="zh">格心解析平均采用独立高阶求积，格点直接取解析点值。图包含一阶、二阶实测曲线及斜率参考线；参考线不是证明。应同时查看原始残差是否远小于空间误差。</p><p lang="en">Cell references use independent high-order quadrature; nodes use analytic point values. The plot includes measured first/second-order curves and slope guides, which are not proofs. Also check that primal residuals are much smaller than spatial errors.</p><div class="lab nslab" id="accuracy-lab"></div><p lang="zh">固定基准补充：μ_ref=0.15、Pr=0.72、常物性；下表是离线实际计算的 64→128 网格斜率，不随顶部参数改变。</p><p lang="en">Fixed supplementary baseline: μ_ref=0.15, Pr=0.72, constant transport. The table gives measured offline rates from 64 to 128 cells/intervals and does not follow top controls.</p><div class="tablewrap"><table class="kv"><thead><tr><th>order</th><th>N</th><th>error</th><th>measured rate</th></tr></thead><tbody><tr><td>1</td><td>128</td><td>2.21712e-2</td><td>0.7759</td></tr><tr><td>2</td><td>128</td><td>5.11940e-5</td><td>2.0797</td></tr></tbody></table></div></section><section class="sec" id="s15"><div class="secnum"><span lang="zh">第 15 节</span><span lang="en">Section 15</span></div><h2 lang="zh">连续参考与一致性</h2><h2 lang="en">Continuous reference and consistency</h2><p lang="zh">点积检查转置，差分和复数步长检查固定离散问题的导数；连续参考检查另一件事：网格加密时目标和梯度是否趋向同一物理边值问题。这里不把离散残差图转置后称为独立连续伴随。</p><p lang="en">Dot tests check transposition; finite differences and complex step check derivatives of the fixed discrete problem. Continuous comparison asks whether objectives and gradients approach the same physical BVP under refinement. Transposing the discrete residual graph is not an independent continuous adjoint.</p><p lang="zh">附录 A 从连续守恒方程出发，利用恒定质量流率消元，求解四维空间边值问题及其连续伴随。展示的是该等价约化系统的四个乘子，不把它们冒充三个守恒变量的伴随分量。以同一参数的总目标导数作比较。</p><p lang="en">Appendix A eliminates density using constant mass flow and solves a four-dimensional spatial BVP and its continuous adjoint. Its four multipliers belong to that equivalent reduced system, not the three conservative-variable adjoint components. Compare total objective derivatives for the same parameter.</p><div class="lab nslab" id="consistency-lab"></div></section><section class="sec" id="s16"><div class="secnum"><span lang="zh">第 16 节</span><span lang="en">Section 16</span></div><h2 lang="zh">GS 与 GMRES</h2><h2 lang="en">GS and GMRES</h2><p lang="zh">GS 缺陷校正使用 x←x+ωB(b−Ax)，这里 ω=0.65；GMRES 在同一个精确算子上组合多个搜索方向，以 B 作右预处理。伴随用 Aᵀ 与 Bᵀ。预处理保留物理扩散，不把对流耗散当作黏性。</p><p lang="en">GS defect correction uses x←x+ωB(b−Ax), with ω=0.65. GMRES combines search directions for the same exact operator using right preconditioner B. The adjoint uses Aᵀ and Bᵀ. Physical diffusion stays in the preconditioner and is not replaced by convective dissipation.</p><p lang="zh">原始 Newton 每步解一个线性修正方程，并回溯保证状态有效且真实残差下降。以下在同一个收敛流场上比较伴随线性系统，不把非线性迭代次数和线性迭代次数混在一起。GS 预算用尽只表示本次未收敛，不是一般发散定理。</p><p lang="en">Each primal Newton step solves a linear correction with backtracking to preserve admissibility and reduce the true residual. The comparison below fixes the converged flow and solves the same adjoint linear system. Nonlinear and linear iteration counts are distinct. Exhausting the GS budget is not a general divergence theorem.</p><div class="lab nslab" id="solver-lab"></div></section><section class="sec" id="s17"><div class="secnum"><span lang="zh">第 17 节</span><span lang="en">Section 17</span></div><h2 lang="zh">总结</h2><h2 lang="en">Summary</h2><p lang="zh">从 Euler 到层流 N–S，核心伴随公式没有改变；需要扩展的是实际离散程序的依赖链。完整保留状态转换、面梯度、温度物性、黏性功、热流、边界与目标的求导，才能得到正确总导数。先用小网格 LU 和局部点积定位错误，再用完整重算差分、复数残差及加密检查不同层次的正确性。</p><p lang="en">From Euler to laminar N–S the adjoint identity is unchanged; the differentiated dependency graph grows. State conversion, face gradients, temperature-dependent transport, viscous work, heat flux, boundaries and objectives must all be included. Small-grid LU and local dot tests locate errors; full-rerun differences, complex residuals and refinement test distinct kinds of correctness.</p><p lang="zh">本页完成的是等截面、平面一维、光滑层流教学模型。它为多维 N–S 的梯度重构和黏性边界求导提供基础，不代表已经实现管壁边界层、变截面黏性闭合或湍流模型。首次学习可先读正文，连续参考和直接法都在同页附录中。</p><p lang="en">This is a constant-area, plane-one-dimensional smooth laminar teaching model. It prepares for multidimensional viscous gradients and boundaries, not duct-wall boundary layers, variable-area viscous closures or turbulence. Start with the main text; continuous references and direct solves are same-page appendices.</p></section><section class="sec" id="appendix-a"><h2 lang="zh">附录 A：独立连续参考与完整伴随</h2><h2 lang="en">Appendix A: independent continuous reference and complete adjoint</h2><h3 lang="zh">A.1 从连续变分到空间边值问题</h3><h3 lang="en">A.1 From continuous variations to a spatial BVP</h3><p lang="zh">令总通量 F=Fᶜ−Fᵛ，稳态残差 ℛ=F(U,Uₓ,a)ₓ−S。在线性化点写 C=F_U、D=F_Uₓ，则 δℛ=(CδU+DδUₓ)ₓ−S_UδU−S_aδa。对 ℒ=J+∫ψᵀℛdx 两次分部积分得到体内方程及边界项；边界项必须与实际入口／出口条件一起处理。</p><p lang="en">Let F=Fᶜ−Fᵛ and ℛ=F(U,Uₓ,a)ₓ−S. With C=F_U and D=F_Uₓ, δℛ=(CδU+DδUₓ)ₓ−S_UδU−S_aδa. Integrating ℒ=J+∫ψᵀℛdx twice gives the volume equation and boundary terms, which must be combined with the actual inlet/outlet constraints.</p><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msubsup><mi>j</mi><mi>U</mi><mi>T</mi></msubsup><mo>−</mo><msup><mi>C</mi><mi>T</mi></msup><msup><mi>ψ</mi><mo mathvariant="normal" lspace="0em" rspace="0em">′</mo></msup><mo>+</mo><mo stretchy="false">(</mo><msup><mi>D</mi><mi>T</mi></msup><msup><mi>ψ</mi><mo mathvariant="normal" lspace="0em" rspace="0em">′</mo></msup><msup><mo stretchy="false">)</mo><mo mathvariant="normal" lspace="0em" rspace="0em">′</mo></msup><mo>−</mo><msubsup><mi>S</mi><mi>U</mi><mi>T</mi></msubsup><mi>ψ</mi><mo>=</mo><mn>0</mn><mo separator="true">,</mo><mspace width="1em"/><msubsup><mrow><mo fence="true">[</mo><msup><mi>ψ</mi><mi>T</mi></msup><mo stretchy="false">(</mo><mi>C</mi><mi>δ</mi><mi>U</mi><mo>+</mo><mi>D</mi><mi>δ</mi><msup><mi>U</mi><mo mathvariant="normal" lspace="0em" rspace="0em">′</mo></msup><mo stretchy="false">)</mo><mo>−</mo><msup><mi>ψ</mi><mrow><mo mathvariant="normal">′</mo><mi>T</mi></mrow></msup><mi>D</mi><mi>δ</mi><mi>U</mi><mo fence="true">]</mo></mrow><mn>0</mn><mn>1</mn></msubsup><mo>+</mo><mi>δ</mi><msub><mi>J</mi><mrow><mi>e</mi><mi>n</mi><mi>d</mi></mrow></msub><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">j_U^T-C^T\psi&#x27;+(D^T\psi&#x27;)&#x27;-S_U^T\psi=0,\quad \left[\psi^T(C\delta U+D\delta U&#x27;)-\psi&#x27;^TD\delta U\right]_0^1+\delta J_{end}.</annotation></semantics></math></span></div><p lang="zh">上式体积分目标假设 j 不含 Uₓ；入口热流作为端点目标保留在 δJ_end 中。黏性矩阵 D 的质量行是零，因此不能把它当可逆三阶矩阵来求三个二阶方程。这里利用固定质量流率 m=0.35 消去 ρ=m/u，转为等价四维一阶问题。</p><p lang="en">The displayed volume objective j has no Uₓ dependence; inlet heat flux remains an endpoint term. D has a zero mass row and is not an invertible 3×3 matrix defining three second-order equations. Eliminate ρ=m/u using fixed mass flow m=0.35 to obtain an equivalent four-dimensional first-order problem.</p><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>z</mi><mo>=</mo><mo stretchy="false">(</mo><mi>u</mi><mo separator="true">,</mo><mi>T</mi><mo separator="true">,</mo><mi mathvariant="normal">Π</mi><mo separator="true">,</mo><mi>H</mi><msup><mo stretchy="false">)</mo><mi>T</mi></msup><mo separator="true">,</mo><mspace width="1em"/><mi>τ</mi><mo>=</mo><mi>m</mi><mi>u</mi><mo>+</mo><mi>m</mi><mi>T</mi><mi mathvariant="normal">/</mi><mi>u</mi><mo>−</mo><mi mathvariant="normal">Π</mi><mo separator="true">,</mo><mspace width="1em"/><msup><mi>u</mi><mo mathvariant="normal" lspace="0em" rspace="0em">′</mo></msup><mo>=</mo><mfrac><mi>τ</mi><mrow><mn>4</mn><mi>μ</mi><mi mathvariant="normal">/</mi><mn>3</mn></mrow></mfrac><mo separator="true">,</mo><mspace width="1em"/><msup><mi>T</mi><mo mathvariant="normal" lspace="0em" rspace="0em">′</mo></msup><mo>=</mo><mfrac><mrow><mi>m</mi><mo stretchy="false">(</mo><msub><mi>c</mi><mi>p</mi></msub><mi>T</mi><mo>+</mo><msup><mi>u</mi><mn>2</mn></msup><mi mathvariant="normal">/</mi><mn>2</mn><mo stretchy="false">)</mo><mo>−</mo><mi>u</mi><mi>τ</mi><mo>−</mo><mi>H</mi></mrow><mi>κ</mi></mfrac><mo separator="true">,</mo><mspace width="1em"/><msup><mi mathvariant="normal">Π</mi><mo mathvariant="normal" lspace="0em" rspace="0em">′</mo></msup><mo>=</mo><msub><mi>S</mi><mi>m</mi></msub><mo separator="true">,</mo><mspace width="1em"/><msup><mi>H</mi><mo mathvariant="normal" lspace="0em" rspace="0em">′</mo></msup><mo>=</mo><msub><mi>S</mi><mi>E</mi></msub><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">z=(u,T,\Pi,H)^T,\quad \tau=mu+mT/u-\Pi,\quad u&#x27;=\frac{\tau}{4\mu/3},\quad T&#x27;=\frac{m(c_pT+u^2/2)-u\tau-H}{\kappa},\quad\Pi&#x27;=S_m,\quad H&#x27;=S_E.</annotation></semantics></math></span></div><p lang="zh">Π、H 是总动量、总能量通量；符号 m 是质量流率，μ 是黏度。入口固定 u、T，未知的是 Π(0)、H(0)。用 RK4 积分，并通过独立的两变量 Newton 射击满足出口应力与零热流（或制造解 u、T）。射击 Jacobian 来自这个 ODE 的变分方程，不调用有限体积残差。只在所验证的非刚性参数范围内使用单次射击；较强加热采用从零热源连续增加的初值延拓。</p><p lang="en">Π and H are total momentum and energy fluxes; m is mass flow and μ is viscosity. Inlet u,T are fixed and Π(0),H(0) are unknown. RK4 plus a two-variable Newton shooting solve enforces outlet stress and zero heat flux (or manufactured u,T). Shooting derivatives come from this ODE’s variational equations, not the FV residual. Single shooting is used only in the validated non-stiff range; stronger heating uses continuation from zero heating.</p><h3 lang="zh">A.2 等价连续伴随及完整边界条件</h3><h3 lang="en">A.2 Equivalent continuous adjoint and complete boundary conditions</h3><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msup><mi>z</mi><mo mathvariant="normal" lspace="0em" rspace="0em">′</mo></msup><mo>=</mo><mi>f</mi><mo stretchy="false">(</mo><mi>z</mi><mo separator="true">,</mo><mi>a</mi><mo separator="true">,</mo><mi>x</mi><mo stretchy="false">)</mo><mo separator="true">,</mo><mspace width="1em"/><msub><mi>g</mi><mn>0</mn></msub><mo>=</mo><mo stretchy="false">(</mo><mi>u</mi><mo stretchy="false">(</mo><mn>0</mn><mo stretchy="false">)</mo><mo>−</mo><mi>m</mi><mo separator="true">,</mo><mi>T</mi><mo stretchy="false">(</mo><mn>0</mn><mo stretchy="false">)</mo><mo>−</mo><msub><mi>T</mi><mrow><mi>i</mi><mi>n</mi></mrow></msub><msup><mo stretchy="false">)</mo><mi>T</mi></msup><mo>=</mo><mn>0</mn><mo separator="true">,</mo><mspace width="1em"/><msub><mi>g</mi><mn>1</mn></msub><mo stretchy="false">(</mo><mi>z</mi><mo stretchy="false">(</mo><mn>1</mn><mo stretchy="false">)</mo><mo separator="true">,</mo><mi>a</mi><mo stretchy="false">)</mo><mo>=</mo><mn>0.</mn></mrow><annotation encoding="application/x-tex">z&#x27;=f(z,a,x),\quad g_0=(u(0)-m,T(0)-T_{in})^T=0,\quad g_1(z(1),a)=0.</annotation></semantics></math></span></div><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi mathvariant="script">L</mi><mo>=</mo><msubsup><mo>∫</mo><mn>0</mn><mn>1</mn></msubsup><mo stretchy="false">[</mo><mi>j</mi><mo>+</mo><msup><mi>λ</mi><mi>T</mi></msup><mo stretchy="false">(</mo><mi>f</mi><mo>−</mo><msup><mi>z</mi><mo mathvariant="normal" lspace="0em" rspace="0em">′</mo></msup><mo stretchy="false">)</mo><mo stretchy="false">]</mo><mi>d</mi><mi>x</mi><mo>+</mo><msub><mi>ϕ</mi><mn>0</mn></msub><mo>+</mo><msub><mi>ϕ</mi><mn>1</mn></msub><mo>+</mo><msubsup><mi>η</mi><mn>0</mn><mi>T</mi></msubsup><msub><mi>g</mi><mn>0</mn></msub><mo>+</mo><msubsup><mi>η</mi><mn>1</mn><mi>T</mi></msubsup><msub><mi>g</mi><mn>1</mn></msub><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">\mathcal L=\int_0^1[j+\lambda^T(f-z&#x27;)]dx+\phi_0+\phi_1+\eta_0^Tg_0+\eta_1^Tg_1.</annotation></semantics></math></span></div><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msup><mi>λ</mi><mo mathvariant="normal" lspace="0em" rspace="0em">′</mo></msup><mo>=</mo><mo>−</mo><msubsup><mi>f</mi><mi>z</mi><mi>T</mi></msubsup><mi>λ</mi><mo>−</mo><msubsup><mi>j</mi><mi>z</mi><mi>T</mi></msubsup><mo separator="true">,</mo><mspace width="1em"/><mi>λ</mi><mo stretchy="false">(</mo><mn>0</mn><mo stretchy="false">)</mo><mo>+</mo><msubsup><mi>ϕ</mi><mrow><mn>0</mn><mo separator="true">,</mo><mi>z</mi></mrow><mi>T</mi></msubsup><mo>+</mo><msubsup><mi>g</mi><mrow><mn>0</mn><mo separator="true">,</mo><mi>z</mi></mrow><mi>T</mi></msubsup><msub><mi>η</mi><mn>0</mn></msub><mo>=</mo><mn>0</mn><mo separator="true">,</mo><mspace width="1em"/><mo>−</mo><mi>λ</mi><mo stretchy="false">(</mo><mn>1</mn><mo stretchy="false">)</mo><mo>+</mo><msubsup><mi>ϕ</mi><mrow><mn>1</mn><mo separator="true">,</mo><mi>z</mi></mrow><mi>T</mi></msubsup><mo>+</mo><msubsup><mi>g</mi><mrow><mn>1</mn><mo separator="true">,</mo><mi>z</mi></mrow><mi>T</mi></msubsup><msub><mi>η</mi><mn>1</mn></msub><mo>=</mo><mn>0.</mn></mrow><annotation encoding="application/x-tex">\lambda&#x27;=-f_z^T\lambda-j_z^T,\quad\lambda(0)+\phi_{0,z}^T+g_{0,z}^T\eta_0=0,\quad-\lambda(1)+\phi_{1,z}^T+g_{1,z}^T\eta_1=0.</annotation></semantics></math></span></div><p lang="zh">入口 u、T 的扰动受约束，因此先用自由的 Π、H 变分得到 λ_Π(0)=−φ₀,Π、λ_H(0)=−φ₀,H。出口令 λ(1)=φ₁,zᵀ+g₁,zᵀη₁。分别向后积分一个特解和两个齐次响应，用上述入口两条条件解 η₁ 的 2×2 系统。最后再向后积分实际 λ 和梯度积分。入口两个剩余条件给出 η₀。</p><p lang="en">Inlet u,T variations are constrained, while free Π,H variations give λ_Π(0)=−φ₀,Π and λ_H(0)=−φ₀,H. Set λ(1)=φ₁,zᵀ+g₁,zᵀη₁. Integrate one particular solution and two homogeneous responses backwards, solve a 2×2 system for η₁ using the inlet conditions, then integrate the actual λ and gradient quadrature. The two remaining inlet conditions determine η₀.</p><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mfrac><mrow><mi>d</mi><mi>J</mi></mrow><mrow><mi>d</mi><mi>a</mi></mrow></mfrac><mo>=</mo><msub><mi>ϕ</mi><mrow><mn>0</mn><mo separator="true">,</mo><mi>a</mi></mrow></msub><mo>+</mo><msub><mi>ϕ</mi><mrow><mn>1</mn><mo separator="true">,</mo><mi>a</mi></mrow></msub><mo>+</mo><msubsup><mo>∫</mo><mn>0</mn><mn>1</mn></msubsup><mo stretchy="false">(</mo><msub><mi>j</mi><mi>a</mi></msub><mo>+</mo><msup><mi>λ</mi><mi>T</mi></msup><msub><mi>f</mi><mi>a</mi></msub><mo stretchy="false">)</mo><mi>d</mi><mi>x</mi><mo>+</mo><msubsup><mi>η</mi><mn>0</mn><mi>T</mi></msubsup><msub><mi>g</mi><mrow><mn>0</mn><mo separator="true">,</mo><mi>a</mi></mrow></msub><mo>+</mo><msubsup><mi>η</mi><mn>1</mn><mi>T</mi></msubsup><msub><mi>g</mi><mrow><mn>1</mn><mo separator="true">,</mo><mi>a</mi></mrow></msub><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">\frac{dJ}{da}=\phi_{0,a}+\phi_{1,a}+\int_0^1(j_a+\lambda^Tf_a)dx+\eta_0^Tg_{0,a}+\eta_1^Tg_{1,a}.</annotation></semantics></math></span></div><p lang="zh">g₁ 在加热问题中为 (Π−mu−p_b, H−m(c_pT+u²/2)+uτ)；第二项正是热流 q。制造解则为 (u−0.35,T−T_out)。入口温度导数含 λ_T(0)+φ₀,T，出口参数必须保留 η₁ᵀg₁,a。入口热流目标 φ₀=q 会同时改变入口伴随条件和显式参数项。</p><p lang="en">For heating, g₁=(Π−mu−p_b, H−m(c_pT+u²/2)+uτ); its second component is q. For the manufactured case g₁=(u−0.35,T−T_out). The inlet-temperature derivative includes λ_T(0)+φ₀,T, and outlet parameters retain η₁ᵀg₁,a. An inlet heat-flux objective φ₀=q modifies both inlet adjoint conditions and explicit parameter terms.</p><p lang="zh">这是先推导连续 ODE 伴随、再用 RK4 求解，不是对有限体积或 RK4 离散程序求转置。下方同时检查连续伴随边界残差、射击残差和完整重算连续差分，并可改变 ODE 步数。质量流率在本页设计变量中固定；若新增入口密度或速度设计变量，必须把消去的 m 的显式依赖一起加入。</p><p lang="en">This derives the continuous ODE adjoint before solving it with RK4; it is not the transpose of the FV or RK4 program. Inspect continuous adjoint boundary residuals, shooting residuals and independently re-solved continuous differences while varying ODE steps. Mass flow is fixed for the current design variables; adding inlet density/velocity controls requires differentiating the eliminated mass-flow dependence.</p><div class="lab nslab" id="continuous-lab"></div><pre class="algorithm">solve continuous spatial BVP for u,T,Pi,H
+form analytic ODE partials f_z, f_a and objective partials
+integrate lambda_prime = -transpose(f_z)*lambda - j_z
+solve two endpoint multiplier coefficients
+integrate lambda^T*f_a + j_a and retain endpoint terms
+compare with re-solved continuous finite differences</pre></section><section class="sec" id="appendix-b"><h2 lang="zh">附录 B：黏性通量的局部求导</h2><h2 lang="en">Appendix B: local viscous-flux differentiation</h2><h3 lang="zh">B.1 局部黏性运算与反传</h3><h3 lang="en">B.1 Local viscous operations and reverse accumulation</h3><p lang="zh">把一个内部面的运算拆成四个小映射：守恒量→原始量，原始量→梯度，温度→物性，应力／热流→能量通量。局部点积检验每个映射的转置，再检查整个面。此处提供可调的状态种子与面种子，并显示完整面 Jacobian 的前向和反向乘积。</p><p lang="en">Split an interior face into four maps: conservative-to-primitive, primitive-to-gradient, temperature-to-transport, and stress/heat-flux-to-energy-flux. Local dot tests check transposes before testing the complete face. The panel selects a face and displays its full forward and reverse products with deterministic nonzero seeds.</p><div class="lab nslab" id="local-lab"></div><h3 lang="zh">B.2 为什么热流目标不能只求状态导数</h3><h3 lang="en">B.2 Why a heat-flux objective needs explicit parameter derivatives</h3><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>J</mi><mi>q</mi></msub><mo>=</mo><mo>−</mo><mi>κ</mi><mo stretchy="false">(</mo><msub><mi>T</mi><mi>f</mi></msub><mo separator="true">,</mo><msub><mi>μ</mi><mrow><mi>r</mi><mi>e</mi><mi>f</mi></mrow></msub><mo separator="true">,</mo><mi>P</mi><mi>r</mi><mo stretchy="false">)</mo><mo stretchy="false">(</mo><msub><mi>T</mi><mi>x</mi></msub><msub><mo stretchy="false">)</mo><mi>f</mi></msub><mo separator="true">,</mo><mspace width="1em"/><mi>δ</mi><msub><mi>J</mi><mi>q</mi></msub><mo>=</mo><mo>−</mo><mi>κ</mi><mi>δ</mi><msub><mi>T</mi><mi>x</mi></msub><mo>−</mo><msub><mi>T</mi><mi>x</mi></msub><mrow><mo fence="true">(</mo><msub><mi>κ</mi><mi>T</mi></msub><mi>δ</mi><mi>T</mi><mo>+</mo><msub><mi>κ</mi><msub><mi>μ</mi><mrow><mi>r</mi><mi>e</mi><mi>f</mi></mrow></msub></msub><mi>δ</mi><msub><mi>μ</mi><mrow><mi>r</mi><mi>e</mi><mi>f</mi></mrow></msub><mo>+</mo><msub><mi>κ</mi><mrow><mi>P</mi><mi>r</mi></mrow></msub><mi>δ</mi><mi>P</mi><mi>r</mi><mo fence="true">)</mo></mrow><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">J_q=-\kappa(T_f,\mu_{ref},Pr)(T_x)_f,\quad\delta J_q=-\kappa\delta T_x-T_x\left(\kappa_T\delta T+\kappa_{\mu_{ref}}\delta\mu_{ref}+\kappa_{Pr}\delta Pr\right).</annotation></semantics></math></span></div><p lang="zh">即使固定 U，改变 μ_ref 或 Pr 也改变目标。总梯度必须包含 J_a；把 R_aᵀψ 当全部梯度会漏项。第 11 节同时显示显式目标项与残差反传项，便于逐项核对。</p><p lang="en">Even at fixed U, changing μ_ref or Pr changes the objective. Retain J_a in the total gradient; R_aᵀψ alone omits terms. Section 11 separates the explicit objective and residual-adjoint contributions.</p><h3 lang="zh">B.3 求导与求解范围</h3><h3 lang="en">B.3 Differentiation and solution scope</h3><p lang="zh">所有开放算例光滑且使用无 limiter 重构；温度物性被完整求导。Newton 回溯用于找到收敛状态，稳态伴随求导对象是收敛残差方程，不是回溯次数。参数越界或无法收敛时显示失败，不把旧曲线当新结果。</p><p lang="en">All exposed cases are smooth and use unlimited reconstruction with full transport derivatives. Newton backtracking finds a converged state; the steady adjoint differentiates its residual equation, not the number of backtracking steps. Invalid or failed parameter cases report failure rather than presenting stale plots as new results.</p></section><section class="sec" id="appendix-c"><h2 lang="zh">附录 C：显式矩阵与直接伴随求解</h2><h2 lang="en">Appendix C: explicit matrices and direct adjoint solves</h2><p lang="zh">这里显式组装完整 A 并对 Aᵀ 做带部分主元 LU，不采用 matrix-free 求解。一次 Aeⱼ 形成一列；组装完成后可直接观察黏性和重构带来的耦合。第 16 节比较同一系统的求解时间，计时包括各自需要的准备工作。</p><p lang="en">This explicitly assembles A and factors Aᵀ with partial-pivot LU, not a matrix-free solve. Each Aeⱼ forms one column. Inspect couplings from viscosity and reconstruction. Section 16 compares the same system, including the preparation required by each method.</p><div class="equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi mathvariant="normal">Π</mi><msup><mi>A</mi><mi>T</mi></msup><mo>=</mo><mi>L</mi><mi>U</mi><mo separator="true">,</mo><mspace width="1em"/><mi>L</mi><mi>y</mi><mo>=</mo><mi mathvariant="normal">Π</mi><mo stretchy="false">(</mo><mo>−</mo><msubsup><mi>J</mi><mi>U</mi><mi>T</mi></msubsup><mo stretchy="false">)</mo><mo separator="true">,</mo><mspace width="1em"/><mi>U</mi><mi>ψ</mi><mo>=</mo><mi>y</mi><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">\Pi A^T=LU,\quad Ly=\Pi(-J_U^T),\quad U\psi=y.</annotation></semantics></math></span></div><pre class="algorithm">for j in state components:
+    A[:,j] = exact_JVP(unit(j))
+M = transpose(A)
+for k in 0..nd-1:
+    pivot = argmax(abs(M[k:nd,k]))
+    swap complete rows and permutation
+    store elimination multipliers in lower triangle
+    update remaining upper-right block
+y = forward_substitution(L, permuted_rhs)
+psi = backward_substitution(U, y)</pre><p lang="zh">主元交换必须包含已经存储的 L 乘数。分解后多个目标可以复用因子；当前流场、物性或阶数改变后必须重新组装。本页小矩阵适合直接法，但不据此推断大规模非结构网格也应使用稠密 LU。</p><p lang="en">Pivoting swaps previously stored L entries too. Several objectives can reuse factors until the flow, transport or order changes. Dense direct solves suit these small matrices, not necessarily large unstructured meshes.</p><div class="lab nslab" id="direct-lab"></div></section><details><summary><span lang="zh">完整可运行实现</span><span lang="en">Complete runnable implementation</span></summary><pre class="source-code">(function(root){'use strict';
+const gamma=1.4,alpha=2,zeros=n=>Array(n).fill(0),dot=(a,b)=>a.reduce((s,x,i)=>s+x*b[i],0),norm=a=>Math.sqrt(dot(a,a));
+const real={c:x=>x,add:(a,b)=>a+b,sub:(a,b)=>a-b,mul:(a,b)=>a*b,div:(a,b)=>a/b,pow:(a,p)=>a**p,sin:Math.sin,cos:Math.cos};
+function tape(){const val=[],pa=[],pb=[],da=[],db=[],inputs=[];function node(v,a=-1,b=-1,x=0,y=0){const i=val.length;val.push(v);pa.push(a);pb.push(b);da.push(x);db.push(y);return i;}const op={c:x=>node(x),input:x=>{const i=node(x);inputs.push(i);return i;},add:(a,b)=>node(val[a]+val[b],a,b,1,1),sub:(a,b)=>node(val[a]-val[b],a,b,1,-1),mul:(a,b)=>node(val[a]*val[b],a,b,val[b],val[a]),div:(a,b)=>node(val[a]/val[b],a,b,1/val[b],-val[a]/val[b]**2),pow:(a,p)=>node(val[a]**p,a,-1,p*val[a]**(p-1)),sin:a=>node(Math.sin(val[a]),a,-1,Math.cos(val[a])),cos:a=>node(Math.cos(val[a]),a,-1,-Math.sin(val[a]))};
+function forward(seed){const d=new Float64Array(val.length);inputs.forEach((i,k)=>d[i]=seed[k]||0);for(let i=0;i&lt;val.length;i++){if(pa[i]>=0)d[i]+=da[i]*d[pa[i]];if(pb[i]>=0)d[i]+=db[i]*d[pb[i]];}return d;}
+function reverse(outputs,seeds){const w=new Float64Array(val.length);outputs.forEach((i,k)=>w[i]+=seeds[k]);for(let i=val.length-1;i>=0;i--){if(pa[i]>=0)w[pa[i]]+=da[i]*w[i];if(pb[i]>=0)w[pb[i]]+=db[i]*w[i];}return inputs.map(i=>w[i]);}
+return {op,val,forward,reverse};}
+const complex={c:x=>[x,0],add:(a,b)=>[a[0]+b[0],a[1]+b[1]],sub:(a,b)=>[a[0]-b[0],a[1]-b[1]],mul:(a,b)=>[a[0]*b[0]-a[1]*b[1],a[0]*b[1]+a[1]*b[0]],div:(a,b)=>{const d=b[0]**2+b[1]**2;return [(a[0]*b[0]+a[1]*b[1])/d,(a[1]*b[0]-a[0]*b[1])/d];},pow:(a,p)=>{const r=Math.hypot(...a)**p,t=p*Math.atan2(a[1],a[0]);return [r*Math.cos(t),r*Math.sin(t)];},sin:a=>[Math.sin(a[0])*Math.cosh(a[1]),Math.cos(a[0])*Math.sinh(a[1])],cos:a=>[Math.cos(a[0])*Math.cosh(a[1]),-Math.sin(a[0])*Math.sinh(a[1])]};
+function gmres(A,b,P=x=>x.slice(),tol=1e-11,max=b.length){const n=b.length,beta=norm(b);if(beta&lt;=tol)return {x:zeros(n),residual:beta,history:[beta],states:[zeros(n)],converged:true};const V=[b.map(x=>x/beta)],Z=[],H=Array.from({length:max+1},()=>zeros(max)),cs=zeros(max),sn=zeros(max),g=zeros(max+1),history=[beta],estimates=[beta],states=[zeros(n)];g[0]=beta;let m=0;
+ for(let j=0;j&lt;max;j++){Z.push(P(V[j]));let w=A(Z[j]);for(let pass=0;pass&lt;2;pass++)for(let i=0;i&lt;=j;i++){const h=dot(V[i],w);H[i][j]+=h;w=w.map((x,k)=>x-h*V[i][k]);}H[j+1][j]=norm(w);const nextnorm=H[j+1][j];if(nextnorm>1e-16)V.push(w.map(x=>x/nextnorm));for(let i=0;i&lt;j;i++){const a=H[i][j],b=H[i+1][j];H[i][j]=cs[i]*a+sn[i]*b;H[i+1][j]=-sn[i]*a+cs[i]*b;}const a=H[j][j],bb=H[j+1][j],r=Math.hypot(a,bb);cs[j]=r?a/r:1;sn[j]=r?bb/r:0;H[j][j]=r;H[j+1][j]=0;g[j+1]=-sn[j]*g[j];g[j]*=cs[j];m=j+1;estimates.push(Math.abs(g[j+1]));const yy=zeros(m);for(let ii=m-1;ii>=0;ii--){let a=g[ii];for(let kk=ii+1;kk&lt;m;kk++)a-=H[ii][kk]*yy[kk];yy[ii]=a/H[ii][ii];}const xx=zeros(n);for(let ii=0;ii&lt;m;ii++)for(let kk=0;kk&lt;n;kk++)xx[kk]+=Z[ii][kk]*yy[ii];states.push(xx);history.push(norm(A(xx).map((v,i)=>v-b[i])));if(history.at(-1)&lt;tol||nextnorm&lt;=1e-16)break;}
+ const y=zeros(m);for(let i=m-1;i>=0;i--){let a=g[i];for(let j=i+1;j&lt;m;j++)a-=H[i][j]*y[j];y[i]=a/H[i][i];}const x=zeros(n);for(let i=0;i&lt;m;i++)for(let j=0;j&lt;n;j++)x[j]+=Z[i][j]*y[i];const residual=norm(A(x).map((z,i)=>z-b[i]));return {x,residual,history,estimates,states,converged:residual&lt;=Math.max(tol*5,1e-13)};}
+const api={real,complex,tape,gmres,dot,norm};if(typeof module!=='undefined')module.exports=api;else root.QMath=api;
+})(typeof window!=='undefined'?window:globalThis);
+
+/* Small educational systems: matrix-free exact products; explicit matrices only for LU/conditioning diagnostics. */
+(function(root){'use strict';
+const Q=typeof module!=='undefined'?require('../q1d/reconstruction/math'):root.QMath;
+const {norm,dot}=Q,zeros=n=>Array(n).fill(0),transpose=A=>A[0].map((_,j)=>A.map(r=>r[j])),mv=(A,x)=>A.map(r=>dot(r,x));
+function factor(A){const n=A.length,lu=A.map(r=>r.slice()),p=Array.from({length:n},(_,i)=>i),scale=Math.max(...A.flat().map(Math.abs));for(let k=0;k&lt;n;k++){let j=k;for(let i=k+1;i&lt;n;i++)if(Math.abs(lu[i][k])>Math.abs(lu[j][k]))j=i;if(!Number.isFinite(lu[j][k])||Math.abs(lu[j][k])&lt;1e-14*scale)throw Error('Singular LU pivot '+k);[lu[j],lu[k]]=[lu[k],lu[j]];[p[j],p[k]]=[p[k],p[j]];for(let i=k+1;i&lt;n;i++){lu[i][k]/=lu[k][k];for(let j=k+1;j&lt;n;j++)lu[i][j]-=lu[i][k]*lu[k][j];}}return {lu,p};}
+function solve(F,b){const {lu,p}=F,n=b.length,x=p.map(i=>b[i]);for(let i=0;i&lt;n;i++)for(let j=0;j&lt;i;j++)x[i]-=lu[i][j]*x[j];for(let i=n-1;i>=0;i--){for(let j=i+1;j&lt;n;j++)x[i]-=lu[i][j]*x[j];x[i]/=lu[i][i];}return x;}
+function assemble(L,n){const A=Array.from({length:n},()=>zeros(n));for(let j=0;j&lt;n;j++){const e=zeros(n);e[j]=1;L.jvp(e).R.forEach((v,i)=>A[i][j]=v);}return A;}
+function limiter(a,b,kind='minmod',eps=.01){if(kind==='first')return {s:0,da:0,db:0,branch:'first',margin:1};if(kind==='none')return {s:(a+b)/2,da:.5,db:.5,branch:'unlimited',margin:1};if(kind==='smooth'){const den=a*a+b*b+eps*eps,num=a*b*(a+b);return {s:num/den,da:((2*a*b+b*b)*den-2*a*num)/(den*den),db:((a*a+2*a*b)*den-2*b*num)/(den*den),branch:'smooth',margin:1};}const margin=Math.min(Math.abs(a),Math.abs(b),Math.abs(Math.abs(a)-Math.abs(b)));if(a*b&lt;=0)return {s:0,da:0,db:0,branch:'zero',margin};return Math.abs(a)&lt;=Math.abs(b)?{s:a,da:1,db:0,branch:'left',margin}:{s:b,da:0,db:1,branch:'right',margin};}
+function slope(o,a,b,kind,eps,mode='full'){const r=limiter(o.value(a),o.value(b),kind,eps),{c,add,mul,sub,div}=o;if(mode==='frozen'){const d=(o.value(a)+o.value(b))/2,phi=Math.abs(d)>1e-15?r.s/d:0;return add(c(r.s),mul(c(phi/2),add(sub(a,c(o.value(a))),sub(b,c(o.value(b))))));}if(kind==='smooth'){const den=add(add(mul(a,a),mul(b,b)),c(eps*eps));return div(mul(mul(a,b),add(a,b)),den);}return add(c(r.s),add(mul(c(r.da),sub(a,c(o.value(a)))),mul(c(r.db),sub(b,c(o.value(b))))));}
+function operators(U,p,evalFn,mode='full'){const t=Q.tape();t.op.value=i=>t.val[i];const ui=U.map(t.op.input),pi=p.map(t.op.input),r=evalFn(t.op,ui,pi,mode);return {R:r.R.map(i=>t.val[i]),J:t.val[r.J],jvp:(v,dp=zeros(p.length))=>{const z=t.forward([...v,...dp]);return {R:r.R.map(i=>z[i]),J:z[r.J]};},vjp:(w,j=0)=>{const z=t.reverse([...r.R,r.J],[...w,j]);return {U:z.slice(0,U.length),p:z.slice(U.length)};}};}
+const real={...Q.real,value:x=>x};
+function gsMatrix(P,sweeps=2){const n=P.length,B=Array.from({length:n},()=>zeros(n));for(let k=0;k&lt;n;k++){const b=zeros(n),x=zeros(n);b[k]=1;for(let s=0;s&lt;sweeps;s++)for(let i=0;i&lt;n;i++){let v=b[i];for(let j=0;j&lt;n;j++)if(i!==j)v-=P[i][j]*x[j];if(Math.abs(P[i][i])&lt;1e-14)throw Error('Zero GS diagonal');x[i]=v/P[i][i];}x.forEach((v,i)=>B[i][k]=v);}return B;}
+function compare(L,P,rhs,adj=false,omega=.7,preAction=null){const n=rhs.length,A=assemble(L,n),AA=adj?transpose(A):A,F=factor(AA),exact=solve(F,rhs),B0=preAction?transpose(Array.from({length:n},(_,j)=>{const e=zeros(n);e[j]=1;return preAction(e);})):gsMatrix(P),B=adj?transpose(B0):B0,op=v=>adj?L.vjp(v).U:L.jvp(v).R,pre=v=>mv(B,v),gm=Q.gmres(op,rhs,pre,1e-11,n);let x=zeros(n),history=[],reason='limit';for(let k=0;k&lt;250;k++){const ax=op(x),r=rhs.map((b,i)=>b-ax[i]),rn=norm(r);history.push(rn);if(rn&lt;1e-10){reason='converged';break;}if(!Number.isFinite(rn)||rn>Math.max(1,norm(rhs))*1e8){reason='growth';break;}const d=pre(r);x=x.map((v,i)=>v+omega*d[i]);}
+const inv=transpose(Array.from({length:n},(_,j)=>{const e=zeros(n);e[j]=1;return solve(F,e);})),ni=M=>Math.max(...M.map(r=>r.reduce((s,v)=>s+Math.abs(v),0))),cond=ni(AA)*ni(inv),M=AA.map((_,i)=>AA[0].map((_,j)=>(i===j?1:0)-omega*B[i].reduce((s,v,k)=>s+v*AA[k][j],0)));return {exact,luResidual:norm(op(exact).map((v,i)=>v-rhs[i])),gm,gs:{x,history,reason},conditionInfinity:cond,iterationNormInfinity:ni(M),A};}
+const api={...Q,zeros,transpose,mv,factor,solve,assemble,limiter,slope,operators,real,gsMatrix,compare};if(typeof module!=='undefined')module.exports=api;else root.EduNumerics=api;
+})(typeof window!=='undefined'?window:globalThis);
+
+/* Plane 1D laminar compressible Navier–Stokes. R = Fc_right-Fc_left-Fv_right+Fv_left-S. */
+(function(root){'use strict';
+const Q=typeof module!=='undefined'?require('../q1d/reconstruction/math'):root.QMath;
+const N=typeof module!=='undefined'?require('../experiments/numerics'):root.EduNumerics;
+const {norm,dot,real,complex,tape,gmres}=Q,{zeros,assemble,transpose,factor,solve:lu,mv}=N;
+const cp=3.5,cv=2.5,mass=.35;
+function physics(o,variable){const {c,add,sub,mul,div,pow}=o;
+ const prim=U=>{const rho=U[0],u=div(U[1],rho),T=div(sub(div(U[2],rho),mul(c(.5),mul(u,u))),c(cv));return {rho,u,T,p:mul(rho,T)};};
+ const cons=(rho,u,T)=>[rho,mul(rho,u),mul(rho,add(mul(c(cv),T),mul(c(.5),mul(u,u))))];
+ const transport=(T,b)=>{const mu=variable?mul(b[2],div(mul(c(1.4),pow(T,1.5)),add(T,c(.4)))):b[2];return {mu,kappa:div(mul(c(cp),mu),b[3])};};
+ const flux=U=>{const q=prim(U);return [U[1],add(mul(U[1],q.u),q.p),mul(q.u,add(U[2],q.p))];};
+ return {prim,cons,transport,flux};
+}
+function exact(x){const u=mass+.03*Math.sin(Math.PI*x)+.01*Math.sin(2*Math.PI*x),T=1+.05*Math.sin(Math.PI*x)+.02*Math.sin(2*Math.PI*x);return [mass/u,mass,(mass/u)*(cv*T+.5*u*u)];}
+function manufactured(x,mu0,Pr,variable){const s=Math.sin(Math.PI*x),c=Math.cos(Math.PI*x),u=mass+.03*s+.01*Math.sin(2*Math.PI*x),T=1+.05*s+.02*Math.sin(2*Math.PI*x),ux=.03*Math.PI*c+.02*Math.PI*Math.cos(2*Math.PI*x),tx=.05*Math.PI*c+.04*Math.PI*Math.cos(2*Math.PI*x),uxx=-.03*Math.PI**2*s-.04*Math.PI**2*Math.sin(2*Math.PI*x),txx=-.05*Math.PI**2*s-.08*Math.PI**2*Math.sin(2*Math.PI*x);
+ const mu=variable?mu0*1.4*T**1.5/(T+.4):mu0,mut=variable?mu*(1.5/T-1/(T+.4)):0,k=cp*mu/Pr,kt=cp*mut/Pr,tau=4/3*mu*ux,taux=4/3*(mut*tx*ux+mu*uxx);
+ return [0,mass*ux+mass*(tx/u-T*ux/u**2)-taux,mass*(cp*tx+u*ux)-ux*tau-u*taux-kt*tx*tx-k*txx];}
+function model({node=false,n=12,order=2,variable=false,mode='heat',objective='tracking',mu=.15,Pr=.72}={}){
+ if(n&lt;4)throw Error('At least four intervals required');const h=1/n,m=node?n+1:n,nd=3*m,x=Array.from({length:m},(_,i)=>(i+(node?0:.5))*h),fx=node?[0,...Array.from({length:n},(_,i)=>(i+.5)*h),1]:Array.from({length:n+1},(_,i)=>i*h),vol=x.map((_,i)=>fx[i+1]-fx[i]);
+ const params=[mode==='heat'?.03:0,0,mu,Pr,1,1],names=['a₀','a₁','μ_ref','Pr','T_in',mode==='heat'?'p_b':'T_out'];
+ function source(o,xx,b){const {c,add,mul}=o,base=mode==='mms'?manufactured(xx,mu,Pr,variable):[0,0,0];return [c(0),c(base[1]),add(c(base[2]),add(mul(b[0],c(Math.sin(Math.PI*xx)**2)),mul(b[1],c(Math.sin(2*Math.PI*xx)**2))))];}
+ function weights(i,xx,q=order){if(q===1)return [[i,1]];const d=(xx-x[i])/h;if(i===0)return [[0,1-d],[1,d]];if(i===m-1)return [[i,1+d],[i-1,-d]];return [[i,1],[i-1,-d/2],[i+1,d/2]];}
+ function evaluate(o,U,b=params,q=order){const {c,add,sub,mul,div,pow}=o,ph=physics(o,variable),R=Array.from({length:nd},()=>c(0)),local=[],sources=[],qstates=Array.from({length:m},(_,i)=>ph.prim(U.slice(3*i,3*i+3)));
+ const sum=a=>a.reduce((s,v)=>add(s,v),c(0)),lin=(a,w)=>sum(w.map(([i,v])=>mul(c(v),a[i]))),rec=(i,xx)=>[0,1,2].map(k=>lin(U.filter((_,j)=>j%3===k),weights(i,xx,q))),at=(key,i)=>qstates[i][key];
+ const inlet=ph.cons(c(1),c(mass),b[4]);
+ for(let f=0;f&lt;=m;f++){const L=f-1,Ri=f,xx=fx[f];let ul,ur,face,ux,tx;
+  if(f>0&amp;&amp;f&lt;m){ul=rec(L,xx);ur=rec(Ri,xx);face=ph.prim([0,1,2].map(k=>mul(c(.5),add(U[3*L+k],U[3*Ri+k]))));ux=mul(c(1/h),sub(at('u',Ri),at('u',L)));tx=mul(c(1/h),sub(at('T',Ri),at('T',L)));}
+  else if(node){const i=f===0?0:m-1;ul=ur=U.slice(3*i,3*i+3);face=ph.prim(ul);const w=f===0?[[0,-1.5/h],[1,2/h],[2,-.5/h]]:[[m-1,1.5/h],[m-2,-2/h],[m-3,.5/h]];ux=lin(qstates.map(s=>s.u),w);tx=lin(qstates.map(s=>s.T),w);}
+  else if(f===0){ul=ur=inlet;face=ph.prim(inlet);ux=mul(c(1/h),sum([mul(c(-8/3),face.u),mul(c(3),at('u',0)),mul(c(-1/3),at('u',1))]));tx=mul(c(1/h),sum([mul(c(-8/3),face.T),mul(c(3),at('T',0)),mul(c(-1/3),at('T',1))]));}
+  else {const ext=key=>sub(mul(c(1.5),at(key,m-1)),mul(c(.5),at(key,m-2)));const rho=ext('rho'),u=mode==='mms'?c(mass):ext('u'),T=mode==='mms'?b[5]:ext('T');ul=ur=ph.cons(rho,u,T);face=ph.prim(ul);ux=mode==='mms'?mul(c(1/h),sum([mul(c(8/3),u),mul(c(-3),at('u',m-1)),mul(c(1/3),at('u',m-2))])):c(0);tx=mode==='mms'?mul(c(1/h),sum([mul(c(8/3),T),mul(c(-3),at('T',m-1)),mul(c(1/3),at('T',m-2))])):c(0);}
+  const tr=ph.transport(face.T,b);let tau=mul(c(4/3),mul(tr.mu,ux)),heat=mul(c(-1),mul(tr.kappa,tx));
+  if(!node&amp;&amp;f===m&amp;&amp;mode==='heat'){tau=sub(face.p,b[5]);ux=div(tau,mul(c(4/3),tr.mu));}
+  let fc=ph.flux(ul),alpha=c(0);if(f>0&amp;&amp;f&lt;m){const a=ph.prim(ul),bb=ph.prim(ur),fr=ph.flux(ur);alpha=mul(c(.5),sum([a.u,bb.u,pow(mul(c(1.4),a.T),.5),pow(mul(c(1.4),bb.T),.5)]));fc=fc.map((v,k)=>sub(mul(c(.5),add(v,fr[k])),mul(mul(c(.5),alpha),sub(ur[k],ul[k]))));}
+  const fv=[c(0),tau,sub(mul(face.u,tau),heat)],H=fc.map((v,k)=>sub(v,fv[k]));
+  H.forEach((v,k)=>{if(L>=0)R[3*L+k]=add(R[3*L+k],v);if(Ri&lt;m)R[3*Ri+k]=sub(R[3*Ri+k],v);});local.push({x:xx,ul,ur,fc,fv,H,ux,tx,tau,heat,mu:tr.mu,kappa:tr.kappa,u:face.u,T:face.T,p:face.p,alpha});
+ }
+ let J=c(0);for(let i=0;i&lt;m;i++){const mid=(fx[i]+fx[i+1])/2,half=vol[i]/2,S=[c(0),c(0),c(0)];for(const z of [-1/Math.sqrt(3),1/Math.sqrt(3)]){const xx=mid+half*z,ss=source(o,xx,b);ss.forEach((v,k)=>S[k]=add(S[k],mul(c(half),v)));const T=ph.prim(rec(i,xx)).T,d=sub(T,c(1+.04*Math.sin(Math.PI*xx)));if(objective==='tracking')J=add(J,mul(c(.5*half),mul(d,d)));}S.forEach((v,k)=>R[3*i+k]=sub(R[3*i+k],v));sources.push(S);}
+ if(objective==='outlet')J=local[m].T;if(objective==='heatflux')J=local[0].heat;
+ const raw=R.slice(),constraints=[];if(node){const put=(row,v)=>{R[row]=v;constraints.push(row);};put(0,sub(qstates[0].rho,c(1)));put(1,sub(qstates[0].u,c(mass)));put(2,sub(qstates[0].T,b[4]));if(mode==='mms'){put(3*(m-1)+1,sub(qstates[m-1].u,c(mass)));put(3*(m-1)+2,sub(qstates[m-1].T,b[5]));}else{put(3*(m-1)+1,sub(sub(local[m].p,local[m].tau),b[5]));put(3*(m-1)+2,local[m].heat);}}
+ return {R,J,raw,local,sources,constraints};
+ }
+ function linearize(U,b=params,q=order){const t=tape(),u=U.map(t.op.input),p=b.map(t.op.input),out=evaluate(t.op,u,p,q),vals=a=>a.map(i=>t.val[i]);
+ const extract=(a,d)=>Object.fromEntries(Object.entries(a).map(([k,v])=>[k,k==='x'?v:Array.isArray(v)?v.map(i=>d[i]):d[v]]));
+ return {R:vals(out.R),J:t.val[out.J],jvp:(v,dp=zeros(b.length))=>{const d=t.forward([...v,...dp]);return {R:out.R.map(i=>d[i]),raw:out.raw.map(i=>d[i]),J:d[out.J],local:out.local.map(a=>extract(a,d)),sources:out.sources.map(a=>a.map(i=>d[i]))};},vjp:(w,j=0)=>{const d=t.reverse([...out.R,out.J],[...w,j]);return {U:d.slice(0,nd),p:d.slice(nd)};},constraintVjp:w=>t.reverse(out.constraints.map(i=>out.R[i]),out.constraints.map(i=>w[i])).slice(0,nd),faceVjp:(f,w)=>t.reverse(out.local[f].H,w).slice(0,nd)};
+ }
+ function precondition(U,b=params){const P=assemble(linearize(U,b,1),nd),blocks=Array.from({length:m},(_,i)=>factor(P.slice(3*i,3*i+3).map(r=>r.slice(3*i,3*i+3))));
+ // One forward block GS sweep B=(D+L)^-1; reverse sweep is exactly B^T.
+ const apply=(r,tr=false)=>{const z=zeros(nd);for(let it=0;it&lt;m;it++){const i=tr?m-1-it:it,rr=r.slice(3*i,3*i+3);for(let j=tr?i+1:0;tr?j&lt;m:j&lt;i;j++)for(let k=0;k&lt;3;k++)for(let l=0;l&lt;3;l++)rr[k]-=(tr?P[3*j+l][3*i+k]:P[3*i+k][3*j+l])*z[3*j+l];const block=tr?factor(transpose(P.slice(3*i,3*i+3).map(r=>r.slice(3*i,3*i+3)))):blocks[i],v=lu(block,rr);v.forEach((a,k)=>z[3*i+k]=a);}return z;};return {P,apply};}
+ function linearSolve(L,rhs,pre,trans=false,method='gmres',tol=1e-11){const op=v=>trans?L.vjp(v).U:L.jvp(v).R;
+ if(method==='lu'){const A=assemble(L,nd),x=lu(factor(trans?transpose(A):A),rhs);return {x,history:[norm(rhs),norm(op(x).map((v,i)=>v-rhs[i]))],converged:true,A};}
+ if(method==='gmres')return gmres(op,rhs,r=>pre.apply(r,trans),tol,nd);
+ let x=zeros(nd),history=[];for(let it=0;it&lt;1500;it++){const ax=op(x),r=rhs.map((v,i)=>v-ax[i]),rn=norm(r);history.push(rn);if(rn&lt;tol)return {x,history,converged:true};if(!Number.isFinite(rn)||rn>1e8)break;const d=pre.apply(r,trans);x=x.map((v,i)=>v+.65*d[i]);}return {x,history,converged:false};}
+ function valid(U,b=params){try{const z=evaluate(real,U,b);return z.local.every(f=>[f.ul,f.ur].every(v=>{const s=physics(real,variable).prim(v);return s.rho>.1&amp;&amp;s.T>.3&amp;&amp;s.u>.05&amp;&amp;s.u&lt;.9*Math.sqrt(1.4*s.T);}));}catch{return false;}}
+ function initial(){return x.flatMap(xx=>mode==='mms'?exact(xx):[1,mass,cv+.5*mass**2]);}
+ function solve(b=params,start,method='gmres',tol=2e-12){let U=start?start.slice():initial();const history=[],states=[];for(let it=0;it&lt;35;it++){const L=linearize(U,b),rn=norm(L.R);history.push(rn);states.push(U.slice());if(rn&lt;tol)return {U,history,states,converged:true};const pre=precondition(U,b),v=linearSolve(L,L.R.map(x=>-x),pre,false,method,2e-13);if(!v.converged)throw Error('Primal linear solve failed');let step=1,ok=false;while(step>1e-8){const trial=U.map((x,i)=>x+step*v.x[i]);if(valid(trial,b)&amp;&amp;norm(evaluate(real,trial,b).R)&lt;(1-1e-4*step)*rn){U=trial;ok=true;break;}step*=.5;}if(!ok)throw Error('No admissible Newton correction');}throw Error('Primal residual did not converge');}
+ function sensitivity(sol,b=params,k=0,method='gmres'){const L=linearize(sol.U,b),pre=precondition(sol.U,b),dp=zeros(b.length);dp[k]=1;const tangent=linearSolve(L,L.jvp(zeros(nd),dp).R.map(x=>-x),pre,false,method),adjoint=linearSolve(L,L.vjp(zeros(nd),1).U.map(x=>-x),pre,true,method);if(!tangent.converged||!adjoint.converged)throw Error('Derivative solve did not converge');return {L,pre,tangent,adjoint,gradient:L.vjp(adjoint.x,1).p,directional:L.jvp(tangent.x,dp).J};}
+ function complexGradient(sol,b=params,k=0){const h=1e-25,p=b.map((v,i)=>[v,i===k?h:0]),U=sol.U.map(v=>[v,0]),L=linearize(sol.U,b),pre=precondition(sol.U,b);for(let it=0;it&lt;4;it++){const z=evaluate(complex,U,p),r=z.R.map(v=>v[1]/h);if(norm(r)&lt;1e-10)return {gradient:z.J[1]/h,residual:norm(r)};const s=linearSolve(L,r.map(v=>-v),pre,false,'gmres',1e-13);if(!s.converged)throw Error('Complex correction failed');U.forEach((v,i)=>v[1]+=h*s.x[i]);}const z=evaluate(complex,U,p),residual=norm(z.R.map(v=>v[1]/h));if(residual>1e-9)throw Error('Complex residual not converged');return {gradient:z.J[1]/h,residual};}
+ return {node,n,m,nd,h,x,fx,vol,order,mode,variable,objective,params,names,source,weights,initial,valid,solve,linearize,precondition,linearSolve,sensitivity,complexGradient,evaluate:(U,b=params)=>evaluate(real,U,b),evaluateWith:evaluate,physics:physics(real,variable)};
+}
+const api={model,physics,exact,manufactured,cp,cv,mass};if(typeof module!=='undefined')module.exports=api;else root.NS1D=api;
+})(typeof window!=='undefined'?window:globalThis);
+
+/* Independent spatial ODE BVP and continuous ODE adjoint. No FV residual/Jacobian calls. */
+(function(root){'use strict';const Q=typeof module!=='undefined'?require('../q1d/reconstruction/math'):root.QMath,N=typeof module!=='undefined'?require('../experiments/numerics'):root.EduNumerics,C=typeof module!=='undefined'?require('./core'):root.NS1D;
+const {real,tape,norm,dot}=Q,{zeros,factor,solve:lu}=N,m=C.mass,cp=C.cp;
+const add=(a,b,s=1)=>a.map((v,i)=>v+s*b[i]);
+function rk(f,x,y,h){const a=f(x,y),b=f(x+h/2,add(y,a,h/2)),c=f(x+h/2,add(y,b,h/2)),d=f(x+h,add(y,c,h));return y.map((v,i)=>v+h*(a[i]+2*b[i]+2*c[i]+d[i])/6);}
+function equations(model,o,x,z,b){const {c,add,sub,mul,div}=o,[u,T,P,H]=z,tr=C.physics(o,model.variable).transport(T,b),tau=sub(add(mul(c(m),u),div(mul(c(m),T),u)),P),ux=div(tau,mul(c(4/3),tr.mu)),ht=mul(c(m),add(mul(c(cp),T),mul(c(.5),mul(u,u)))),heat=add(sub(H,ht),mul(u,tau)),tx=div(mul(c(-1),heat),tr.kappa),S=model.source(o,x,b),d=sub(T,c(1+.04*Math.sin(Math.PI*x))),j=model.objective==='tracking'?mul(c(.5),mul(d,d)):c(0);return {f:[ux,tx,S[1],S[2]],j,heat,tau};}
+function boundary(model,o,z,b){const {c,sub,mul}=o;return model.mode==='mms'?[sub(z[0],c(m)),sub(z[1],b[5])]:[sub(sub(z[2],mul(c(m),z[0])),b[5]),equations(model,o,1,z,b).heat];}
+function derivatives(model,x,z,b){const t=tape(),zz=z.map(t.op.input),bb=b.map(t.op.input),out=equations(model,t.op,x,zz,bb),ids=[...out.f,out.j],jac=ids.map(i=>t.reverse([i],[1]));return {f:out.f.map(i=>t.val[i]),j:t.val[out.j],A:jac.slice(0,4).map(r=>r.slice(0,4)),B:jac.slice(0,4).map(r=>r.slice(4)),jz:jac[4].slice(0,4),jp:jac[4].slice(4)};}
+function endpoint(model,z,b,which){const t=tape(),zz=z.map(t.op.input),bb=b.map(t.op.input),phi=which===0&amp;&amp;model.objective==='heatflux'?equations(model,t.op,0,zz,bb).heat:which===1&amp;&amp;model.objective==='outlet'?zz[1]:t.op.c(0),g=boundary(model,t.op,zz,bb),d=t.reverse([phi],[1]);return {phi:t.val[phi],phiz:d.slice(0,4),phip:d.slice(4),g:g.map(i=>t.val[i]),G:g.map(i=>t.reverse([i],[1]).slice(0,4)),Gp:g.map(i=>t.reverse([i],[1]).slice(4))};}
+function integrate(model,b,initial,steps,variations=false){let y=[m,b[4],...initial];if(variations)y.push(...[0,0,0,0,1,0,0,1]);const states=[y.slice(0,4)],f=(x,y)=>{const d=derivatives(model,x,y.slice(0,4),b);return variations?[...d.f,...d.A.flatMap(r=>[0,1].map(k=>r.reduce((s,v,j)=>s+v*y[4+2*j+k],0)))]:d.f;};for(let i=0;i&lt;steps;i++){y=rk(f,i/steps,y,1/steps);if(!y.every(Number.isFinite)||y[0]&lt;=.02||y[1]&lt;=.2||y[0]>.95*Math.sqrt(1.4*y[1]))throw Error('Continuous trajectory outside positive subsonic branch');states.push(y.slice(0,4));}return {states,Y:variations?Array.from({length:4},(_,i)=>y.slice(4+2*i,6+2*i)):null};}
+function solve(model,b=model.params,steps=256,warm=null){if(!warm&amp;&amp;model.mode==='heat'&amp;&amp;Math.max(Math.abs(b[0]),Math.abs(b[1]))>.04){const base=b.slice();base[0]=base[1]=0;let r=solve(model,base,steps);for(let k=1;k&lt;=6;k++){const next=b.slice();next[0]*=k/6;next[1]*=k/6;r=solve(model,next,steps,r.states[0].slice(2));}return r;}let guess=[m*m+1,m*(cp*b[4]+.5*m*m)];if(model.mode==='mms'){const z=C.exact(0),q=C.physics(real,model.variable).prim(z),mu=C.physics(real,model.variable).transport(q.T,b);const tau=4/3*mu.mu*.05*Math.PI;guess=[m*m+1-tau,m*(cp+.5*m*m)-m*tau-mu.kappa*.09*Math.PI];}
+ if(warm)guess=warm.slice();let run,history=[];for(let it=0;it&lt;20;it++){run=integrate(model,b,guess,steps,true);const ep=endpoint(model,run.states.at(-1),b,1),rn=norm(ep.g);history.push(rn);if(rn&lt;2e-12)break;const A=ep.G.map(r=>[0,1].map(k=>r.reduce((s,v,j)=>s+v*run.Y[j][k],0))),d=lu(factor(A),ep.g.map(v=>-v));let step=1,ok=false;while(step>1e-7){try{const trial=add(guess,d,step),r=integrate(model,b,trial,steps),err=norm(endpoint(model,r.states.at(-1),b,1).g);if(err&lt;rn){guess=trial;ok=true;break;}}catch{}step*=.5;}if(!ok)throw Error('Continuous shooting failed');}
+ if(history.at(-1)>2e-11)throw Error('Continuous boundary residual not converged');
+ const states=run.states,fs=states.map((z,i)=>equations(model,real,i/steps,z,b).f);
+ function at(x){const i=Math.min(steps-1,Math.max(0,Math.floor(x*steps))),t=x*steps-i,h=1/steps;return states[i].map((v,k)=>(2*t**3-3*t*t+1)*v+(t**3-2*t*t+t)*h*fs[i][k]+(-2*t**3+3*t*t)*states[i+1][k]+(t**3-t*t)*h*fs[i+1][k]);}
+ let integral=0;for(let i=0;i&lt;steps;i++){const x=i/steps,h=1/steps;integral+=h/6*(equations(model,real,x,states[i],b).j+4*equations(model,real,x+h/2,at(x+h/2),b).j+equations(model,real,x+h,states[i+1],b).j);}
+ return {states,at,steps,history,J:integral+endpoint(model,states[0],b,0).phi+endpoint(model,states.at(-1),b,1).phi};}
+function adjoint(model,ref,b=model.params){const n=ref.steps,end=endpoint(model,ref.states.at(-1),b,1),start=endpoint(model,ref.states[0],b,0);
+ const march=(terminal,forcing=true,withGradient=false)=>{let y=[...terminal,...(withGradient?zeros(b.length):[])],values=Array(n+1);values[n]=terminal;const f=(x,y)=>{const d=derivatives(model,x,ref.at(x),b),v=Array.from({length:4},(_,i)=>-d.A.reduce((s,r,j)=>s+r[i]*y[j],0)-(forcing?d.jz[i]:0));if(withGradient)v.push(...b.map((_,i)=>d.jp[i]+d.B.reduce((s,r,j)=>s+r[i]*y[j],0)));return v;};for(let i=n;i>0;i--){y=rk(f,i/n,y,-1/n);values[i-1]=y.slice(0,4);}return {y,values};};
+ const a=march(end.phiz),r=end.G.map(v=>march(v,false)),rhs=[2,3].map(i=>-start.phiz[i]-a.y[i]),mat=[2,3].map(i=>r.map(v=>v.y[i])),eta=lu(factor(mat),rhs),terminal=end.phiz.map((v,i)=>v+end.G.reduce((s,r,j)=>s+eta[j]*r[i],0)),out=march(terminal,true,true),l0=out.y.slice(0,4),gradient=b.map((_,i)=>start.phip[i]+end.phip[i]-out.y[4+i]+eta.reduce((s,v,j)=>s+v*end.Gp[j][i],0)+(i===4?l0[1]+start.phiz[1]:0));
+ return {values:out.values,eta,gradient,boundaryResidual:Math.hypot(l0[2]+start.phiz[2],l0[3]+start.phiz[3])};}
+const api={solve,adjoint,equations,derivatives,boundary,endpoint,rk};if(typeof module!=='undefined')module.exports=api;else root.NSContinuous=api;
+})(typeof window!=='undefined'?window:globalThis);
+
+(function(root){'use strict';const C=typeof module!=='undefined'?require('./core'):root.NS1D,N=typeof module!=='undefined'?require('../experiments/numerics'):root.EduNumerics;
+function reference(m,i){if(m.node)return C.exact(m.x[i]);const a=m.fx[i],b=m.fx[i+1],r=[0,0,0],z=[-.9602898564975363,-.7966664774136267,-.525532409916329,-.1834346424956498,.1834346424956498,.525532409916329,.7966664774136267,.9602898564975363],w=[.1012285362903763,.2223810344533745,.3137066458778873,.362683783378362,.362683783378362,.3137066458778873,.2223810344533745,.1012285362903763];z.forEach((v,j)=>C.exact((a+b)/2+(b-a)*v/2).forEach((s,k)=>r[k]+=w[j]*s/2));return r;}
+function accuracy(options,grids=[8,16,32,64]){const rows=[];for(const order of [1,2]){let prev;for(const n of grids){const m=C.model({...options,mode:'mms',n,order}),s=m.solve(),e=Math.sqrt(m.x.reduce((ss,_,i)=>ss+m.vol[i]*reference(m,i).reduce((sum,v,k)=>sum+(v-s.U[3*i+k])**2,0),0));rows.push({order,n,error:e,rate:prev?Math.log2(prev/e):null,residual:s.history.at(-1)});prev=e;}}return rows;}
+function trace(m,sol,kind){const U=sol.U,L=m.linearize(U),raw=m.evaluate(U),v=U.map((_,i)=>Math.sin(i+1)),w=U.map((_,i)=>Math.cos(2*i+1)),d=L.jvp(v),out=N.zeros(m.nd),steps=[];const step=(zh,en,face,details,updates=[])=>{for(const [i,value,replace]of updates)out[i]=replace?value:out[i]+value;steps.push({zh,en,face,details,values:out.slice()});};
+ step('清零输出数组','Zero output',0,[]);
+ if(kind==='adjoint'){const masked=w.slice();raw.constraints.forEach(i=>masked[i]=0);if(m.node)step('反传约束并屏蔽旧平衡行','Reverse constraints and mask old balance rows',0,raw.constraints.map(i=>['row '+i,w[i]]),L.constraintVjp(w).map((x,i)=>[i,x]));for(let f=m.m;f>=0;f--){const seed=[0,1,2].map(k=>(f>0?masked[3*(f-1)+k]:0)-(f&lt;m.m?masked[3*f+k]:0)),back=L.faceVjp(f,seed);step('形成净面通量种子','Form net-face seeds',f,seed.map((v,k)=>['Hbar['+k+']',v]));if(f>0&amp;&amp;f&lt;m.m){const z=raw.local[f],tb=-seed[1]-z.u*seed[2],qb=seed[2],ub=-z.tau*seed[2];step('反传黏性功与热通量','Reverse viscous work and heat flux',f,[['u_bar (viscous)',ub],['tau_bar',tb],['q_bar',qb]]);step('反传应力、梯度与输运系数','Reverse stress, gradients and transport',f,[['mu_bar',4/3*z.ux*tb],['ux_bar',4/3*z.mu*tb],['kappa_bar',-z.tx*qb],['Tx_bar',-z.kappa*qb]]);}step('反传通量、物性、梯度和重构，累加状态','Reverse flux, transport, gradients and reconstruction; accumulate state',f,back.map((v,i)=>['dUbar['+i+']',v]).filter(a=>Math.abs(a[1])>1e-15),back.map((v,i)=>[i,v]));}}
+ else{for(let f=0;f&lt;=m.m;f++){const z=kind==='tangent'?d.local[f]:raw.local[f];step('收集并重构左右状态','Gather and reconstruct traces',f,[...z.ul.map((v,k)=>['Uminus['+k+']',v]),...z.ur.map((v,k)=>['Uplus['+k+']',v])]);step('计算梯度和输运系数','Evaluate gradients and transport',f,['ux','tx','mu','kappa'].map(k=>[k,z[k]]));step('计算应力、热流及能量黏性通量','Evaluate stress, heat flux and viscous work',f,[['tau',z.tau],['q',z.heat],...z.fv.map((v,k)=>['Fv['+k+']',v])]);step('计算对流与净通量','Evaluate convective and net flux',f,[...z.fc.map((v,k)=>['Fc['+k+']',v]),...z.H.map((v,k)=>['H['+k+']',v])]);const updates=[];z.H.forEach((v,k)=>{if(f>0)updates.push([3*(f-1)+k,v]);if(f&lt;m.m)updates.push([3*f+k,-v]);});step('向左右控制体分发','Scatter to neighbouring volumes',f,[],updates);}
+ const src=kind==='tangent'?d.sources:raw.sources;src.forEach((ss,i)=>step('减去体积源项','Subtract integrated source',i,ss.map((v,k)=>['S['+k+']',v]),ss.map((v,k)=>[3*i+k,-v])));if(m.node)step('替换边界约束行','Replace boundary rows',0,[],raw.constraints.map(i=>[i,kind==='tangent'?d.R[i]:raw.R[i],true]));}
+ const expected=kind==='adjoint'?L.vjp(w).U:kind==='tangent'?d.R:raw.R;return {steps,expected,error:N.norm(out.map((v,i)=>v-expected[i]))};}
+const api={reference,accuracy,trace};if(typeof module!=='undefined')module.exports=api;else root.NSStudy=api;
+})(typeof window!=='undefined'?window:globalThis);
+</pre></details></main><footer class="foot">© 2026 Yisheng Gao · <a href="LICENSE">CC BY 4.0</a> · <a href="adjoint_ns1d_cell.html"><span lang="zh">切换格心／格点</span><span lang="en">Switch cell/node</span></a> · <a href="adjoint_q1d_node.html">Euler</a> · <a href="adjoint_1d_node.html">Burgers</a></footer></div><script>/* Language switch.
+
+   Chinese is the canonical text; English is carried ALONGSIDE it in sibling
+   elements marked lang="en", and the page simply shows one set and hides the
+   other. Nothing is translated at runtime.
+
+   Why siblings rather than swapping strings: figure labels are placed by a
+   box-measuring pass at build time (figlabels.js moves a label off a stroke
+   using its measured width). English boxes are a different size, so a single
+   SVG cannot be laid out correctly for both languages -- each language needs
+   its own rendering, which sibling elements give for free.               */
+(function () {
+  "use strict";
+  var KEY = "adjlang";
+  var root = document.documentElement;
+
+  /* every host the demos append into: they build once, so a language switch
+     has to clear them before re-running boot, or content would double up */
+  var HOSTS = ["explorer-mesh", "explorer-info", "flux-plot", "flux-table",
+    "flux-code", "fluxd-code", "fluxb-code", "bc-code", "dual-code",
+    /* dual-mesh and dual-ctl are appended into, not overwritten: the node
+       page builds a MeshView into dual-mesh and a Player control bar into
+       dual-ctl. Leaving them out meant bootDemos() added a SECOND mesh and a
+       second control bar to the median-dual demo on every language switch. */
+    "dual-mesh", "dual-ctl",
+    "newton-mesh", "newton-code", "newton-status", "newton-plot",
+    "newton-lanes", "newton-stage-ctl", "newton-ctl", "newton-info",
+    "loop-primal", "loop-tangent", "loop-adjoint", "dot-out",
+    "jacobi-mesh", "jacobi-lanes", "jacobi-plot", "jacobi-status",
+    "jacobi-info", "jacobi-code", "jacobi-face-ctl", "jacobi-ctl",
+    /* the forward solve of Section 9 is the same demo in tangent mode and
+       appends into the same kinds of host; without these a switch stacked a
+       second panel under the first, the first in the old language */
+    "tan-mesh", "tan-lanes", "tan-plot", "tan-status", "tan-info",
+    "tan-code", "tan-face-ctl", "tan-ctl",
+    "grad-mesh", "grad-out",
+    /* the merged step-size sweep: both are appended into, so a
+       language switch would otherwise stack a second plot and a
+       second control row on top of the first. */
+    "hsweep-ctl", "hsweep-plot"];
+
+  function current() {
+    return root.getAttribute("data-lang") === "en" ? "en" : "zh";
+  }
+
+  function paintButton(lang) {
+    var btn = document.getElementById("langtoggle");
+    if (!btn) return;
+    btn.textContent = lang === "en" ? "中文" : "English";
+    btn.setAttribute("aria-label",
+      lang === "en" ? "切换到中文" : "Switch to English");
+  }
+
+  /* Two things the sibling/CSS trick cannot reach, so they are set here:
+
+       - attribute values (aria-label), which CSS cannot select on;
+       - the text of <option>, because display:none on an option is not
+         honoured consistently across browsers, so a hidden sibling option
+         would still appear in the dropdown.
+
+     Both are declared on the element itself and swapped at switch time:
+       <option data-zh="中心差分" data-en="Central difference">
+       <select data-zh-aria="差分格式" data-en-aria="Difference scheme">
+     paintButton() already does exactly this for the toggle's own label. */
+  function paintDeclared(lang) {
+    var k = lang === "en" ? "en" : "zh";
+    Array.prototype.forEach.call(
+      document.querySelectorAll("[data-zh][data-en]"), function (el) {
+        var v = el.getAttribute("data-" + k);
+        if (v !== null) el.textContent = v;
+      });
+    Array.prototype.forEach.call(
+      document.querySelectorAll("[data-zh-aria][data-en-aria]"), function (el) {
+        var v = el.getAttribute("data-" + k + "-aria");
+        if (v !== null) el.setAttribute("aria-label", v);
+      });
+  }
+
+  /* Text built once by an inline page script (the u* summary) lives in no
+     demo host, so clearing HOSTS would never refresh it. Such a script
+     registers its own repainter here and it is re-run on every switch. */
+  window.REPAINT = window.REPAINT || [];
+  function repaint() {
+    window.REPAINT.forEach(function (fn) {
+      try { fn(); }
+      catch (e) { if (window.console) console.error("[i18n] repaint", e); }
+    });
+  }
+
+  function apply(lang, rebuild) {
+    root.setAttribute("data-lang", lang);
+    root.setAttribute("lang", lang === "en" ? "en" : "zh-CN");
+    try { localStorage.setItem(KEY, lang); } catch (e) { /* private mode */ }
+    paintButton(lang);
+    /* these run on the initial apply() too: a page restored as lang=en would
+       otherwise open with Chinese option text and Chinese aria-labels */
+    paintDeclared(lang);
+    repaint();
+    if (!rebuild) return;
+    /* figure numbers are stamped into captions once and guarded against
+       re-stamping, so drop them before renumbering in the new language */
+    Array.prototype.forEach.call(document.querySelectorAll(".figno"),
+      function (b) { b.parentNode.removeChild(b); });
+    if (window.bootDemos) {
+      HOSTS.forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.replaceChildren();
+      });
+      try { window.bootDemos(); }
+      catch (e) { if (window.console) console.error("[i18n] rebuild", e); }
+    }
+  }
+
+  window.LANG = current;
+  window.t = function (zh, en) { return current() === "en" ? en : zh; };
+
+  function init() {
+    var saved = null;
+    try { saved = localStorage.getItem(KEY); } catch (e) { /* ignore */ }
+    apply(saved === "en" ? "en" : "zh", false);
+    var btn = document.getElementById("langtoggle");
+    if (btn) {
+      btn.addEventListener("click", function () {
+        apply(current() === "en" ? "zh" : "en", true);
+      });
+    }
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else { init(); }
+})();
+
+(function(root){'use strict';
+const gamma=1.4,alpha=2,zeros=n=>Array(n).fill(0),dot=(a,b)=>a.reduce((s,x,i)=>s+x*b[i],0),norm=a=>Math.sqrt(dot(a,a));
+const real={c:x=>x,add:(a,b)=>a+b,sub:(a,b)=>a-b,mul:(a,b)=>a*b,div:(a,b)=>a/b,pow:(a,p)=>a**p,sin:Math.sin,cos:Math.cos};
+function tape(){const val=[],pa=[],pb=[],da=[],db=[],inputs=[];function node(v,a=-1,b=-1,x=0,y=0){const i=val.length;val.push(v);pa.push(a);pb.push(b);da.push(x);db.push(y);return i;}const op={c:x=>node(x),input:x=>{const i=node(x);inputs.push(i);return i;},add:(a,b)=>node(val[a]+val[b],a,b,1,1),sub:(a,b)=>node(val[a]-val[b],a,b,1,-1),mul:(a,b)=>node(val[a]*val[b],a,b,val[b],val[a]),div:(a,b)=>node(val[a]/val[b],a,b,1/val[b],-val[a]/val[b]**2),pow:(a,p)=>node(val[a]**p,a,-1,p*val[a]**(p-1)),sin:a=>node(Math.sin(val[a]),a,-1,Math.cos(val[a])),cos:a=>node(Math.cos(val[a]),a,-1,-Math.sin(val[a]))};
+function forward(seed){const d=new Float64Array(val.length);inputs.forEach((i,k)=>d[i]=seed[k]||0);for(let i=0;i<val.length;i++){if(pa[i]>=0)d[i]+=da[i]*d[pa[i]];if(pb[i]>=0)d[i]+=db[i]*d[pb[i]];}return d;}
+function reverse(outputs,seeds){const w=new Float64Array(val.length);outputs.forEach((i,k)=>w[i]+=seeds[k]);for(let i=val.length-1;i>=0;i--){if(pa[i]>=0)w[pa[i]]+=da[i]*w[i];if(pb[i]>=0)w[pb[i]]+=db[i]*w[i];}return inputs.map(i=>w[i]);}
+return {op,val,forward,reverse};}
+const complex={c:x=>[x,0],add:(a,b)=>[a[0]+b[0],a[1]+b[1]],sub:(a,b)=>[a[0]-b[0],a[1]-b[1]],mul:(a,b)=>[a[0]*b[0]-a[1]*b[1],a[0]*b[1]+a[1]*b[0]],div:(a,b)=>{const d=b[0]**2+b[1]**2;return [(a[0]*b[0]+a[1]*b[1])/d,(a[1]*b[0]-a[0]*b[1])/d];},pow:(a,p)=>{const r=Math.hypot(...a)**p,t=p*Math.atan2(a[1],a[0]);return [r*Math.cos(t),r*Math.sin(t)];},sin:a=>[Math.sin(a[0])*Math.cosh(a[1]),Math.cos(a[0])*Math.sinh(a[1])],cos:a=>[Math.cos(a[0])*Math.cosh(a[1]),-Math.sin(a[0])*Math.sinh(a[1])]};
+function gmres(A,b,P=x=>x.slice(),tol=1e-11,max=b.length){const n=b.length,beta=norm(b);if(beta<=tol)return {x:zeros(n),residual:beta,history:[beta],states:[zeros(n)],converged:true};const V=[b.map(x=>x/beta)],Z=[],H=Array.from({length:max+1},()=>zeros(max)),cs=zeros(max),sn=zeros(max),g=zeros(max+1),history=[beta],estimates=[beta],states=[zeros(n)];g[0]=beta;let m=0;
+ for(let j=0;j<max;j++){Z.push(P(V[j]));let w=A(Z[j]);for(let pass=0;pass<2;pass++)for(let i=0;i<=j;i++){const h=dot(V[i],w);H[i][j]+=h;w=w.map((x,k)=>x-h*V[i][k]);}H[j+1][j]=norm(w);const nextnorm=H[j+1][j];if(nextnorm>1e-16)V.push(w.map(x=>x/nextnorm));for(let i=0;i<j;i++){const a=H[i][j],b=H[i+1][j];H[i][j]=cs[i]*a+sn[i]*b;H[i+1][j]=-sn[i]*a+cs[i]*b;}const a=H[j][j],bb=H[j+1][j],r=Math.hypot(a,bb);cs[j]=r?a/r:1;sn[j]=r?bb/r:0;H[j][j]=r;H[j+1][j]=0;g[j+1]=-sn[j]*g[j];g[j]*=cs[j];m=j+1;estimates.push(Math.abs(g[j+1]));const yy=zeros(m);for(let ii=m-1;ii>=0;ii--){let a=g[ii];for(let kk=ii+1;kk<m;kk++)a-=H[ii][kk]*yy[kk];yy[ii]=a/H[ii][ii];}const xx=zeros(n);for(let ii=0;ii<m;ii++)for(let kk=0;kk<n;kk++)xx[kk]+=Z[ii][kk]*yy[ii];states.push(xx);history.push(norm(A(xx).map((v,i)=>v-b[i])));if(history.at(-1)<tol||nextnorm<=1e-16)break;}
+ const y=zeros(m);for(let i=m-1;i>=0;i--){let a=g[i];for(let j=i+1;j<m;j++)a-=H[i][j]*y[j];y[i]=a/H[i][i];}const x=zeros(n);for(let i=0;i<m;i++)for(let j=0;j<n;j++)x[j]+=Z[i][j]*y[i];const residual=norm(A(x).map((z,i)=>z-b[i]));return {x,residual,history,estimates,states,converged:residual<=Math.max(tol*5,1e-13)};}
+const api={real,complex,tape,gmres,dot,norm};if(typeof module!=='undefined')module.exports=api;else root.QMath=api;
+})(typeof window!=='undefined'?window:globalThis);
+
+/* Small educational systems: matrix-free exact products; explicit matrices only for LU/conditioning diagnostics. */
+(function(root){'use strict';
+const Q=typeof module!=='undefined'?require('../q1d/reconstruction/math'):root.QMath;
+const {norm,dot}=Q,zeros=n=>Array(n).fill(0),transpose=A=>A[0].map((_,j)=>A.map(r=>r[j])),mv=(A,x)=>A.map(r=>dot(r,x));
+function factor(A){const n=A.length,lu=A.map(r=>r.slice()),p=Array.from({length:n},(_,i)=>i),scale=Math.max(...A.flat().map(Math.abs));for(let k=0;k<n;k++){let j=k;for(let i=k+1;i<n;i++)if(Math.abs(lu[i][k])>Math.abs(lu[j][k]))j=i;if(!Number.isFinite(lu[j][k])||Math.abs(lu[j][k])<1e-14*scale)throw Error('Singular LU pivot '+k);[lu[j],lu[k]]=[lu[k],lu[j]];[p[j],p[k]]=[p[k],p[j]];for(let i=k+1;i<n;i++){lu[i][k]/=lu[k][k];for(let j=k+1;j<n;j++)lu[i][j]-=lu[i][k]*lu[k][j];}}return {lu,p};}
+function solve(F,b){const {lu,p}=F,n=b.length,x=p.map(i=>b[i]);for(let i=0;i<n;i++)for(let j=0;j<i;j++)x[i]-=lu[i][j]*x[j];for(let i=n-1;i>=0;i--){for(let j=i+1;j<n;j++)x[i]-=lu[i][j]*x[j];x[i]/=lu[i][i];}return x;}
+function assemble(L,n){const A=Array.from({length:n},()=>zeros(n));for(let j=0;j<n;j++){const e=zeros(n);e[j]=1;L.jvp(e).R.forEach((v,i)=>A[i][j]=v);}return A;}
+function limiter(a,b,kind='minmod',eps=.01){if(kind==='first')return {s:0,da:0,db:0,branch:'first',margin:1};if(kind==='none')return {s:(a+b)/2,da:.5,db:.5,branch:'unlimited',margin:1};if(kind==='smooth'){const den=a*a+b*b+eps*eps,num=a*b*(a+b);return {s:num/den,da:((2*a*b+b*b)*den-2*a*num)/(den*den),db:((a*a+2*a*b)*den-2*b*num)/(den*den),branch:'smooth',margin:1};}const margin=Math.min(Math.abs(a),Math.abs(b),Math.abs(Math.abs(a)-Math.abs(b)));if(a*b<=0)return {s:0,da:0,db:0,branch:'zero',margin};return Math.abs(a)<=Math.abs(b)?{s:a,da:1,db:0,branch:'left',margin}:{s:b,da:0,db:1,branch:'right',margin};}
+function slope(o,a,b,kind,eps,mode='full'){const r=limiter(o.value(a),o.value(b),kind,eps),{c,add,mul,sub,div}=o;if(mode==='frozen'){const d=(o.value(a)+o.value(b))/2,phi=Math.abs(d)>1e-15?r.s/d:0;return add(c(r.s),mul(c(phi/2),add(sub(a,c(o.value(a))),sub(b,c(o.value(b))))));}if(kind==='smooth'){const den=add(add(mul(a,a),mul(b,b)),c(eps*eps));return div(mul(mul(a,b),add(a,b)),den);}return add(c(r.s),add(mul(c(r.da),sub(a,c(o.value(a)))),mul(c(r.db),sub(b,c(o.value(b))))));}
+function operators(U,p,evalFn,mode='full'){const t=Q.tape();t.op.value=i=>t.val[i];const ui=U.map(t.op.input),pi=p.map(t.op.input),r=evalFn(t.op,ui,pi,mode);return {R:r.R.map(i=>t.val[i]),J:t.val[r.J],jvp:(v,dp=zeros(p.length))=>{const z=t.forward([...v,...dp]);return {R:r.R.map(i=>z[i]),J:z[r.J]};},vjp:(w,j=0)=>{const z=t.reverse([...r.R,r.J],[...w,j]);return {U:z.slice(0,U.length),p:z.slice(U.length)};}};}
+const real={...Q.real,value:x=>x};
+function gsMatrix(P,sweeps=2){const n=P.length,B=Array.from({length:n},()=>zeros(n));for(let k=0;k<n;k++){const b=zeros(n),x=zeros(n);b[k]=1;for(let s=0;s<sweeps;s++)for(let i=0;i<n;i++){let v=b[i];for(let j=0;j<n;j++)if(i!==j)v-=P[i][j]*x[j];if(Math.abs(P[i][i])<1e-14)throw Error('Zero GS diagonal');x[i]=v/P[i][i];}x.forEach((v,i)=>B[i][k]=v);}return B;}
+function compare(L,P,rhs,adj=false,omega=.7,preAction=null){const n=rhs.length,A=assemble(L,n),AA=adj?transpose(A):A,F=factor(AA),exact=solve(F,rhs),B0=preAction?transpose(Array.from({length:n},(_,j)=>{const e=zeros(n);e[j]=1;return preAction(e);})):gsMatrix(P),B=adj?transpose(B0):B0,op=v=>adj?L.vjp(v).U:L.jvp(v).R,pre=v=>mv(B,v),gm=Q.gmres(op,rhs,pre,1e-11,n);let x=zeros(n),history=[],reason='limit';for(let k=0;k<250;k++){const ax=op(x),r=rhs.map((b,i)=>b-ax[i]),rn=norm(r);history.push(rn);if(rn<1e-10){reason='converged';break;}if(!Number.isFinite(rn)||rn>Math.max(1,norm(rhs))*1e8){reason='growth';break;}const d=pre(r);x=x.map((v,i)=>v+omega*d[i]);}
+const inv=transpose(Array.from({length:n},(_,j)=>{const e=zeros(n);e[j]=1;return solve(F,e);})),ni=M=>Math.max(...M.map(r=>r.reduce((s,v)=>s+Math.abs(v),0))),cond=ni(AA)*ni(inv),M=AA.map((_,i)=>AA[0].map((_,j)=>(i===j?1:0)-omega*B[i].reduce((s,v,k)=>s+v*AA[k][j],0)));return {exact,luResidual:norm(op(exact).map((v,i)=>v-rhs[i])),gm,gs:{x,history,reason},conditionInfinity:cond,iterationNormInfinity:ni(M),A};}
+const api={...Q,zeros,transpose,mv,factor,solve,assemble,limiter,slope,operators,real,gsMatrix,compare};if(typeof module!=='undefined')module.exports=api;else root.EduNumerics=api;
+})(typeof window!=='undefined'?window:globalThis);
+
+/* Plane 1D laminar compressible Navier–Stokes. R = Fc_right-Fc_left-Fv_right+Fv_left-S. */
+(function(root){'use strict';
+const Q=typeof module!=='undefined'?require('../q1d/reconstruction/math'):root.QMath;
+const N=typeof module!=='undefined'?require('../experiments/numerics'):root.EduNumerics;
+const {norm,dot,real,complex,tape,gmres}=Q,{zeros,assemble,transpose,factor,solve:lu,mv}=N;
+const cp=3.5,cv=2.5,mass=.35;
+function physics(o,variable){const {c,add,sub,mul,div,pow}=o;
+ const prim=U=>{const rho=U[0],u=div(U[1],rho),T=div(sub(div(U[2],rho),mul(c(.5),mul(u,u))),c(cv));return {rho,u,T,p:mul(rho,T)};};
+ const cons=(rho,u,T)=>[rho,mul(rho,u),mul(rho,add(mul(c(cv),T),mul(c(.5),mul(u,u))))];
+ const transport=(T,b)=>{const mu=variable?mul(b[2],div(mul(c(1.4),pow(T,1.5)),add(T,c(.4)))):b[2];return {mu,kappa:div(mul(c(cp),mu),b[3])};};
+ const flux=U=>{const q=prim(U);return [U[1],add(mul(U[1],q.u),q.p),mul(q.u,add(U[2],q.p))];};
+ return {prim,cons,transport,flux};
+}
+function exact(x){const u=mass+.03*Math.sin(Math.PI*x)+.01*Math.sin(2*Math.PI*x),T=1+.05*Math.sin(Math.PI*x)+.02*Math.sin(2*Math.PI*x);return [mass/u,mass,(mass/u)*(cv*T+.5*u*u)];}
+function manufactured(x,mu0,Pr,variable){const s=Math.sin(Math.PI*x),c=Math.cos(Math.PI*x),u=mass+.03*s+.01*Math.sin(2*Math.PI*x),T=1+.05*s+.02*Math.sin(2*Math.PI*x),ux=.03*Math.PI*c+.02*Math.PI*Math.cos(2*Math.PI*x),tx=.05*Math.PI*c+.04*Math.PI*Math.cos(2*Math.PI*x),uxx=-.03*Math.PI**2*s-.04*Math.PI**2*Math.sin(2*Math.PI*x),txx=-.05*Math.PI**2*s-.08*Math.PI**2*Math.sin(2*Math.PI*x);
+ const mu=variable?mu0*1.4*T**1.5/(T+.4):mu0,mut=variable?mu*(1.5/T-1/(T+.4)):0,k=cp*mu/Pr,kt=cp*mut/Pr,tau=4/3*mu*ux,taux=4/3*(mut*tx*ux+mu*uxx);
+ return [0,mass*ux+mass*(tx/u-T*ux/u**2)-taux,mass*(cp*tx+u*ux)-ux*tau-u*taux-kt*tx*tx-k*txx];}
+function model({node=false,n=12,order=2,variable=false,mode='heat',objective='tracking',mu=.15,Pr=.72}={}){
+ if(n<4)throw Error('At least four intervals required');const h=1/n,m=node?n+1:n,nd=3*m,x=Array.from({length:m},(_,i)=>(i+(node?0:.5))*h),fx=node?[0,...Array.from({length:n},(_,i)=>(i+.5)*h),1]:Array.from({length:n+1},(_,i)=>i*h),vol=x.map((_,i)=>fx[i+1]-fx[i]);
+ const params=[mode==='heat'?.03:0,0,mu,Pr,1,1],names=['a₀','a₁','μ_ref','Pr','T_in',mode==='heat'?'p_b':'T_out'];
+ function source(o,xx,b){const {c,add,mul}=o,base=mode==='mms'?manufactured(xx,mu,Pr,variable):[0,0,0];return [c(0),c(base[1]),add(c(base[2]),add(mul(b[0],c(Math.sin(Math.PI*xx)**2)),mul(b[1],c(Math.sin(2*Math.PI*xx)**2))))];}
+ function weights(i,xx,q=order){if(q===1)return [[i,1]];const d=(xx-x[i])/h;if(i===0)return [[0,1-d],[1,d]];if(i===m-1)return [[i,1+d],[i-1,-d]];return [[i,1],[i-1,-d/2],[i+1,d/2]];}
+ function evaluate(o,U,b=params,q=order){const {c,add,sub,mul,div,pow}=o,ph=physics(o,variable),R=Array.from({length:nd},()=>c(0)),local=[],sources=[],qstates=Array.from({length:m},(_,i)=>ph.prim(U.slice(3*i,3*i+3)));
+ const sum=a=>a.reduce((s,v)=>add(s,v),c(0)),lin=(a,w)=>sum(w.map(([i,v])=>mul(c(v),a[i]))),rec=(i,xx)=>[0,1,2].map(k=>lin(U.filter((_,j)=>j%3===k),weights(i,xx,q))),at=(key,i)=>qstates[i][key];
+ const inlet=ph.cons(c(1),c(mass),b[4]);
+ for(let f=0;f<=m;f++){const L=f-1,Ri=f,xx=fx[f];let ul,ur,face,ux,tx;
+  if(f>0&&f<m){ul=rec(L,xx);ur=rec(Ri,xx);face=ph.prim([0,1,2].map(k=>mul(c(.5),add(U[3*L+k],U[3*Ri+k]))));ux=mul(c(1/h),sub(at('u',Ri),at('u',L)));tx=mul(c(1/h),sub(at('T',Ri),at('T',L)));}
+  else if(node){const i=f===0?0:m-1;ul=ur=U.slice(3*i,3*i+3);face=ph.prim(ul);const w=f===0?[[0,-1.5/h],[1,2/h],[2,-.5/h]]:[[m-1,1.5/h],[m-2,-2/h],[m-3,.5/h]];ux=lin(qstates.map(s=>s.u),w);tx=lin(qstates.map(s=>s.T),w);}
+  else if(f===0){ul=ur=inlet;face=ph.prim(inlet);ux=mul(c(1/h),sum([mul(c(-8/3),face.u),mul(c(3),at('u',0)),mul(c(-1/3),at('u',1))]));tx=mul(c(1/h),sum([mul(c(-8/3),face.T),mul(c(3),at('T',0)),mul(c(-1/3),at('T',1))]));}
+  else {const ext=key=>sub(mul(c(1.5),at(key,m-1)),mul(c(.5),at(key,m-2)));const rho=ext('rho'),u=mode==='mms'?c(mass):ext('u'),T=mode==='mms'?b[5]:ext('T');ul=ur=ph.cons(rho,u,T);face=ph.prim(ul);ux=mode==='mms'?mul(c(1/h),sum([mul(c(8/3),u),mul(c(-3),at('u',m-1)),mul(c(1/3),at('u',m-2))])):c(0);tx=mode==='mms'?mul(c(1/h),sum([mul(c(8/3),T),mul(c(-3),at('T',m-1)),mul(c(1/3),at('T',m-2))])):c(0);}
+  const tr=ph.transport(face.T,b);let tau=mul(c(4/3),mul(tr.mu,ux)),heat=mul(c(-1),mul(tr.kappa,tx));
+  if(!node&&f===m&&mode==='heat'){tau=sub(face.p,b[5]);ux=div(tau,mul(c(4/3),tr.mu));}
+  let fc=ph.flux(ul),alpha=c(0);if(f>0&&f<m){const a=ph.prim(ul),bb=ph.prim(ur),fr=ph.flux(ur);alpha=mul(c(.5),sum([a.u,bb.u,pow(mul(c(1.4),a.T),.5),pow(mul(c(1.4),bb.T),.5)]));fc=fc.map((v,k)=>sub(mul(c(.5),add(v,fr[k])),mul(mul(c(.5),alpha),sub(ur[k],ul[k]))));}
+  const fv=[c(0),tau,sub(mul(face.u,tau),heat)],H=fc.map((v,k)=>sub(v,fv[k]));
+  H.forEach((v,k)=>{if(L>=0)R[3*L+k]=add(R[3*L+k],v);if(Ri<m)R[3*Ri+k]=sub(R[3*Ri+k],v);});local.push({x:xx,ul,ur,fc,fv,H,ux,tx,tau,heat,mu:tr.mu,kappa:tr.kappa,u:face.u,T:face.T,p:face.p,alpha});
+ }
+ let J=c(0);for(let i=0;i<m;i++){const mid=(fx[i]+fx[i+1])/2,half=vol[i]/2,S=[c(0),c(0),c(0)];for(const z of [-1/Math.sqrt(3),1/Math.sqrt(3)]){const xx=mid+half*z,ss=source(o,xx,b);ss.forEach((v,k)=>S[k]=add(S[k],mul(c(half),v)));const T=ph.prim(rec(i,xx)).T,d=sub(T,c(1+.04*Math.sin(Math.PI*xx)));if(objective==='tracking')J=add(J,mul(c(.5*half),mul(d,d)));}S.forEach((v,k)=>R[3*i+k]=sub(R[3*i+k],v));sources.push(S);}
+ if(objective==='outlet')J=local[m].T;if(objective==='heatflux')J=local[0].heat;
+ const raw=R.slice(),constraints=[];if(node){const put=(row,v)=>{R[row]=v;constraints.push(row);};put(0,sub(qstates[0].rho,c(1)));put(1,sub(qstates[0].u,c(mass)));put(2,sub(qstates[0].T,b[4]));if(mode==='mms'){put(3*(m-1)+1,sub(qstates[m-1].u,c(mass)));put(3*(m-1)+2,sub(qstates[m-1].T,b[5]));}else{put(3*(m-1)+1,sub(sub(local[m].p,local[m].tau),b[5]));put(3*(m-1)+2,local[m].heat);}}
+ return {R,J,raw,local,sources,constraints};
+ }
+ function linearize(U,b=params,q=order){const t=tape(),u=U.map(t.op.input),p=b.map(t.op.input),out=evaluate(t.op,u,p,q),vals=a=>a.map(i=>t.val[i]);
+ const extract=(a,d)=>Object.fromEntries(Object.entries(a).map(([k,v])=>[k,k==='x'?v:Array.isArray(v)?v.map(i=>d[i]):d[v]]));
+ return {R:vals(out.R),J:t.val[out.J],jvp:(v,dp=zeros(b.length))=>{const d=t.forward([...v,...dp]);return {R:out.R.map(i=>d[i]),raw:out.raw.map(i=>d[i]),J:d[out.J],local:out.local.map(a=>extract(a,d)),sources:out.sources.map(a=>a.map(i=>d[i]))};},vjp:(w,j=0)=>{const d=t.reverse([...out.R,out.J],[...w,j]);return {U:d.slice(0,nd),p:d.slice(nd)};},constraintVjp:w=>t.reverse(out.constraints.map(i=>out.R[i]),out.constraints.map(i=>w[i])).slice(0,nd),faceVjp:(f,w)=>t.reverse(out.local[f].H,w).slice(0,nd)};
+ }
+ function precondition(U,b=params){const P=assemble(linearize(U,b,1),nd),blocks=Array.from({length:m},(_,i)=>factor(P.slice(3*i,3*i+3).map(r=>r.slice(3*i,3*i+3))));
+ // One forward block GS sweep B=(D+L)^-1; reverse sweep is exactly B^T.
+ const apply=(r,tr=false)=>{const z=zeros(nd);for(let it=0;it<m;it++){const i=tr?m-1-it:it,rr=r.slice(3*i,3*i+3);for(let j=tr?i+1:0;tr?j<m:j<i;j++)for(let k=0;k<3;k++)for(let l=0;l<3;l++)rr[k]-=(tr?P[3*j+l][3*i+k]:P[3*i+k][3*j+l])*z[3*j+l];const block=tr?factor(transpose(P.slice(3*i,3*i+3).map(r=>r.slice(3*i,3*i+3)))):blocks[i],v=lu(block,rr);v.forEach((a,k)=>z[3*i+k]=a);}return z;};return {P,apply};}
+ function linearSolve(L,rhs,pre,trans=false,method='gmres',tol=1e-11){const op=v=>trans?L.vjp(v).U:L.jvp(v).R;
+ if(method==='lu'){const A=assemble(L,nd),x=lu(factor(trans?transpose(A):A),rhs);return {x,history:[norm(rhs),norm(op(x).map((v,i)=>v-rhs[i]))],converged:true,A};}
+ if(method==='gmres')return gmres(op,rhs,r=>pre.apply(r,trans),tol,nd);
+ let x=zeros(nd),history=[];for(let it=0;it<1500;it++){const ax=op(x),r=rhs.map((v,i)=>v-ax[i]),rn=norm(r);history.push(rn);if(rn<tol)return {x,history,converged:true};if(!Number.isFinite(rn)||rn>1e8)break;const d=pre.apply(r,trans);x=x.map((v,i)=>v+.65*d[i]);}return {x,history,converged:false};}
+ function valid(U,b=params){try{const z=evaluate(real,U,b);return z.local.every(f=>[f.ul,f.ur].every(v=>{const s=physics(real,variable).prim(v);return s.rho>.1&&s.T>.3&&s.u>.05&&s.u<.9*Math.sqrt(1.4*s.T);}));}catch{return false;}}
+ function initial(){return x.flatMap(xx=>mode==='mms'?exact(xx):[1,mass,cv+.5*mass**2]);}
+ function solve(b=params,start,method='gmres',tol=2e-12){let U=start?start.slice():initial();const history=[],states=[];for(let it=0;it<35;it++){const L=linearize(U,b),rn=norm(L.R);history.push(rn);states.push(U.slice());if(rn<tol)return {U,history,states,converged:true};const pre=precondition(U,b),v=linearSolve(L,L.R.map(x=>-x),pre,false,method,2e-13);if(!v.converged)throw Error('Primal linear solve failed');let step=1,ok=false;while(step>1e-8){const trial=U.map((x,i)=>x+step*v.x[i]);if(valid(trial,b)&&norm(evaluate(real,trial,b).R)<(1-1e-4*step)*rn){U=trial;ok=true;break;}step*=.5;}if(!ok)throw Error('No admissible Newton correction');}throw Error('Primal residual did not converge');}
+ function sensitivity(sol,b=params,k=0,method='gmres'){const L=linearize(sol.U,b),pre=precondition(sol.U,b),dp=zeros(b.length);dp[k]=1;const tangent=linearSolve(L,L.jvp(zeros(nd),dp).R.map(x=>-x),pre,false,method),adjoint=linearSolve(L,L.vjp(zeros(nd),1).U.map(x=>-x),pre,true,method);if(!tangent.converged||!adjoint.converged)throw Error('Derivative solve did not converge');return {L,pre,tangent,adjoint,gradient:L.vjp(adjoint.x,1).p,directional:L.jvp(tangent.x,dp).J};}
+ function complexGradient(sol,b=params,k=0){const h=1e-25,p=b.map((v,i)=>[v,i===k?h:0]),U=sol.U.map(v=>[v,0]),L=linearize(sol.U,b),pre=precondition(sol.U,b);for(let it=0;it<4;it++){const z=evaluate(complex,U,p),r=z.R.map(v=>v[1]/h);if(norm(r)<1e-10)return {gradient:z.J[1]/h,residual:norm(r)};const s=linearSolve(L,r.map(v=>-v),pre,false,'gmres',1e-13);if(!s.converged)throw Error('Complex correction failed');U.forEach((v,i)=>v[1]+=h*s.x[i]);}const z=evaluate(complex,U,p),residual=norm(z.R.map(v=>v[1]/h));if(residual>1e-9)throw Error('Complex residual not converged');return {gradient:z.J[1]/h,residual};}
+ return {node,n,m,nd,h,x,fx,vol,order,mode,variable,objective,params,names,source,weights,initial,valid,solve,linearize,precondition,linearSolve,sensitivity,complexGradient,evaluate:(U,b=params)=>evaluate(real,U,b),evaluateWith:evaluate,physics:physics(real,variable)};
+}
+const api={model,physics,exact,manufactured,cp,cv,mass};if(typeof module!=='undefined')module.exports=api;else root.NS1D=api;
+})(typeof window!=='undefined'?window:globalThis);
+
+/* Independent spatial ODE BVP and continuous ODE adjoint. No FV residual/Jacobian calls. */
+(function(root){'use strict';const Q=typeof module!=='undefined'?require('../q1d/reconstruction/math'):root.QMath,N=typeof module!=='undefined'?require('../experiments/numerics'):root.EduNumerics,C=typeof module!=='undefined'?require('./core'):root.NS1D;
+const {real,tape,norm,dot}=Q,{zeros,factor,solve:lu}=N,m=C.mass,cp=C.cp;
+const add=(a,b,s=1)=>a.map((v,i)=>v+s*b[i]);
+function rk(f,x,y,h){const a=f(x,y),b=f(x+h/2,add(y,a,h/2)),c=f(x+h/2,add(y,b,h/2)),d=f(x+h,add(y,c,h));return y.map((v,i)=>v+h*(a[i]+2*b[i]+2*c[i]+d[i])/6);}
+function equations(model,o,x,z,b){const {c,add,sub,mul,div}=o,[u,T,P,H]=z,tr=C.physics(o,model.variable).transport(T,b),tau=sub(add(mul(c(m),u),div(mul(c(m),T),u)),P),ux=div(tau,mul(c(4/3),tr.mu)),ht=mul(c(m),add(mul(c(cp),T),mul(c(.5),mul(u,u)))),heat=add(sub(H,ht),mul(u,tau)),tx=div(mul(c(-1),heat),tr.kappa),S=model.source(o,x,b),d=sub(T,c(1+.04*Math.sin(Math.PI*x))),j=model.objective==='tracking'?mul(c(.5),mul(d,d)):c(0);return {f:[ux,tx,S[1],S[2]],j,heat,tau};}
+function boundary(model,o,z,b){const {c,sub,mul}=o;return model.mode==='mms'?[sub(z[0],c(m)),sub(z[1],b[5])]:[sub(sub(z[2],mul(c(m),z[0])),b[5]),equations(model,o,1,z,b).heat];}
+function derivatives(model,x,z,b){const t=tape(),zz=z.map(t.op.input),bb=b.map(t.op.input),out=equations(model,t.op,x,zz,bb),ids=[...out.f,out.j],jac=ids.map(i=>t.reverse([i],[1]));return {f:out.f.map(i=>t.val[i]),j:t.val[out.j],A:jac.slice(0,4).map(r=>r.slice(0,4)),B:jac.slice(0,4).map(r=>r.slice(4)),jz:jac[4].slice(0,4),jp:jac[4].slice(4)};}
+function endpoint(model,z,b,which){const t=tape(),zz=z.map(t.op.input),bb=b.map(t.op.input),phi=which===0&&model.objective==='heatflux'?equations(model,t.op,0,zz,bb).heat:which===1&&model.objective==='outlet'?zz[1]:t.op.c(0),g=boundary(model,t.op,zz,bb),d=t.reverse([phi],[1]);return {phi:t.val[phi],phiz:d.slice(0,4),phip:d.slice(4),g:g.map(i=>t.val[i]),G:g.map(i=>t.reverse([i],[1]).slice(0,4)),Gp:g.map(i=>t.reverse([i],[1]).slice(4))};}
+function integrate(model,b,initial,steps,variations=false){let y=[m,b[4],...initial];if(variations)y.push(...[0,0,0,0,1,0,0,1]);const states=[y.slice(0,4)],f=(x,y)=>{const d=derivatives(model,x,y.slice(0,4),b);return variations?[...d.f,...d.A.flatMap(r=>[0,1].map(k=>r.reduce((s,v,j)=>s+v*y[4+2*j+k],0)))]:d.f;};for(let i=0;i<steps;i++){y=rk(f,i/steps,y,1/steps);if(!y.every(Number.isFinite)||y[0]<=.02||y[1]<=.2||y[0]>.95*Math.sqrt(1.4*y[1]))throw Error('Continuous trajectory outside positive subsonic branch');states.push(y.slice(0,4));}return {states,Y:variations?Array.from({length:4},(_,i)=>y.slice(4+2*i,6+2*i)):null};}
+function solve(model,b=model.params,steps=256,warm=null){if(!warm&&model.mode==='heat'&&Math.max(Math.abs(b[0]),Math.abs(b[1]))>.04){const base=b.slice();base[0]=base[1]=0;let r=solve(model,base,steps);for(let k=1;k<=6;k++){const next=b.slice();next[0]*=k/6;next[1]*=k/6;r=solve(model,next,steps,r.states[0].slice(2));}return r;}let guess=[m*m+1,m*(cp*b[4]+.5*m*m)];if(model.mode==='mms'){const z=C.exact(0),q=C.physics(real,model.variable).prim(z),mu=C.physics(real,model.variable).transport(q.T,b);const tau=4/3*mu.mu*.05*Math.PI;guess=[m*m+1-tau,m*(cp+.5*m*m)-m*tau-mu.kappa*.09*Math.PI];}
+ if(warm)guess=warm.slice();let run,history=[];for(let it=0;it<20;it++){run=integrate(model,b,guess,steps,true);const ep=endpoint(model,run.states.at(-1),b,1),rn=norm(ep.g);history.push(rn);if(rn<2e-12)break;const A=ep.G.map(r=>[0,1].map(k=>r.reduce((s,v,j)=>s+v*run.Y[j][k],0))),d=lu(factor(A),ep.g.map(v=>-v));let step=1,ok=false;while(step>1e-7){try{const trial=add(guess,d,step),r=integrate(model,b,trial,steps),err=norm(endpoint(model,r.states.at(-1),b,1).g);if(err<rn){guess=trial;ok=true;break;}}catch{}step*=.5;}if(!ok)throw Error('Continuous shooting failed');}
+ if(history.at(-1)>2e-11)throw Error('Continuous boundary residual not converged');
+ const states=run.states,fs=states.map((z,i)=>equations(model,real,i/steps,z,b).f);
+ function at(x){const i=Math.min(steps-1,Math.max(0,Math.floor(x*steps))),t=x*steps-i,h=1/steps;return states[i].map((v,k)=>(2*t**3-3*t*t+1)*v+(t**3-2*t*t+t)*h*fs[i][k]+(-2*t**3+3*t*t)*states[i+1][k]+(t**3-t*t)*h*fs[i+1][k]);}
+ let integral=0;for(let i=0;i<steps;i++){const x=i/steps,h=1/steps;integral+=h/6*(equations(model,real,x,states[i],b).j+4*equations(model,real,x+h/2,at(x+h/2),b).j+equations(model,real,x+h,states[i+1],b).j);}
+ return {states,at,steps,history,J:integral+endpoint(model,states[0],b,0).phi+endpoint(model,states.at(-1),b,1).phi};}
+function adjoint(model,ref,b=model.params){const n=ref.steps,end=endpoint(model,ref.states.at(-1),b,1),start=endpoint(model,ref.states[0],b,0);
+ const march=(terminal,forcing=true,withGradient=false)=>{let y=[...terminal,...(withGradient?zeros(b.length):[])],values=Array(n+1);values[n]=terminal;const f=(x,y)=>{const d=derivatives(model,x,ref.at(x),b),v=Array.from({length:4},(_,i)=>-d.A.reduce((s,r,j)=>s+r[i]*y[j],0)-(forcing?d.jz[i]:0));if(withGradient)v.push(...b.map((_,i)=>d.jp[i]+d.B.reduce((s,r,j)=>s+r[i]*y[j],0)));return v;};for(let i=n;i>0;i--){y=rk(f,i/n,y,-1/n);values[i-1]=y.slice(0,4);}return {y,values};};
+ const a=march(end.phiz),r=end.G.map(v=>march(v,false)),rhs=[2,3].map(i=>-start.phiz[i]-a.y[i]),mat=[2,3].map(i=>r.map(v=>v.y[i])),eta=lu(factor(mat),rhs),terminal=end.phiz.map((v,i)=>v+end.G.reduce((s,r,j)=>s+eta[j]*r[i],0)),out=march(terminal,true,true),l0=out.y.slice(0,4),gradient=b.map((_,i)=>start.phip[i]+end.phip[i]-out.y[4+i]+eta.reduce((s,v,j)=>s+v*end.Gp[j][i],0)+(i===4?l0[1]+start.phiz[1]:0));
+ return {values:out.values,eta,gradient,boundaryResidual:Math.hypot(l0[2]+start.phiz[2],l0[3]+start.phiz[3])};}
+const api={solve,adjoint,equations,derivatives,boundary,endpoint,rk};if(typeof module!=='undefined')module.exports=api;else root.NSContinuous=api;
+})(typeof window!=='undefined'?window:globalThis);
+
+(function(root){'use strict';const C=typeof module!=='undefined'?require('./core'):root.NS1D,N=typeof module!=='undefined'?require('../experiments/numerics'):root.EduNumerics;
+function reference(m,i){if(m.node)return C.exact(m.x[i]);const a=m.fx[i],b=m.fx[i+1],r=[0,0,0],z=[-.9602898564975363,-.7966664774136267,-.525532409916329,-.1834346424956498,.1834346424956498,.525532409916329,.7966664774136267,.9602898564975363],w=[.1012285362903763,.2223810344533745,.3137066458778873,.362683783378362,.362683783378362,.3137066458778873,.2223810344533745,.1012285362903763];z.forEach((v,j)=>C.exact((a+b)/2+(b-a)*v/2).forEach((s,k)=>r[k]+=w[j]*s/2));return r;}
+function accuracy(options,grids=[8,16,32,64]){const rows=[];for(const order of [1,2]){let prev;for(const n of grids){const m=C.model({...options,mode:'mms',n,order}),s=m.solve(),e=Math.sqrt(m.x.reduce((ss,_,i)=>ss+m.vol[i]*reference(m,i).reduce((sum,v,k)=>sum+(v-s.U[3*i+k])**2,0),0));rows.push({order,n,error:e,rate:prev?Math.log2(prev/e):null,residual:s.history.at(-1)});prev=e;}}return rows;}
+function trace(m,sol,kind){const U=sol.U,L=m.linearize(U),raw=m.evaluate(U),v=U.map((_,i)=>Math.sin(i+1)),w=U.map((_,i)=>Math.cos(2*i+1)),d=L.jvp(v),out=N.zeros(m.nd),steps=[];const step=(zh,en,face,details,updates=[])=>{for(const [i,value,replace]of updates)out[i]=replace?value:out[i]+value;steps.push({zh,en,face,details,values:out.slice()});};
+ step('清零输出数组','Zero output',0,[]);
+ if(kind==='adjoint'){const masked=w.slice();raw.constraints.forEach(i=>masked[i]=0);if(m.node)step('反传约束并屏蔽旧平衡行','Reverse constraints and mask old balance rows',0,raw.constraints.map(i=>['row '+i,w[i]]),L.constraintVjp(w).map((x,i)=>[i,x]));for(let f=m.m;f>=0;f--){const seed=[0,1,2].map(k=>(f>0?masked[3*(f-1)+k]:0)-(f<m.m?masked[3*f+k]:0)),back=L.faceVjp(f,seed);step('形成净面通量种子','Form net-face seeds',f,seed.map((v,k)=>['Hbar['+k+']',v]));if(f>0&&f<m.m){const z=raw.local[f],tb=-seed[1]-z.u*seed[2],qb=seed[2],ub=-z.tau*seed[2];step('反传黏性功与热通量','Reverse viscous work and heat flux',f,[['u_bar (viscous)',ub],['tau_bar',tb],['q_bar',qb]]);step('反传应力、梯度与输运系数','Reverse stress, gradients and transport',f,[['mu_bar',4/3*z.ux*tb],['ux_bar',4/3*z.mu*tb],['kappa_bar',-z.tx*qb],['Tx_bar',-z.kappa*qb]]);}step('反传通量、物性、梯度和重构，累加状态','Reverse flux, transport, gradients and reconstruction; accumulate state',f,back.map((v,i)=>['dUbar['+i+']',v]).filter(a=>Math.abs(a[1])>1e-15),back.map((v,i)=>[i,v]));}}
+ else{for(let f=0;f<=m.m;f++){const z=kind==='tangent'?d.local[f]:raw.local[f];step('收集并重构左右状态','Gather and reconstruct traces',f,[...z.ul.map((v,k)=>['Uminus['+k+']',v]),...z.ur.map((v,k)=>['Uplus['+k+']',v])]);step('计算梯度和输运系数','Evaluate gradients and transport',f,['ux','tx','mu','kappa'].map(k=>[k,z[k]]));step('计算应力、热流及能量黏性通量','Evaluate stress, heat flux and viscous work',f,[['tau',z.tau],['q',z.heat],...z.fv.map((v,k)=>['Fv['+k+']',v])]);step('计算对流与净通量','Evaluate convective and net flux',f,[...z.fc.map((v,k)=>['Fc['+k+']',v]),...z.H.map((v,k)=>['H['+k+']',v])]);const updates=[];z.H.forEach((v,k)=>{if(f>0)updates.push([3*(f-1)+k,v]);if(f<m.m)updates.push([3*f+k,-v]);});step('向左右控制体分发','Scatter to neighbouring volumes',f,[],updates);}
+ const src=kind==='tangent'?d.sources:raw.sources;src.forEach((ss,i)=>step('减去体积源项','Subtract integrated source',i,ss.map((v,k)=>['S['+k+']',v]),ss.map((v,k)=>[3*i+k,-v])));if(m.node)step('替换边界约束行','Replace boundary rows',0,[],raw.constraints.map(i=>[i,kind==='tangent'?d.R[i]:raw.R[i],true]));}
+ const expected=kind==='adjoint'?L.vjp(w).U:kind==='tangent'?d.R:raw.R;return {steps,expected,error:N.norm(out.map((v,i)=>v-expected[i]))};}
+const api={reference,accuracy,trace};if(typeof module!=='undefined')module.exports=api;else root.NSStudy=api;
+})(typeof window!=='undefined'?window:globalThis);
+
+/* Bilingual, self-contained displays driven by the actual residual and derivative graph. */
+(function(){'use strict';const C=NS1D,N=EduNumerics,S=NSStudy,R=NSContinuous,$=id=>document.getElementById(id),fmt=x=>Number.isFinite(x)?x.toExponential(5):String(x),en=()=>document.documentElement.lang==='en',t=(z,e)=>en()?e:z,colors=['#4073b8','#198577','#8250ad','#b97720'];let current=null,timers=[];
+const table=(heads,rows)=>'<div class="tablewrap"><table class="kv"><thead><tr>'+heads.map(h=>'<th>'+h+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(v=>'<td>'+(typeof v==='number'?fmt(v):v)+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';
+function plot(series,{log=false,xlabel='x',ylabel='',width=760,height=260}={}){const pts=series.flatMap(s=>s.points).filter(p=>p.every(Number.isFinite)),X=pts.map(p=>p[0]),Y=pts.map(p=>log?Math.log10(Math.max(1e-17,Math.abs(p[1]))):p[1]);if(!pts.length)return '';let xmin=Math.min(...X),xmax=Math.max(...X),ymin=Math.min(...Y),ymax=Math.max(...Y);if(xmax===xmin)xmax=xmin+1;if(ymax===ymin){ymin-=.5;ymax+=.5;}const pad=.1*(ymax-ymin);ymin-=pad;ymax+=pad;const xx=x=>65+(width-90)*(x-xmin)/(xmax-xmin),yy=y=>height-45-(height-110)*((log?Math.log10(Math.max(1e-17,Math.abs(y))):y)-ymin)/(ymax-ymin);
+return `<svg role="img" aria-label="${ylabel}" viewBox="0 0 ${width} ${height}"><line x1="65" y1="${height-45}" x2="${width-25}" y2="${height-45}" stroke="var(--rule)"/><line x1="65" y1="65" x2="65" y2="${height-45}" stroke="var(--rule)"/>${[0,.5,1].map(a=>{const y=ymin+a*(ymax-ymin),xp=xmin+a*(xmax-xmin);return `<text x="2" y="${height-45-a*(height-110)}">${y.toExponential(1)}</text><text x="${xx(xp)}" y="${height-23}">${xp.toPrecision(3)}</text>`;}).join('')}${series.map((s,i)=>`<polyline fill="none" stroke="${colors[i%4]}" stroke-width="2" points="${s.points.filter(p=>p.every(Number.isFinite)).map(p=>xx(p[0])+','+yy(p[1])).join(' ')}"/><text x="${70+(i%2)*340}" y="${20+Math.floor(i/2)*18}" style="fill:${colors[i%4]}">${s.name}</text>`).join('')}<text x="${width-90}" y="${height-3}">${xlabel}</text><text x="2" y="${height-3}">${log?'log₁₀ ':''}${ylabel}</text></svg>`;}
+function mesh(m,values=null,selected=-1){const left=25,w=700,y=47;return `<svg role="img" aria-label="${t('一维网格与计算值','One-dimensional mesh and computed values')}" viewBox="0 0 760 120"><line x1="${left}" y1="${y}" x2="${left+w}" y2="${y}" stroke="var(--ink)"/>${m.fx.map(x=>`<line x1="${left+w*x}" y1="28" x2="${left+w*x}" y2="66" stroke="var(--rule)"/>`).join('')}${m.x.map((x,i)=>`<circle cx="${left+w*x}" cy="${y}" r="${i===selected?6:4}" fill="${i===selected?colors[2]:colors[0]}"/><text text-anchor="middle" x="${left+w*x}" y="20">${i}</text>${values&&m.m<=25?`<text transform="translate(${left+w*x},78) rotate(45)">${values[i].toFixed(3)}</text>`:''}`).join('')}</svg>`;}
+function controlSelect(id,items,selected=0){return `<select id="${id}">${items.map(([value,label],i)=>`<option value="${value}"${i===selected?' selected':''}>${label}</option>`).join('')}</select>`;}
+function button(id,z,e){return `<button class="btn" id="${id}">${t(z,e)}</button>`;}
+function safe(host,fn){try{fn();}catch(e){$(host).innerHTML='<p class="error">'+t('计算失败：','Calculation failed: ')+e.message+'</p>';}}
+function player(host,kind){const {m,sol}=current,trace=S.trace(m,sol,kind),base=host;let at=0,clock=null;$(host).innerHTML=`<div class="controls">${button(base+'-first','开头','First')}${button(base+'-prev','上一步','Previous')}${button(base+'-play','播放／暂停','Play / pause')}${button(base+'-next','下一步','Next')}${button(base+'-last','结尾','Last')}<input aria-label="${t('执行步骤','Execution step')}" id="${base}-range" type="range" min="0" max="${trace.steps.length-1}" value="0"/><span id="${base}-count"></span></div><div id="${base}-frame"></div><p>${t('与完整运算输出的差','Difference from full operator')}: ${fmt(trace.error)}</p>`;
+ const render=()=>{const z=trace.steps[at];$(base+'-range').value=at;$(base+'-count').textContent=(at+1)+' / '+trace.steps.length;$(base+'-frame').innerHTML=`<h4>${en()?z.en:z.zh} · f=${z.face}</h4>`+mesh(m,z.values.filter((_,i)=>i%3===1),Math.min(m.m-1,z.face))+table(['operation','value'],z.details)+table(['i',kind==='adjoint'?'Aᵀw[ρ]':'R[ρ]',kind==='adjoint'?'Aᵀw[ρu]':'R[ρu]',kind==='adjoint'?'Aᵀw[ρE]':'R[ρE]'],m.x.map((_,i)=>[String(i),...z.values.slice(3*i,3*i+3)]));};
+ $(base+'-range').oninput=e=>{at=+e.target.value;render();};for(const [key,action]of [['first',()=>0],['prev',()=>Math.max(0,at-1)],['next',()=>Math.min(trace.steps.length-1,at+1)],['last',()=>trace.steps.length-1]])$(base+'-'+key).onclick=()=>{at=action();render();};$(base+'-play').onclick=()=>{if(clock){clearInterval(clock);clock=null;}else{clock=setInterval(()=>{at++;if(at>=trace.steps.length){at=trace.steps.length-1;clearInterval(clock);clock=null;}render();},450);timers.push(clock);}};render();}
+function fieldPlot(m,U){const states=m.x.map((_,i)=>m.physics.prim(U.slice(3*i,3*i+3)));return plot(['rho','u','T'].map(key=>({name:key,points:states.map((q,i)=>[m.x[i],q[key]])})));}
+function matrixSVG(A,k=-1){const n=A.length,w=400,scale=Math.max(...A.flat().map(Math.abs));return `<svg role="img" aria-label="Jacobian matrix" viewBox="0 0 450 445">${A.flatMap((r,i)=>r.map((v,j)=>Math.abs(v)>1e-13?`<rect x="${30+j*w/n}" y="${20+i*w/n}" width="${w/n}" height="${w/n}" fill="${v>0?colors[0]:colors[2]}" opacity="${.18+.82*Math.abs(v)/scale}"/>`:'')).join('')}${k>=0?`<rect x="30" y="${20+k*w/n}" width="400" height="${w/n}" fill="none" stroke="${colors[3]}"/>`:''}<text x="30" y="438">row / column · ${n} × ${n}</text></svg>`;}
+function derivativePanels(){const {m,sol,der}=current,k=+$('parameter').value,d=m.sensitivity(sol,m.params,k);current.der=d;
+ $('tangent-solve').innerHTML=mesh(m,d.tangent.x.filter((_,i)=>i%3===2))+plot([0,1,2].map(c=>({name:['δρ','δ(ρu)','δ(ρE)'][c],points:m.x.map((x,i)=>[x,d.tangent.x[3*i+c]])})))+plot([{name:'||Av+R_a||',points:d.tangent.history.map((v,i)=>[i,v])}],{log:true,xlabel:'iteration'});
+ $('adjoint-solve').innerHTML=plot([0,1,2].map(c=>({name:'ψ'+c,points:m.x.map((x,i)=>[x,d.adjoint.x[3*i+c]])})))+plot([{name:'||Aᵀψ+J_Uᵀ||',points:d.adjoint.history.map((v,i)=>[i,v])}],{log:true,xlabel:'iteration'});
+ const explicit=d.L.vjp(N.zeros(m.nd),1).p;$('gradient-lab').innerHTML=table(['parameter','J_a','R_aᵀψ','total'],m.params.map((_,i)=>[m.names[i],explicit[i],d.gradient[i]-explicit[i],d.gradient[i]]))+`<p>tangent = ${fmt(d.directional)}; adjoint = ${fmt(d.gradient[k])}; ${t('所选方向','direction')}: ${m.names[k]}</p>`;
+}
+function setupFD(){const {m,sol}=current;$('fd-lab').innerHTML=`<div class="controls">${controlSelect('fd-k',m.names.map((n,i)=>[i,n]))}<label>h <input id="fd-h" type="number" value="0.00001" min="1e-12" max="0.01" step="any"/></label>${button('fd-one','计算此步长','Evaluate step')}${button('fd-scan','扫描 10⁻² 至 10⁻¹⁰','Sweep 10⁻² to 10⁻¹⁰')}${button('fd-all','全部变量','All parameters')}</div><div id="fd-result"></div>`;
+ const run=(hs,ks)=>{safe('fd-result',()=>{const rows=[],g=current.der.gradient,j0=m.evaluate(sol.U).J;for(const k of ks)for(const h of hs){if(!(h>0&&h<=.01))throw Error('0 < h ≤ 0.01');const a=m.params.slice(),b=a.slice();a[k]+=h;b[k]-=h;const sp=m.solve(a,sol.U),sm=m.solve(b,sol.U),jp=m.evaluate(sp.U,a).J,jm=m.evaluate(sm.U,b).J,df=(jp-j0)/h,db=(j0-jm)/h,dc=(jp-jm)/(2*h);rows.push({k,h,df,db,dc,err:Math.abs(dc-g[k]),E1:Math.abs(jp-j0),E2:Math.abs(jp-j0-h*g[k]),rp:sp.history.at(-1),rm:sm.history.at(-1)});}
+ $('fd-result').innerHTML=plot([{name:'|central − adjoint|',points:rows.map(r=>[Math.log10(r.h),r.err])},{name:'Taylor E₁',points:rows.map(r=>[Math.log10(r.h),r.E1])},{name:'Taylor E₂',points:rows.map(r=>[Math.log10(r.h),r.E2])}],{log:true,xlabel:'log₁₀ h'})+table(['parameter','h','forward','backward','central','adjoint','|error|','Taylor E₂','||R+||','||R−||'],rows.map(r=>[m.names[r.k],r.h,r.df,r.db,r.dc,g[r.k],r.err,r.E2,r.rp,r.rm]));});};$('fd-one').onclick=()=>run([+$('fd-h').value],[+$('fd-k').value]);$('fd-scan').onclick=()=>run(Array.from({length:9},(_,i)=>10**(-2-i)),[+$('fd-k').value]);$('fd-all').onclick=()=>run([+$('fd-h').value],m.params.map((_,i)=>i));run([1e-5],[0]);
+ $('complex-lab').innerHTML=button('cs-run','检查全部变量','Check all parameters')+'<div id="cs-result"></div>';$('cs-run').onclick=()=>safe('cs-result',()=>{$('cs-result').innerHTML=table(['parameter','complex','adjoint','difference','scaled Im R'],m.params.map((_,k)=>{const cs=m.complexGradient(sol,m.params,k);return [m.names[k],cs.gradient,current.der.gradient[k],cs.gradient-current.der.gradient[k],cs.residual];}));});}
+function continuous(){const {m,sol}=current;$('continuous-lab').innerHTML=`<div class="controls">${controlSelect('ode-steps',[128,256,512].map(n=>[n,n]),1)}${button('ode-run','求解连续参考与伴随','Solve continuous reference and adjoint')}</div><div id="ode-result"></div>`;
+ const run=()=>safe('ode-result',()=>{const steps=+$('ode-steps').value,ref=R.solve(m,m.params,steps),adj=R.adjoint(m,ref),k=+$('parameter').value,p=m.params.slice(),q=p.slice();p[k]+=1e-5;q[k]-=1e-5;const fd=(R.solve(m,p,steps).J-R.solve(m,q,steps).J)/2e-5;current.ref=ref;
+ $('ode-result').innerHTML=plot([0,1].map(i=>({name:i?'T continuous':'u continuous',points:ref.states.map((z,j)=>[j/steps,z[i]])})))+plot([0,1,2,3].map(i=>({name:['λu','λT','λΠ','λH'][i],points:adj.values.map((z,j)=>[j/steps,z[i]])})))+table(['quantity','value'],[['||shooting BC||',ref.history.at(-1)],['||adjoint BC||',adj.boundaryResidual],['J continuous',ref.J],['g continuous adjoint',adj.gradient[k]],['g continuous FD',fd],['|difference|',Math.abs(fd-adj.gradient[k])]])+table(['parameter','continuous g','discrete g','difference'],m.params.map((_,i)=>[m.names[i],adj.gradient[i],current.der.gradient[i],current.der.gradient[i]-adj.gradient[i]]));
+ $('consistency-lab').innerHTML=table(['quantity','discrete','continuous','difference'],[['J',current.der.L.J,ref.J,current.der.L.J-ref.J],[m.names[k]+' gradient',current.der.gradient[k],adj.gradient[k],current.der.gradient[k]-adj.gradient[k]]])+`<p>${t('连续 ODE 步数','Continuous ODE steps')}: ${steps}. <a href="#appendix-a">${t('查看独立推导、场和差分','Inspect independent derivation, fields and FD')}</a></p>`+button('consistency-refine','比较 8／16／32／64 网格的目标与梯度','Compare objective and gradient on 8/16/32/64 grids')+'<div id="consistency-result"></div>';
+ $('consistency-refine').onclick=()=>{const host='consistency-result';$(host).textContent=t('计算中…','Computing…');setTimeout(()=>safe(host,()=>{const rows=[8,16,32,64].map(n=>{const f=C.model({node:m.node,n,order:m.order,mode:m.mode,variable:m.variable,objective:m.objective,mu:m.params[2],Pr:m.params[3]});const b=m.params.slice(),sol=f.solve(b),d=f.sensitivity(sol,b,k);return {n,J:d.L.J,g:d.gradient[k],eJ:Math.abs(d.L.J-ref.J),eg:Math.abs(d.gradient[k]-adj.gradient[k])};});$(host).innerHTML=plot([{name:'|J_h−J|',points:rows.map(r=>[Math.log2(r.n),r.eJ])},{name:'|g_h−g|',points:rows.map(r=>[Math.log2(r.n),r.eg])}],{log:true,xlabel:'log₂ N'})+table(['N','J_h','g_h','|J_h−J|','|g_h−g|'],rows.map(r=>[String(r.n),r.J,r.g,r.eJ,r.eg]));}),20);};});$('ode-run').onclick=run;run();}
+function direct(){const {m,sol}=current,L=m.linearize(sol.U),A=N.assemble(L,m.nd),AT=N.transpose(A),rhs=L.vjp(N.zeros(m.nd),1).U.map(v=>-v),F=N.factor(AT),psi=N.solve(F,rhs),res=N.norm(L.vjp(psi).U.map((v,i)=>v-rhs[i]));
+ $('direct-lab').innerHTML=`<p>||Aᵀψ+J_Uᵀ|| = ${fmt(res)}</p><label>${t('消元步骤','Elimination stage')} <input id="lu-step" type="range" min="0" max="${m.nd}" value="0"/></label><div id="lu-frame"></div>`;
+ const draw=()=>{const stop=+$('lu-step').value,B=AT.map(r=>r.slice()),p=Array.from({length:m.nd},(_,i)=>i),piv=[];for(let k=0;k<stop;k++){let z=k;for(let i=k+1;i<m.nd;i++)if(Math.abs(B[i][k])>Math.abs(B[z][k]))z=i;[B[k],B[z]]=[B[z],B[k]];[p[k],p[z]]=[p[z],p[k]];piv.push([String(k),String(z),B[k][k]]);for(let i=k+1;i<m.nd;i++){B[i][k]/=B[k][k];for(let j=k+1;j<m.nd;j++)B[i][j]-=B[i][k]*B[k][j];}}
+ $('lu-frame').innerHTML=`<p>k=${stop}/${m.nd}; ${t('下三角存储 L 的乘数，上三角存储 U','Lower triangle stores L multipliers; upper triangle stores U')}</p>`+matrixSVG(B)+table(['k','pivot row','pivot value'],piv)+table(['i','permuted rhs','y','ψ'],psi.map((v,i)=>{const y=F.lu[i].map((v,j)=>j>=i?v*psi[j]:0).reduce((a,b)=>a+b,0);return [String(i),rhs[F.p[i]],y,v];}));};$('lu-step').oninput=draw;draw();
+ $('solver-lab').innerHTML=button('compare-solvers','比较 GS／GMRES／LU','Compare GS / GMRES / LU')+'<div id="solver-result"></div>';$('compare-solvers').onclick=()=>safe('solver-result',()=>{const out=[];for(const method of ['gs','gmres','lu']){const start=performance.now(),pre=method==='lu'?null:m.precondition(sol.U),r=m.linearSolve(L,rhs,pre,true,method);out.push({method,r,ms:performance.now()-start});}$('solver-result').innerHTML=plot(out.filter(a=>a.method!=='lu').map(a=>({name:a.method,points:a.r.history.map((v,i)=>[i,v])})),{log:true,xlabel:'linear iteration'})+table(['method','preparation + solve ms','samples','converged','true residual'],out.map(a=>[a.method,a.ms,String(a.r.history.length),a.r.converged?t('是','yes'):t('预算内未收敛','not within budget'),N.norm(L.vjp(a.r.x).U.map((v,i)=>v-rhs[i]))]));});
+}
+function render(){const {m,sol}=current,U=sol.U,ev=m.evaluate(U),L=m.linearize(U);current.der=m.sensitivity(sol);$('status').textContent=t('已收敛','Converged')+`: ${m.mode}, ${m.node?'node':'cell'}, N=${m.n}, order=${m.order}; ||R||=${fmt(sol.history.at(-1))}; J=${fmt(ev.J)}`;
+$('primal-lab').innerHTML=plot([{name:'Newton ||R||',points:sol.history.map((v,i)=>[i,v])}],{log:true,xlabel:'Newton iteration'})+controlSelect('primal-step',sol.states.map((_,i)=>[i,'Newton '+i]))+'<div id="primal-frame"></div>';const primal=()=>{const i=+$('primal-step').value;$('primal-frame').innerHTML=mesh(m,sol.states[i].filter((_,j)=>j%3===0))+fieldPlot(m,sol.states[i])+`<p>||R||=${fmt(sol.history[i])}</p>`;};$('primal-step').onchange=primal;primal();
+ $('mesh-lab').innerHTML=mesh(m,U.filter((_,i)=>i%3===0))+fieldPlot(m,U)+table(['i','x','volume','ρ','u','T'],m.x.map((x,i)=>{const q=m.physics.prim(U.slice(3*i,3*i+3));return [String(i),x,m.vol[i],q.rho,q.u,q.T];}));
+ $('flux-lab').innerHTML=plot(['tau','heat'].map(key=>({name:key,points:ev.local.map(f=>[f.x,f[key]])})))+table(['f','x','u_x','T_x','μ','κ','τ','q','uτ−q'],ev.local.map((f,i)=>[String(i),f.x,f.ux,f.tx,f.mu,f.kappa,f.tau,f.heat,f.fv[2]]));
+ $('bc-lab').innerHTML=table(['boundary','ρ','u','T','p−τ','q'],[0,m.m].map(i=>{const f=ev.local[i],q=m.physics.prim(i?f.ur:f.ul);return [i?'x=1':'x=0',q.rho,q.u,q.T,q.p-f.tau,f.heat];}))+table(['component','H_right−H_left−ΣS','Σ raw balance','Σ final rows'],[0,1,2].map(k=>[String(k),ev.local.at(-1).H[k]-ev.local[0].H[k]-ev.sources.reduce((s,a)=>s+a[k],0),ev.raw.reduce((s,v,i)=>s+(i%3===k?v:0),0),ev.R.reduce((s,v,i)=>s+(i%3===k?v:0),0)]));
+ const A=N.assemble(L,m.nd);$('matrix-lab').innerHTML=controlSelect('matrix-row',Array.from({length:m.nd},(_,i)=>[i,'row '+i]))+'<div id="matrix-view"></div>';const matrix=()=>{$('matrix-view').innerHTML=matrixSVG(A,+$('matrix-row').value)+table(['column','A[row,column]'],A[+$('matrix-row').value].map((v,i)=>[String(i),v]));};$('matrix-row').onchange=matrix;matrix();
+ $('objective-lab').innerHTML=plot([{name:'T numerical',points:m.x.map((x,i)=>[x,m.physics.prim(U.slice(3*i,3*i+3)).T])},{name:'T target',points:Array.from({length:101},(_,i)=>[i/100,1+.04*Math.sin(Math.PI*i/100)])}])+`<p>J = ${fmt(ev.J)}</p>`;
+ for(const [host,kind]of [['residual-player','residual'],['tangent-player','tangent'],['adjoint-player','adjoint']])player(host,kind);
+ derivativePanels();setupFD();continuous();direct();
+ $('accuracy-lab').innerHTML=button('accuracy-run','运行独立制造解加密：8／16／32／64','Refine independent manufactured case: 8/16/32/64')+'<div id="accuracy-result"></div>';$('accuracy-run').onclick=()=>{const host='accuracy-result';$(host).textContent=t('计算中…','Computing…');setTimeout(()=>safe(host,()=>{const rows=S.accuracy({node:m.node,variable:m.variable,mu:m.params[2],Pr:m.params[3]}),s=[1,2].map(order=>({name:'order '+order,points:rows.filter(r=>r.order===order).map(r=>[Math.log2(r.n),r.error])}));for(const order of [1,2]){const r=rows.find(r=>r.order===order);s.push({name:'N^−'+order,points:[8,16,32,64].map(n=>[Math.log2(n),r.error*(8/n)**order])});}$(host).innerHTML=plot(s,{log:true,xlabel:'log₂ N',ylabel:'error'})+table(['order','N','L2 error','measured rate','primal residual'],rows.map(r=>[String(r.order),String(r.n),r.error,r.rate===null?'—':r.rate,r.residual]));}),20);};
+ $('local-lab').innerHTML=controlSelect('local-face',Array.from({length:m.m+1},(_,i)=>[i,'f='+i]))+'<div id="local-frame"></div>';const local=()=>{const f=+$('local-face').value,v=U.map((_,i)=>Math.sin(i+1)),w=[.3,-.7,.4],d=L.jvp(v).local[f],back=L.faceVjp(f,w);$('local-frame').innerHTML=mesh(m,back.filter((_,i)=>i%3===1),Math.min(m.m-1,f))+table(['local quantity','base','directional derivative'],['ux','tx','mu','kappa','tau','heat'].map(k=>[k,ev.local[f][k],d[k]]))+table(['dot test','value'],[['wᵀ H_U v',N.dot(w,d.H)],['vᵀ H_Uᵀw',N.dot(v,back)],['difference',N.dot(w,d.H)-N.dot(v,back)]]);};$('local-face').onchange=local;local();
+}
+function boot(){timers.forEach(clearInterval);timers=[];const cfg={node:document.body.dataset.scheme==='node',n:+$('grid-n').value,order:+$('order').value,variable:$('transport').value==='variable',mode:$('case').value,objective:$('objective').value,mu:+$('mu').value,Pr:+$('pr').value};$('status').textContent=t('正在求解…','Solving…');document.querySelectorAll('.nslab').forEach(e=>e.innerHTML='');try{if(cfg.mu<.08||cfg.mu>.3||cfg.Pr<.5||cfg.Pr>1.2)throw Error('0.08 ≤ μ_ref ≤ 0.3; 0.5 ≤ Pr ≤ 1.2');const m=C.model(cfg);if(cfg.mode==='heat'){const h=+$('heating').value;if(h<0||h>.06)throw Error('0 ≤ heating ≤ 0.06');m.params[0]=h;}const sol=m.solve();current={m,sol};render();$('status').textContent=t('已收敛','Converged')+`: ${cfg.mode}, ${cfg.node?'node':'cell'}, N=${cfg.n}, order=${cfg.order}, μ=${cfg.mu}, Pr=${cfg.Pr}; ||R||=${fmt(sol.history.at(-1))}; J=${fmt(current.der.L.J)}`;}catch(e){current=null;document.querySelectorAll('.nslab').forEach(e=>e.innerHTML='');$('status').textContent=t('失败：','Failed: ')+e.message;}}
+$('solve').onclick=boot;$('parameter').onchange=()=>{if(current){derivativePanels();continuous();}};new MutationObserver(()=>{if(current){timers.forEach(clearInterval);timers=[];render();}}).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});boot();
+})();
+
+/* ---- side-nav collapse + current-section highlight ---- */
+(function () {
+  /* window.t comes from i18n.js, which both builders list first in
+     SCRIPTS; the guard keeps this harmless if loaded standalone. */
+  const TR = (zh, en) => (window.t ? window.t(zh, en) : zh);
+  var nav = document.querySelector("nav.toc");
+  if (!nav) return;
+  var btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "navtoggle";
+  btn.setAttribute("aria-controls", "toc-list");
+  var list = nav.querySelector("ul");
+  if (list) list.id = "toc-list";
+  function paint() {
+    var hid = document.body.classList.contains("navhid");
+    btn.textContent = hid ? "\u00bb" : TR("\u00ab \u6536\u8d77\u76ee\u5f55", "\u00ab hide contents");
+    btn.setAttribute("aria-expanded", hid ? "false" : "true");
+    btn.title = hid ? TR("\u5c55\u5f00\u76ee\u5f55", "show contents") : TR("\u6536\u8d77\u76ee\u5f55", "hide contents");
+  }
+  btn.addEventListener("click", function () {
+    document.body.classList.toggle("navhid");
+    try { localStorage.setItem("navhid", document.body.classList.contains("navhid") ? "1" : "0"); } catch (e) {}
+    paint();
+  });
+  try { if (localStorage.getItem("navhid") === "1") document.body.classList.add("navhid"); } catch (e) {}
+  nav.insertBefore(btn, nav.firstChild);
+  paint();
+  /* A language switch never touches this button: it owns no demo host, so
+     it is not in i18n.js's HOSTS, and paint() otherwise runs only on load
+     and on click. REPAINT is the hook i18n.js provides for precisely this
+     -- text built once by a script with no host of its own. */
+  window.REPAINT = window.REPAINT || [];
+  window.REPAINT.push(paint);
+
+  var links = [].slice.call(nav.querySelectorAll('a[href^="#"]'));
+  var secs = links.map(function (a) { return document.getElementById(a.getAttribute("href").slice(1)); });
+  function spy() {
+    var best = -1, bestTop = -1e9;
+    for (var i = 0; i < secs.length; i++) {
+      if (!secs[i]) continue;
+      var t = secs[i].getBoundingClientRect().top - 90;
+      if (t <= 0 && t > bestTop) { bestTop = t; best = i; }
+    }
+    links.forEach(function (a, i) {
+      if (i === best) a.setAttribute("aria-current", "true");
+      else a.removeAttribute("aria-current");
+    });
+  }
+  addEventListener("scroll", spy, { passive: true });
+  spy();
+})();
+
+
+  (function () {
+    var el = document.getElementById("ustar");
+    function paint() {
+      if (!el || !window.FV) return;
+      var FV = window.FV;
+      var r = FV.residual(FV.U);
+      var t = window.t || function (zh) { return zh; };
+      el.innerHTML = FV.U.map(function (v, i) { return "u<sub>" + (i + 1) + "</sub> = " + FV.fmt(v, 3); }).join(t("　", "   ")) +
+        "<br><span style=\"color:var(--muted)\">‖R(u*)‖ = " + FV.rms(r).toExponential(1).replace("e-", "e−") +
+        t("（均方根）　·　", " (rms) · ") + t("Jacobi 判据 ‖R‖ &lt; 10⁻¹³ 在 k = " + FV.PRIMAL_BASE.iters + " 时满足（固定跑 " + FV.PRIMAL_SWEEPS + " 轮）",
+          "the Jacobi criterion ‖R‖ &lt; 10⁻¹³ is met at k = " + FV.PRIMAL_BASE.iters + " (a fixed " + FV.PRIMAL_SWEEPS + " sweeps are run)") +
+        "</span>";
+    }
+    (window.REPAINT = window.REPAINT || []).push(paint);
+    paint();
+  })();
+
+</script></body></html>

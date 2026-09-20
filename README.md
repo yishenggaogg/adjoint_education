@@ -1,37 +1,39 @@
 # 离散伴随教学页 / Discrete adjoint, taught page by page
 
-本项目的主线是离散伴随教学，面向学过微积分、线性代数与数值方法的本科生；最终目标是完整展示工业级非结构网格 RANS 的离散伴随实现（当前尚未实现 RANS）。连续伴随只作为简单算例的独立验证和对比：正文保留结论，原八页附录 A 提供完整推导、可复制运行的参考代码、图和交互，随页面切换中英文，不再另设文档页面。可以为选定的连续 RANS 模型写出形式伴随，但不能把它自动当作含湍流闭合、壁面处理、限幅与边界算法的完整工业离散流程的严格参照。
+本项目的主线是离散伴随教学，面向学过微积分、线性代数与数值方法的本科生；最终目标是完整展示工业级非结构网格 RANS 的离散伴随实现（当前尚未实现 RANS）。连续伴随只作为简单算例的独立验证和对比：正文保留结论，原八页及新增一维 N–S 页的附录 A 提供完整推导、可复制运行的参考代码、图和交互，随页面切换中英文，不再另设文档页面。可以为选定的连续 RANS 模型写出形式伴随，但不能把它自动当作含湍流闭合、壁面处理、限幅与边界算法的完整工业离散流程的严格参照。
 
-The teaching path develops discrete adjoints for undergraduates with calculus, linear algebra and numerical-methods background, toward a complete industrial unstructured-grid RANS implementation (not yet implemented). Continuous adjoints are independent checks for simple cases. Main chapters retain conclusions; the original eight pages’ bilingual same-page Appendix A contains full derivations, runnable reference code, figures and interaction. Formal continuous RANS adjoints do not automatically supply a strict reference for the full implemented industrial algorithm.
+The teaching path develops discrete adjoints for undergraduates with calculus, linear algebra and numerical-methods background, toward a complete industrial unstructured-grid RANS implementation (not yet implemented). Continuous adjoints are independent checks for simple cases. Main chapters retain conclusions; bilingual same-page Appendix A in the original eight pages and the new 1-D N–S pair contains full derivations, runnable reference code, figures and interaction. Formal continuous RANS adjoints do not automatically supply a strict reference for the full implemented industrial algorithm.
 
-**十个**单文件、可交互的网页，把有限体积法的**全离散伴随**从头到尾讲一遍：
+**十二个**单文件、可交互的网页，把有限体积法的**全离散伴随**从头到尾讲一遍：
 从一个面上的一维通量开始，把同一个循环依次改写成 primal、matrix-free 前向（$Av$）与
 matrix-free 伴随（$A^{\mathsf T}w$），再做前向与伴随求解、几何导数，最后用有限差分逐项校验。
-五组算例——**一维 Burgers 方程**、**二维标量对流方程**、**二维标量对流扩散方程**与
-**拟一维 Euler 方程**与**二维 Euler 方程**——各有**格心**与**格点**两版。第一次接触离散伴随，请从一维那一对读起。
+六组算例——**一维 Burgers 方程**、**二维标量对流方程**、**二维标量对流扩散方程**与
+**拟一维 Euler 方程**与**二维 Euler 方程**、**一维层流 Navier–Stokes 方程**——各有**格心**与**格点**两版。第一次接触离散伴随，请从一维那一对读起。
 
-**Ten** self-contained, interactive web pages that develop the **fully discrete adjoint**
+**Twelve** self-contained, interactive web pages that develop the **fully discrete adjoint**
 of a finite-volume scheme end to end: starting from the one-dimensional flux on a single
 face, the same loop is rewritten as the primal, as matrix-free forward mode ($Av$) and as
 matrix-free adjoint mode ($A^{\mathsf T}w$), followed by the forward and the adjoint solve, the
-geometric derivatives and a term-by-term finite-difference verification. Five model problems &mdash;
+geometric derivatives and a term-by-term finite-difference verification. Six model problems &mdash;
 the **one-dimensional Burgers equation**, a **two-dimensional scalar advection
 equation**, a **two-dimensional scalar advection&ndash;diffusion equation** and the
-**quasi-one-dimensional Euler equations** and **two-dimensional Euler equations** &mdash; each in a **cell-centred** and a **node-centred**
+**quasi-one-dimensional Euler equations** and **two-dimensional Euler equations** and **one-dimensional laminar Navier–Stokes equations** &mdash; each in a **cell-centred** and a **node-centred**
 version. If the discrete adjoint is new to you, start with the one-dimensional pair.
 
 | 文件 / File | 算例 / Problem | 格式 / Scheme | 大小 / Size |
 |---|---|---|---|
-| [`adjoint_1d_cell.html`](adjoint_1d_cell.html) | 一维 Burgers/ 1-D Burgers | **格心** / cell-centred | 884 KB |
-| [`adjoint_1d_node.html`](adjoint_1d_node.html) | 一维 Burgers/ 1-D Burgers | **格点** / node-centred | 888 KB |
+| [`adjoint_1d_cell.html`](adjoint_1d_cell.html) | 一维 Burgers/ 1-D Burgers | **格心** / cell-centred | 894 KB |
+| [`adjoint_1d_node.html`](adjoint_1d_node.html) | 一维 Burgers/ 1-D Burgers | **格点** / node-centred | 898 KB |
 | [`adjoint_cell.html`](adjoint_cell.html) | 二维对流 / 2-D advection | **格心** / cell-centred | 993 KB |
-| [`adjoint_node.html`](adjoint_node.html) | 二维对流 / 2-D advection | **格点** / node-centred | 1036 KB |
+| [`adjoint_node.html`](adjoint_node.html) | 二维对流 / 2-D advection | **格点** / node-centred | 1035 KB |
 | [`adjoint_ad_cell.html`](adjoint_ad_cell.html) | 二维对流扩散 / 2-D advection–diffusion | **格心** / cell-centred | 830 KB |
 | [`adjoint_ad_node.html`](adjoint_ad_node.html) | 二维对流扩散 / 2-D advection–diffusion | **格点** / node-centred | 966 KB |
-| [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | 拟一维 Euler / quasi-1-D Euler | **格心** / cell-centred | 337 KB |
-| [`adjoint_q1d_node.html`](adjoint_q1d_node.html) | 拟一维 Euler / quasi-1-D Euler | **格点** / node-centred | 337 KB |
-| [`adjoint_euler_cell.html`](adjoint_euler_cell.html) | 二维 Euler / 2-D Euler | **格心** / cell-centred | 146 KB |
-| [`adjoint_euler_node.html`](adjoint_euler_node.html) | 二维 Euler / 2-D Euler | **格点** / node-centred | 146 KB |
+| [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | 拟一维 Euler / quasi-1-D Euler | **格心** / cell-centred | 348 KB |
+| [`adjoint_q1d_node.html`](adjoint_q1d_node.html) | 拟一维 Euler / quasi-1-D Euler | **格点** / node-centred | 348 KB |
+| [`adjoint_euler_cell.html`](adjoint_euler_cell.html) | 二维 Euler / 2-D Euler | **格心** / cell-centred | 142 KB |
+| [`adjoint_euler_node.html`](adjoint_euler_node.html) | 二维 Euler / 2-D Euler | **格点** / node-centred | 142 KB |
+| [`adjoint_ns1d_cell.html`](adjoint_ns1d_cell.html) | 一维层流 N–S / 1-D laminar N–S | **格心** / cell-centred | 183 KB |
+| [`adjoint_ns1d_node.html`](adjoint_ns1d_node.html) | 一维层流 N–S / 1-D laminar N–S | **格点** / node-centred | 184 KB |
 
 直接用浏览器打开即可：**没有任何外部依赖**，不联网、不需要构建、不需要服务器。
 Just open any of them in a browser — **no external dependencies**, no network, no build step,
@@ -91,12 +93,12 @@ Revised baseline (N=8, dissipative inlet, default GS tolerances): maximum differ
 
 ## 十个页面怎么排布 / How the ten pages are arranged
 
-五组算例，每组两种离散。**十页教学主题相互对应**：前 14 节一一对应，第 12 节是差分验证，第 13 节是复数步长，
+六组算例，每组两种离散。**十页教学主题相互对应**：前 14 节一一对应，第 12 节是差分验证，第 13 节是复数步长，
 第 14 节是精度阶，总结都在最后一节；第 11 节在一维那一对里是对源项与入口值的设计导数，其余四对是几何导数；
 十页第 15 节均讨论伴随一致性；一维第 16 节新增 GS 预处理 GMRES，总结移到第 17 节，其余八页总结仍为第 16 节。二维 Euler 第 14 节仅报告网格加密结果，第 15 节只给形式连续分析及限制。一维还包含 $J$ 的误差估计。任意两页都能并排对照：
 横着比是**两种格式**；竖着比是**方程**——从一维，到二维纯对流，到加上扩散，再到方程组。
 
-Five model problems, each discretised two ways. All ten have **corresponding teaching topics**: their first
+Six model problems, each discretised two ways. All ten have **corresponding teaching topics**: their first
 14 sections match one to one, Section 12 being the finite-difference check, Section 13 the complex
 step and Section 14 the order of accuracy, and the summary always comes last. Section 11 gives
 design derivatives with respect to the sources and the inflow value on the one-dimensional pair
@@ -145,7 +147,7 @@ The six new viewers contain **offline-computed results**, not browser PDE solves
 这是每一组里两页的分歧所在。**格心格式**的未知量是单元平均值，边界上没有任何自由度，
 所以边界条件只能**弱**加——在通量里给一个外侧状态。**格点格式**的边界节点<u>就在边界上</u>，
 它本身就是未知量，所以可以**强**加——直接把它的方程换掉。伴随里对应的是「进循环前清零、
-出循环后加回」，而且顺序不能反。五组算例分别展示这些处理：
+出循环后加回」，而且顺序不能反。六组算例分别展示这些处理：
 
 - **一维 Burgers**：只有入口一个条件 $u(0)=u_{\mathrm{in}}$，出口的通量就是物理通量。格心页把 $u_{\mathrm{in}}$
   当作入口面左侧的 ghost 状态（弱加）；格点页把节点 0 的整行换成 $u_0-u_{\mathrm{in}}$（强加）。
@@ -498,11 +500,11 @@ discard whatever was committed through the web UI.
 
 © 2026 Yisheng Gao
 
-本仓库的十个页面、连续伴随推导与本 README 以 **知识共享 署名 4.0 国际（CC BY 4.0）** 许可发布：
+本仓库的十二个页面、连续伴随推导与本 README 以 **知识共享 署名 4.0 国际（CC BY 4.0）** 许可发布：
 您可以自由地共享与改编，包括用于商业目的，只要给出**适当署名**、提供许可协议的链接，
 并说明是否作了修改。完整条款见 [`LICENSE`](LICENSE)。
 
-The ten pages, continuous-adjoint derivation and this README are licensed under a
+The twelve pages, continuous-adjoint derivation and this README are licensed under a
 **Creative Commons Attribution 4.0 International License (CC BY 4.0)**. You are free to share
 and adapt the material, including for commercial purposes, so long as you give appropriate
 credit, provide a link to the licence, and indicate if changes were made. Full terms in
@@ -544,3 +546,21 @@ Euler B.6 uses an independent cell-centred FV duct, shared as a reference on the
 新增数值检查 411 项通过；另对 24 单元、二阶 minmod 压力目标的全部 28 个参数进行全链路差分核对，最大绝对差 9.64×10⁻⁹（h=10⁻⁶）。光滑稳态 Burgers 测试的最大差分差为 3.00×10⁻¹¹。冻结 limiter 的默认 Burgers 梯度偏差约 7.68×10⁻³，作为可复现的反例保留；测试未宣称所有 hard limiter 都会发散。
 
 All 411 new numerical checks pass. A separate full-rerun check of all 28 parameters for the 24-cell second-order minmod pressure objective gives a maximum absolute difference of 9.64×10⁻⁹ at h=10⁻⁶. Tested smooth steady Burgers differences are at most 3.00×10⁻¹¹. The default Burgers frozen-limiter gradient bias of about 7.68×10⁻³ is retained as a reproducible counterexample, without claiming that every hard limiter diverges.
+
+## 一维层流 Navier–Stokes / One-dimensional laminar Navier–Stokes
+
+新增格心／格点两页，采用等截面平面一维可压缩模型，包含质量、动量、总能量、轴向分子黏性应力、黏性功和热传导。它不解析横向管壁边界层，不含湍流模型或经验壁面摩擦。局部加热与独立制造解支持一阶／二阶对流重构、中心黏性梯度、常物性与 Sutherland 黏度（κ=μc_p/Pr）。
+
+The new cell/node pair solves plane one-dimensional constant-area compressible laminar flow with mass, momentum, total energy, molecular normal stress, viscous work and conduction. It includes no transverse wall boundary layer, turbulence model or empirical wall friction. Local heating and an independent manufactured solution support first/second-order convection, centred viscous gradients and constant/Sutherland transport.
+
+精确 matrix-free JVP/VJP 包含状态转换、重构、耗散速度、温度物性、面梯度、边界和目标。块 GS 保留黏性与热传导，GMRES 使用其右预处理，伴随转置整个单次 GS 映射；附录 C 显式组装精确矩阵并作带主元 LU。独立连续参考通过恒定质量流率消元后的四维空间边值问题及其连续伴随计算梯度，不复用有限体积残差。图中连续乘子明确属于约化变量 (u,T,Π,H)。
+
+Exact matrix-free JVP/VJP includes state conversion, reconstruction, dissipation speed, transport, gradients, boundaries and objectives. Block-GS right preconditioning retains physical diffusion and is transposed for the adjoint. Appendix C explicitly assembles and factors the exact transpose using pivoted LU. An independent continuous spatial BVP and its continuous adjoint eliminate density through fixed mass flow; their four multipliers belong to (u,T,Π,H), not to three conservative components.
+
+页面包含双语导航、网格数值图、实际残差／前向／反向逐步播放器、Newton 轨迹、六参数全链路差分、Taylor 检验、独立复数残差、制造解加密、连续伴随和 LU 消元交互。制造源项在当前模型的参数差分中固定；顶部重建物性时才建立新的制造算例。一阶粗网格误差可能尚未进入渐近区间，展示实际斜率而不替换为理论阶数。
+
+Both pages include bilingual navigation, mesh/value diagrams, actual residual/tangent/reverse players, Newton histories, six-parameter full-rerun differences, Taylor checks, independent complex residuals, manufactured refinement, continuous adjoints and LU elimination. Manufactured forcing remains fixed during a model’s parameter checks; changing top-level transport constructs a new manufactured case. Measured coarse-grid rates are retained rather than replaced by formal orders.
+
+本轮新增 **1442 项数值检查通过**：覆盖两种网格、两种空间精度、常／变物性、两种算例和三个目标。固定网格全链路差分的最大绝对差为 6.69×10⁻⁸（h=10⁻⁵，测试范围内）；独立连续伴随与连续重算差分最大差为 1.46×10⁻⁹。播放器与完整算子输出最大差为 6.58×10⁻¹⁵。制造解加密至 128 区间；一阶仍表现为缓慢趋近渐近区间，二阶结果及所有实测斜率保留在页面中。
+
+**1442 numerical checks pass** across both grids/orders, constant/variable transport, two cases and three objectives. Tested full-rerun FD absolute differences are at most 6.69×10⁻⁸ at h=10⁻⁵; independent continuous-adjoint versus re-solved continuous FD differences are at most 1.46×10⁻⁹. Player replay differs from full operators by at most 6.58×10⁻¹⁵. Manufactured refinement reaches 128 intervals; first order approaches its asymptotic regime slowly, with measured rates retained on the pages.
