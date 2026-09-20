@@ -63,13 +63,13 @@ equation** — one dimension, then pure advection in two, then diffusion added, 
 
 ### 连续伴随与一致性 / Continuous adjoints and consistency
 
-第 15 节给出分部积分、目标对应的伴随边界条件，以及独立连续解和原离散伴随的加密比较；并区分不一致、无解、不唯一和不稳定，用特征线反例解释边界条件的适定性。完整推导见 [CONTINUOUS_ADJOINT.html](CONTINUOUS_ADJOINT.html)。
+第 15 节给出分部积分、目标对应的伴随边界条件，以及独立连续解和原离散伴随的加密比较；并区分不一致、无解、不唯一和不稳定，用特征线反例解释边界条件的适定性。完整推导见 [中文版](CONTINUOUS_ADJOINT.html)。
 
 - **对流扩散**：独立有限元连续参考，壁面伴随值为 1，远场按原数值总通量解释为 Robin 条件；验证远场值导数。
 - **拟一维 Euler**：等熵原始解与连续伴随边值 ODE，分别检验反设计和推力目标；保留形状导数的端点项。
 - **二维纯对流**：原零通量内壁缺少光滑正值连续参考；明确说明限制，并另外计算特征边界对照的解析伴随，不能把对照当成原边界的验证。
 
-Section 15 derives the Green identities and objective-dependent boundary conditions, then compares independent continuous references with refined discrete adjoints. It distinguishes inconsistency from nonexistence, nonuniqueness and instability through explicit characteristic examples. The [full derivation](CONTINUOUS_ADJOINT.html) records assumptions and evidence limits. Advection–diffusion uses an independent FEM reference with wall dual value one and the implemented total-flux Robin far field; quasi-1-D uses an isentropic primal and a continuous dual boundary-value ODE for both objectives. The original scalar zero-flux body has no smooth positive reference of this kind, so its characteristic-boundary contrast is explicitly separate.
+Section 15 derives the Green identities and objective-dependent boundary conditions, then compares independent continuous references with refined discrete adjoints. It distinguishes inconsistency from nonexistence, nonuniqueness and instability through explicit characteristic examples. The [full English derivation](CONTINUOUS_ADJOINT_en.html) records assumptions and evidence limits. Advection–diffusion uses an independent FEM reference with wall dual value one and the implemented total-flux Robin far field; quasi-1-D uses an isentropic primal and a continuous dual boundary-value ODE for both objectives. The original scalar zero-flux body has no smooth positive reference of this kind, so its characteristic-boundary contrast is explicitly separate.
 
 六个新面板浏览内嵌的**离线计算结果**，不在浏览器中重新求解连续 PDE。它们不引入外部运行依赖。加密误差下降是所测网格族的证据，不是任意网格、激波或边界最大范数的收敛证明。
 
