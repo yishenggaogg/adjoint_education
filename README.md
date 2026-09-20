@@ -1,5 +1,9 @@
 # 离散伴随教学页 / Discrete adjoint, taught page by page
 
+本项目的主线是离散伴随教学，面向学过微积分、线性代数与数值方法的本科生；最终目标是完整展示工业级非结构网格 RANS 的离散伴随实现（当前尚未实现 RANS）。连续伴随只作为简单算例的独立验证和对比：正文保留结论，各页附录 A 提供完整推导、可复制运行的参考代码、图和交互，随页面切换中英文，不再另设文档页面。可以为选定的连续 RANS 模型写出形式伴随，但不能把它自动当作含湍流闭合、壁面处理、限幅与边界算法的完整工业离散流程的严格参照。
+
+The teaching path develops discrete adjoints for undergraduates with calculus, linear algebra and numerical-methods background, toward a complete industrial unstructured-grid RANS implementation (not yet implemented). Continuous adjoints are independent checks for simple cases. Main chapters retain conclusions; each bilingual same-page Appendix A contains full derivations, runnable reference code, figures and interaction. Formal continuous RANS adjoints do not automatically supply a strict reference for the full implemented industrial algorithm.
+
 **八个**单文件、可交互的网页，把有限体积法的**全离散伴随**从头到尾讲一遍：
 从一个面上的一维通量开始，把同一个循环依次改写成 primal、matrix-free 前向（$Av$）与
 matrix-free 伴随（$A^{\mathsf T}w$），再做前向与伴随求解、几何导数，最后用有限差分逐项校验。
@@ -18,14 +22,14 @@ version. If the discrete adjoint is new to you, start with the one-dimensional p
 
 | 文件 / File | 算例 / Problem | 格式 / Scheme | 大小 / Size |
 |---|---|---|---|
-| [`adjoint_1d_cell.html`](adjoint_1d_cell.html) | 一维 Burgers/ 1-D Burgers | **格心** / cell-centred | 660 KB |
-| [`adjoint_1d_node.html`](adjoint_1d_node.html) | 一维 Burgers/ 1-D Burgers | **格点** / node-centred | 664 KB |
-| [`adjoint_cell.html`](adjoint_cell.html) | 二维对流 / 2-D advection | **格心** / cell-centred | 814 KB |
-| [`adjoint_node.html`](adjoint_node.html) | 二维对流 / 2-D advection | **格点** / node-centred | 856 KB |
-| [`adjoint_ad_cell.html`](adjoint_ad_cell.html) | 二维对流扩散 / 2-D advection–diffusion | **格心** / cell-centred | 745 KB |
-| [`adjoint_ad_node.html`](adjoint_ad_node.html) | 二维对流扩散 / 2-D advection–diffusion | **格点** / node-centred | 881 KB |
-| [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | 拟一维 Euler / quasi-1-D Euler | **格心** / cell-centred | 747 KB |
-| [`adjoint_q1d_node.html`](adjoint_q1d_node.html) | 拟一维 Euler / quasi-1-D Euler | **格点** / node-centred | 732 KB |
+| [`adjoint_1d_cell.html`](adjoint_1d_cell.html) | 一维 Burgers/ 1-D Burgers | **格心** / cell-centred | 723 KB |
+| [`adjoint_1d_node.html`](adjoint_1d_node.html) | 一维 Burgers/ 1-D Burgers | **格点** / node-centred | 727 KB |
+| [`adjoint_cell.html`](adjoint_cell.html) | 二维对流 / 2-D advection | **格心** / cell-centred | 875 KB |
+| [`adjoint_node.html`](adjoint_node.html) | 二维对流 / 2-D advection | **格点** / node-centred | 917 KB |
+| [`adjoint_ad_cell.html`](adjoint_ad_cell.html) | 二维对流扩散 / 2-D advection–diffusion | **格心** / cell-centred | 830 KB |
+| [`adjoint_ad_node.html`](adjoint_ad_node.html) | 二维对流扩散 / 2-D advection–diffusion | **格点** / node-centred | 966 KB |
+| [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | 拟一维 Euler / quasi-1-D Euler | **格心** / cell-centred | 807 KB |
+| [`adjoint_q1d_node.html`](adjoint_q1d_node.html) | 拟一维 Euler / quasi-1-D Euler | **格点** / node-centred | 792 KB |
 
 直接用浏览器打开即可：**没有任何外部依赖**，不联网、不需要构建、不需要服务器。
 Just open any of them in a browser — **no external dependencies**, no network, no build step,
@@ -60,7 +64,7 @@ Revised baseline (N=8, dissipative inlet, default GS tolerances): maximum differ
 | node | 1 | 1.069e-10 | 1.416e-11 |
 | node | 2 | 2.405e-10 | 3.878e-13 |
 
-完整连续推导：[中文](CONTINUOUS_ADJOINT.html#section-7) / [English](CONTINUOUS_ADJOINT_en.html#section-7)。
+同页附录（使用页面语言按钮切换）：[中文](adjoint_1d_cell.html#appendix-continuous) / [English](adjoint_1d_cell.html#appendix-continuous)。
 
 ## 八个页面怎么排布 / How the eight pages are arranged
 
@@ -86,13 +90,13 @@ equation** — one dimension, then pure advection in two, then diffusion added, 
 
 ### 连续伴随与一致性 / Continuous adjoints and consistency
 
-第 15 节给出分部积分、目标对应的伴随边界条件，以及独立连续解和原离散伴随的加密比较；并区分不一致、无解、不唯一和不稳定，用特征线反例解释边界条件的适定性。完整推导见 [中文版](CONTINUOUS_ADJOINT.html)。
+正文第 15 节保留一致性结论，各页同页附录 A 给出分部积分、目标对应的伴随边界条件，以及独立连续解和原离散伴随的加密比较；并区分不一致、无解、不唯一和不稳定，用特征线反例解释边界条件的适定性。完整推导见 [中文版](adjoint_ad_cell.html#appendix-continuous)。
 
 - **对流扩散**：独立有限元连续参考，壁面伴随值为 1，远场按原数值总通量解释为 Robin 条件；验证远场值导数。
 - **拟一维 Euler**：等熵原始解与连续伴随边值 ODE，分别检验反设计和推力目标；保留形状导数的端点项。
 - **二维纯对流**：原零通量内壁缺少光滑正值连续参考；明确说明限制，并另外计算特征边界对照的解析伴随，不能把对照当成原边界的验证。
 
-Section 15 derives the Green identities and objective-dependent boundary conditions, then compares independent continuous references with refined discrete adjoints. It distinguishes inconsistency from nonexistence, nonuniqueness and instability through explicit characteristic examples. The [full English derivation](CONTINUOUS_ADJOINT_en.html) records assumptions and evidence limits. Advection–diffusion uses an independent FEM reference with wall dual value one and the implemented total-flux Robin far field; quasi-1-D uses an isentropic primal and a continuous dual boundary-value ODE for both objectives. The original scalar zero-flux body has no smooth positive reference of this kind, so its characteristic-boundary contrast is explicitly separate.
+Section 15 retains the conclusions; the same-page Appendix A derives the Green identities and objective-dependent boundary conditions, then compares independent continuous references with refined discrete adjoints. It distinguishes inconsistency from nonexistence, nonuniqueness and instability through explicit characteristic examples. The [full English derivation](adjoint_ad_cell.html#appendix-continuous) records assumptions and evidence limits. Advection–diffusion uses an independent FEM reference with wall dual value one and the implemented total-flux Robin far field; quasi-1-D uses an isentropic primal and a continuous dual boundary-value ODE for both objectives. The original scalar zero-flux body has no smooth positive reference of this kind, so its characteristic-boundary contrast is explicitly separate.
 
 六个新面板浏览内嵌的**离线计算结果**，不在浏览器中重新求解连续 PDE。它们不引入外部运行依赖。加密误差下降是所测网格族的证据，不是任意网格、激波或边界最大范数的收敛证明。
 
@@ -292,7 +296,7 @@ The Burgers pages add a global spatial-order switch, reconstruction and transpos
 
 ## 页面上的数字都是实测的 / Every number is measured
 
-原有交互面板在页面加载时现场计算；新增连续伴随面板浏览独立求解后内嵌的离线结果。正文、表格与静态图的数值来自实际计算。以下保留其余六页的校验结果；Burgers 新版数据单列于上方：
+离散交互与 Burgers 连续求积在浏览器现场计算；其他连续参考及加密图浏览独立求解后内嵌的离线结果。正文、表格与静态图的数值来自实际计算。以下保留其余六页的校验结果；Burgers 新版数据单列于上方：
 
 The original panels compute live in the browser. The new continuous-adjoint viewers display embedded results from independent offline solves. Text, tables and static figures use measured results. The following tables retain the other six pages’ checks; the revised Burgers data are reported separately above:
 
