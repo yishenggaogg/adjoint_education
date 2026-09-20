@@ -744,8 +744,9 @@ function model({n=80,T=.15,a=.371,kind='shock',order=1,alpha=1.2,objective='line
  if(![n,T,a,alpha].every(Number.isFinite)||!['linear','quadratic'].includes(objective)||!cases[kind]||![1,2].includes(order)||!Number.isInteger(n)||n&lt;8||T&lt;0||T>.25||a&lt;.2||a>.6||alpha&lt;1)throw Error('Invalid shock experiment');
  const [left,right]=cases[kind],h=1/n,x=Array.from({length:n},(_,i)=>(i+.5)*h),steps=T?Math.ceil(T/(.35*h/alpha)):0,dt=steps?T/steps:0;
  const G=u=>objective==='linear'?u:.5*u*u,Gp=u=>objective==='linear'?1:u,q=x=>1+x;
- function initial(position=a){return x.map((_,i)=>right+(left-right)*Math.max(0,Math.min(1,(position-i*h)/h)));}
- function initialDirection(position=a){const v=zeros(n);v[Math.min(n-1,Math.floor(position/h))]=(left-right)/h;return v;}
+ function coordinate(position){const z=position/h,r=Math.round(z);return Math.abs(z-r)&lt;=8*Number.EPSILON*Math.max(1,Math.abs(z))?r:z;}
+ function initial(position=a){const z=coordinate(position);return x.map((_,i)=>right+(left-right)*Math.max(0,Math.min(1,z-i)));}
+ function initialDirection(position=a){const v=zeros(n);v[Math.min(n-1,Math.floor(coordinate(position)))]=(left-right)/h;return v;}
  function stage(u){
   const slope=zeros(n),weights=Array.from({length:n},()=>[]),branch=Array(n).fill('zero');let ties=0;
   if(order===2)for(let i=1;i&lt;n-1;i++){
@@ -781,7 +782,7 @@ function model({n=80,T=.15,a=.371,kind='shock',order=1,alpha=1.2,objective='line
  const exactAverages=time=>x.map((_,i)=>exactIntegral((xx,u)=>u,i*h,(i+1)*h,time)/h);
  function referenceGradient(){if(left>right||T===0)return q(a+speed*T)*(G(left)-G(right));return -integral(xx=>q(xx)*Gp((xx-a)/T)/T,a+left*T,a+right*T);}
  function continuousInitialDual(xx){if(left&lt;=right)return null;const lo=a+(speed-left)*T,hi=a+(speed-right)*T;if(xx&lt;lo)return q(xx+left*T)*Gp(left);if(xx>hi)return q(xx+right*T)*Gp(right);return q(a+speed*T)*(G(left)-G(right))/(left-right);}
- return {n,T,a,kind,order,alpha,objective,h,x,dt,steps,left,right,speed,G,Gp,initial,initialDirection,stage,jvp,vjp,run,derivatives,exact,exactAverages,referenceGradient,continuousInitialDual,exactJ:()=>exactIntegral((xx,u)=>q(xx)*G(u),0,1),aligned:Math.abs(a/h-Math.round(a/h))&lt;1e-10};
+ return {n,T,a,kind,order,alpha,objective,h,x,dt,steps,left,right,speed,G,Gp,initial,initialDirection,stage,jvp,vjp,run,derivatives,exact,exactAverages,referenceGradient,continuousInitialDual,exactJ:()=>exactIntegral((xx,u)=>q(xx)*G(u),0,1),aligned:Number.isInteger(coordinate(a))};
 }
 const api={model,dot};if(typeof module!=='undefined')module.exports=api;else root.BurgersShock=api;
 })(typeof window!=='undefined'?window:globalThis);
@@ -2325,8 +2326,9 @@ function model({n=80,T=.15,a=.371,kind='shock',order=1,alpha=1.2,objective='line
  if(![n,T,a,alpha].every(Number.isFinite)||!['linear','quadratic'].includes(objective)||!cases[kind]||![1,2].includes(order)||!Number.isInteger(n)||n<8||T<0||T>.25||a<.2||a>.6||alpha<1)throw Error('Invalid shock experiment');
  const [left,right]=cases[kind],h=1/n,x=Array.from({length:n},(_,i)=>(i+.5)*h),steps=T?Math.ceil(T/(.35*h/alpha)):0,dt=steps?T/steps:0;
  const G=u=>objective==='linear'?u:.5*u*u,Gp=u=>objective==='linear'?1:u,q=x=>1+x;
- function initial(position=a){return x.map((_,i)=>right+(left-right)*Math.max(0,Math.min(1,(position-i*h)/h)));}
- function initialDirection(position=a){const v=zeros(n);v[Math.min(n-1,Math.floor(position/h))]=(left-right)/h;return v;}
+ function coordinate(position){const z=position/h,r=Math.round(z);return Math.abs(z-r)<=8*Number.EPSILON*Math.max(1,Math.abs(z))?r:z;}
+ function initial(position=a){const z=coordinate(position);return x.map((_,i)=>right+(left-right)*Math.max(0,Math.min(1,z-i)));}
+ function initialDirection(position=a){const v=zeros(n);v[Math.min(n-1,Math.floor(coordinate(position)))]=(left-right)/h;return v;}
  function stage(u){
   const slope=zeros(n),weights=Array.from({length:n},()=>[]),branch=Array(n).fill('zero');let ties=0;
   if(order===2)for(let i=1;i<n-1;i++){
@@ -2362,7 +2364,7 @@ function model({n=80,T=.15,a=.371,kind='shock',order=1,alpha=1.2,objective='line
  const exactAverages=time=>x.map((_,i)=>exactIntegral((xx,u)=>u,i*h,(i+1)*h,time)/h);
  function referenceGradient(){if(left>right||T===0)return q(a+speed*T)*(G(left)-G(right));return -integral(xx=>q(xx)*Gp((xx-a)/T)/T,a+left*T,a+right*T);}
  function continuousInitialDual(xx){if(left<=right)return null;const lo=a+(speed-left)*T,hi=a+(speed-right)*T;if(xx<lo)return q(xx+left*T)*Gp(left);if(xx>hi)return q(xx+right*T)*Gp(right);return q(a+speed*T)*(G(left)-G(right))/(left-right);}
- return {n,T,a,kind,order,alpha,objective,h,x,dt,steps,left,right,speed,G,Gp,initial,initialDirection,stage,jvp,vjp,run,derivatives,exact,exactAverages,referenceGradient,continuousInitialDual,exactJ:()=>exactIntegral((xx,u)=>q(xx)*G(u),0,1),aligned:Math.abs(a/h-Math.round(a/h))<1e-10};
+ return {n,T,a,kind,order,alpha,objective,h,x,dt,steps,left,right,speed,G,Gp,initial,initialDirection,stage,jvp,vjp,run,derivatives,exact,exactAverages,referenceGradient,continuousInitialDual,exactJ:()=>exactIntegral((xx,u)=>q(xx)*G(u),0,1),aligned:Number.isInteger(coordinate(a))};
 }
 const api={model,dot};if(typeof module!=='undefined')module.exports=api;else root.BurgersShock=api;
 })(typeof window!=='undefined'?window:globalThis);
