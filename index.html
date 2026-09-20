@@ -102,22 +102,24 @@ code { font-family:var(--font-mono); font-size:.86em; }
   </div>
 
   <h3 style="margin-top:30px">二维标量对流方程 / A two-dimensional scalar advection equation</h3>
+  <p>保留原有正文、网格图和逐句播放器，各节新增光滑特征边界模型的一阶／二阶扩展；同页附录 B 提供对应连续伴随。精度切换仅作用于新增模型。<br>Original prose, mesh diagrams and players are preserved. Each section adds a first/second-order smooth characteristic-boundary model; Appendix B supplies its continuous adjoint. The order selector controls only the added model.</p>
   <p style="margin:0 0 14px;color:var(--muted);font-size:.93rem">
-    环形 O 型混合网格，24 个未知量。一阶／二阶切换，内外边界统一特征入出流，光滑正值解析参考。<br>
-    A hybrid annular O-mesh with 24 unknowns, first/second-order reconstruction, characteristic inner/outer boundaries and a smooth positive analytic reference.
+    环形 O 型混合网格，24 个未知量。最小的模型问题：局部导数就是两个数。纯对流，边界条件全部写在通量里。<br>
+    A hybrid annular O-mesh with 24 unknowns &mdash; the smallest model problem, where a local derivative is just two numbers.
+    Pure advection, with every boundary condition inside the flux.
   </p>
   <div class="cards">
     <a class="card" href="adjoint_cell.html">
       <h2>格心格式</h2>
       <p class="en">Cell-centred finite volume</p>
-      <p>未知量是单元平均值。一阶常值／二阶最小二乘重构；内外入流取解析场，出流用内部迹。附录 A 在同一边界问题上推导连续伴随。</p>
-      <p class="facts">24 个单元 &middot; 48 个面 &middot; matrix-free<br>adjoint_cell.html</p>
+      <p>未知量是单元平均值。物面采用零数值通量闭合（连续兼容性限制见附录 A），远场按特征方向取来流值或外推——全部在通量里<b>弱</b>加。</p>
+      <p class="facts">24 个单元 &middot; 48 个面 &middot; nnz(A) = 88<br>adjoint_cell.html</p>
     </a>
     <a class="card node" href="adjoint_node.html">
       <h2>格点格式</h2>
       <p class="en">Node-centred, median-dual</p>
-      <p>未知量在节点上，控制体是中位对偶体。一阶保留合成面法向；二阶在各对偶线段分别重构和积分，完整求导状态、网格和位置相关入流。</p>
-      <p class="facts">24 个节点 &middot; 80／112 个面或线段 &middot; matrix-free<br>adjoint_node.html</p>
+      <p>未知量在节点上，控制体是中位对偶体。边界条件同样全部在通量里：纯对流方程放不下 Dirichlet 壁面。</p>
+      <p class="facts">24 个节点 &middot; 80 个面 &middot; nnz(A) = 120<br>adjoint_node.html</p>
     </a>
   </div>
 
@@ -201,7 +203,7 @@ code { font-family:var(--font-mono); font-size:.86em; }
     <li>精度阶与网格加密：构造解、网格族、观测阶；二维 Euler 首版仅报告加密结果，尚不宣称精度阶 &mdash; accuracy and refinement: manufactured solutions and observed orders; the initial 2-D Euler study reports refinement data without claiming an observed order</li>
     <li>（一维）源项作设计变量、伴随梯度驱动的 BFGS 反设计、离散伴随与连续伴随的对照 &mdash; (1-D) sources as design variables, a BFGS inverse design driven by the adjoint gradient, the discrete adjoint against the continuous one</li>
     <li>（一维）哪一种检验抓哪一种错误、入口一致性对照与用伴随估计 <code>J</code> 的误差 &mdash; (1-D) which check catches which bug, an inflow-consistency comparison and an adjoint-based estimate of the error in <code>J</code></li>
-    <li>（全部页面，第 15 节）伴随一致性；连续方程、边界条件与网格加密对照。二维纯对流现采用同一特征边界问题的光滑解析参考与连续伴随。原八页附录 A 提供完整推导、实现与交互；二维 Euler 首版仅给出形式连续分析及验证范围 / The original eight pages include Appendix A; the new 2-D Euler pair provides formal continuous analysis and explicit validation limits &mdash; continuous dual equations, boundary conditions and refinement; a matching characteristic-boundary reference for 2-D advection.</li>
+    <li>（全部页面，第 15 节）伴随一致性；连续方程、边界条件与网格加密对照。二维纯对流另设特征边界对照，并说明原零通量内壁的限制。原八页附录 A 提供完整推导、实现与交互；二维 Euler 首版仅给出形式连续分析及验证范围 / The original eight pages include Appendix A; the new 2-D Euler pair provides formal continuous analysis and explicit validation limits &mdash; continuous dual equations, boundary conditions and refinement; a separate characteristic-boundary contrast for 2-D advection.</li>
     <li>（对流扩散）最小二乘梯度、两遍循环、伸到邻居的邻居的精确 Jacobian、强加的 Dirichlet 壁面 &mdash; (advection&ndash;diffusion) least-squares gradients, two loops, an exact Jacobian reaching the neighbours of neighbours, a strongly imposed Dirichlet wall</li>
     <li>（二维 Euler）四分量面循环、压力壁面、特征旋转、计算图正反传播与固定边界分支 / Four-component face loops, pressure walls, characteristic rotations and forward/reverse computational graphs.</li>
     <li>（拟一维）源项、特征边界条件、3×3 块 &mdash; (quasi-1-D) the source term, characteristic boundary conditions, 3&times;3 blocks</li>
