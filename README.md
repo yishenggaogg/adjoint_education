@@ -22,14 +22,14 @@ version. If the discrete adjoint is new to you, start with the one-dimensional p
 
 | 文件 / File | 算例 / Problem | 格式 / Scheme | 大小 / Size |
 |---|---|---|---|
-| [`adjoint_1d_cell.html`](adjoint_1d_cell.html) | 一维 Burgers/ 1-D Burgers | **格心** / cell-centred | 835 KB |
-| [`adjoint_1d_node.html`](adjoint_1d_node.html) | 一维 Burgers/ 1-D Burgers | **格点** / node-centred | 839 KB |
+| [`adjoint_1d_cell.html`](adjoint_1d_cell.html) | 一维 Burgers/ 1-D Burgers | **格心** / cell-centred | 884 KB |
+| [`adjoint_1d_node.html`](adjoint_1d_node.html) | 一维 Burgers/ 1-D Burgers | **格点** / node-centred | 888 KB |
 | [`adjoint_cell.html`](adjoint_cell.html) | 二维对流 / 2-D advection | **格心** / cell-centred | 993 KB |
 | [`adjoint_node.html`](adjoint_node.html) | 二维对流 / 2-D advection | **格点** / node-centred | 1036 KB |
 | [`adjoint_ad_cell.html`](adjoint_ad_cell.html) | 二维对流扩散 / 2-D advection–diffusion | **格心** / cell-centred | 830 KB |
 | [`adjoint_ad_node.html`](adjoint_ad_node.html) | 二维对流扩散 / 2-D advection–diffusion | **格点** / node-centred | 966 KB |
-| [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | 拟一维 Euler / quasi-1-D Euler | **格心** / cell-centred | 243 KB |
-| [`adjoint_q1d_node.html`](adjoint_q1d_node.html) | 拟一维 Euler / quasi-1-D Euler | **格点** / node-centred | 243 KB |
+| [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | 拟一维 Euler / quasi-1-D Euler | **格心** / cell-centred | 337 KB |
+| [`adjoint_q1d_node.html`](adjoint_q1d_node.html) | 拟一维 Euler / quasi-1-D Euler | **格点** / node-centred | 337 KB |
 | [`adjoint_euler_cell.html`](adjoint_euler_cell.html) | 二维 Euler / 2-D Euler | **格心** / cell-centred | 146 KB |
 | [`adjoint_euler_node.html`](adjoint_euler_node.html) | 二维 Euler / 2-D Euler | **格点** / node-centred | 146 KB |
 
@@ -299,7 +299,7 @@ The quasi-1-D edition distinguishes the exact operator $A_2$, low-order approxim
 - **流进物面的通量**（对流扩散页）：逐个壁面面或壁面节点看它吸收的通量；格点页把一致的反作用量
   与单侧差分公式并排对照
 - **拟一维精确算子与低阶矩阵**：精确 tangent／adjoint 沿计算图实施，不组装精确二阶矩阵；另展示一阶近似矩阵与 3×3 块 GS 扫描。
-- **拟一维连续伴随**：同页附录 A 展开变分、两端零空间边界、面积及边界数据导数；独立 RK4 射击法支持步数切换。附录 B 提供正激波跳跃与固定界面导数计算，新增独立的全流道激波拟合、未知位置求解与约化标量伴随；并非激波捕捉有限体积伴随或完整连续伴随场。
+- **拟一维连续伴随**：同页附录 A 展开变分、两端零空间边界、面积及边界数据导数；独立 RK4 射击法支持步数切换。附录 B 提供正激波跳跃与固定界面导数计算，B.5 提供独立的全流道激波拟合与约化标量伴随；B.6 新增一阶／二阶激波捕捉有限体积残差及完整离散 tangent／adjoint。两者均不宣称提供完整连续 Euler 伴随场。
 - **BFGS 反设计**（一维页）：每个候选设计重新求解 primal 和伴随，经回溯接受下降步；入口值不动，因为它和第一个区间的源项几乎可以互相替代
 - **复数步长与前向迭代，逐轮对照**（二维标量四页）：选一个设计变量和起点，两条迭代的残差与它们逐轮之差画在一起。
   从收敛流场出发，复数迭代的虚部每一轮都等于前向迭代；从初始流场出发，两者只在收敛时相遇。图下的表把
@@ -309,7 +309,7 @@ The quasi-1-D edition distinguishes the exact operator $A_2$, low-order approxim
 - **差分验证与步长扫描**：二维标量四页可选差分格式（中心／前向）与步长 $h$；一维页按所选参数计算中心差分步长扫描，并独立检查复数步长，逐分量用全链路差分对照伴随梯度；
   底部扫描相对误差随步长的变化，截断与舍入怎样围出最优步长一目了然。拟一维页支持全部面积及边界设计变量（默认 16 个）、中心／前向／后向差分和 12 个步长的完整重求解扫描
 
-Interactive panels show meshes, face fluxes, reconstruction, forward/reverse accumulation, solver residuals and full-rerun gradient checks. The four 2-D scalar pages retain their Jacobi iteration players. The quasi-1-D Euler pair now provides first/second-order reconstruction, primal snapshots, block-GS scans, matrix-free derivatives, GS/GMRES comparison, all area and boundary parameter gradients (16 by default), three finite-difference formulas over 12 step sizes, and independently converged complex residuals. Its same-page continuous appendix solves an independent ODE in the browser; its shock appendix adds independent full-duct shock fitting, an unknown shock position and a reduced scalar adjoint, alongside local jumps and interface analysis. This is not a shock-capturing finite-volume adjoint or a full continuous-adjoint field.
+Interactive panels show meshes, face fluxes, reconstruction, forward/reverse accumulation, solver residuals and full-rerun gradient checks. The four 2-D scalar pages retain their Jacobi iteration players. The quasi-1-D Euler pair now provides first/second-order reconstruction, primal snapshots, block-GS scans, matrix-free derivatives, GS/GMRES comparison, all area and boundary parameter gradients (16 by default), three finite-difference formulas over 12 step sizes, and independently converged complex residuals. Its same-page continuous appendix solves an independent ODE in the browser; its shock appendix adds independent full-duct shock fitting, an unknown shock position and a reduced scalar adjoint, alongside local jumps and interface analysis. The B.5 fitted model is not a full continuous-adjoint field. B.6 now adds an independent shock-capturing finite-volume residual with complete discrete tangent/adjoint products and GS-preconditioned GMRES.
 
 The Burgers pages add a global spatial-order switch, reconstruction and transpose players, a row-by-row GS scan, GS/GMRES work comparisons, source-only BFGS steps with line search, and independently converged complex-step checks. Boundary studies separate interior accuracy, global boundary layers and design sensitivities; second-order node-based upwinding is not automatically adjoint consistent.
 
@@ -530,3 +530,17 @@ The smooth case exposes 6/12/24 grid intervals, contraction depth, back pressure
 附录 B.5 采用独立阻塞流道：等熵光滑区域与正激波跳跃决定出口压力，求根得到激波位置；约化伴随给出背压梯度。交互提供马赫数图、界面位移项、遗漏界面项的错误梯度、重求激波位置的差分和守恒检查，并内嵌完整实现。新增验证包括 21 组参数／连续参考／容差检查及 108 项激波拟合检查。
 
 Appendix B.5 uses an independent choked duct: isentropic smooth regions and normal-shock jumps determine exit pressure, whose root fixes shock position. A reduced adjoint provides back-pressure gradients. The experiment includes a Mach plot, interface-motion contribution, the incorrect gradient when that term is omitted, full-rerun finite differences, conservation checks and complete embedded source. Added validation covers 21 parameter/reference/tolerance cases and 108 shock-fitting checks.
+
+## 1D 光滑性与激波捕捉实验 / 1-D smoothness and shock-capturing experiments
+
+四个 1D 页面新增同页中英文附录 D，保留原正文和主算例。三单元 minmod 实验解释为什么线性基态也可能处于不可微切换点；光滑带源黏性 Burgers 比较完整与冻结 limiter 导数、GS／GMRES／LU、条件数、分支变化和重新求解的单侧／中心差分。独立 SSP-RK2 过渡层实验提供黏性、初始层宽、limiter 平滑参数、时间反传与网格加密，区分 tangent 峰值集中与数值失稳。
+
+All four 1-D pages add bilingual Appendix D without replacing their main cases. A three-cell minmod experiment exposes nondifferentiability at a linear base profile. Smooth forced viscous Burgers compares full/frozen limiter derivatives, GS/GMRES/LU, conditioning, branch changes and full-rerun one-sided/central differences. An independent SSP-RK2 transition-layer experiment provides viscosity, initial width, limiter smoothing, reverse-time adjoints and refinement to distinguish tangent concentration from numerical instability.
+
+拟一维 Euler 的 B.6 使用独立格心有限体积流道（格点页共享此参考实验），包括原始变量 minmod／光滑有理重构、固定波速 Rusanov 通量、几何源项、边界闭合、目标积分及全部设计输入的求导。原始问题采用阻尼 Newton 与一阶块 GS 预处理 GMRES；导数采用计算图 JVP/VJP，LU 显式组装用于独立诊断。交互显示逐控制体通量／源项／tangent 残差、网格、迭代快照、梯度差分、冻结系数偏差和 24／48／96 加密比较。粗网格一阶解可能未解析超声速区；离散梯度验证不等于连续伴随网格收敛证明，光滑有理重构不宣称具有一般 TVD／熵稳定性。
+
+Euler B.6 uses an independent cell-centred FV duct, shared as a reference on the node page. It differentiates primitive-variable minmod/smooth rational reconstruction, fixed-speed Rusanov fluxes, geometric sources, boundary closure, objectives and all design inputs. Damped Newton uses first-order block-GS-preconditioned GMRES; derivative actions use graph JVP/VJP, with explicit LU assembly as an independent diagnostic. View per-volume flux/source/tangent balance, meshes, nonlinear snapshots, full-rerun differences, frozen-coefficient bias and 24/48/96 refinement. Coarse first-order solutions may not resolve a supersonic region. Fixed-grid derivative verification is not a continuous-adjoint convergence proof, and smooth rational reconstruction is not asserted to be generally TVD or entropy stable.
+
+新增数值检查 411 项通过；另对 24 单元、二阶 minmod 压力目标的全部 28 个参数进行全链路差分核对，最大绝对差 9.64×10⁻⁹（h=10⁻⁶）。光滑稳态 Burgers 测试的最大差分差为 3.00×10⁻¹¹。冻结 limiter 的默认 Burgers 梯度偏差约 7.68×10⁻³，作为可复现的反例保留；测试未宣称所有 hard limiter 都会发散。
+
+All 411 new numerical checks pass. A separate full-rerun check of all 28 parameters for the 24-cell second-order minmod pressure objective gives a maximum absolute difference of 9.64×10⁻⁹ at h=10⁻⁶. Tested smooth steady Burgers differences are at most 3.00×10⁻¹¹. The default Burgers frozen-limiter gradient bias of about 7.68×10⁻³ is retained as a reproducible counterexample, without claiming that every hard limiter diverges.
