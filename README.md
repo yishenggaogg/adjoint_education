@@ -34,8 +34,8 @@ version. If the discrete adjoint is new to you, start with the one-dimensional p
 | [`adjoint_euler_node.html`](adjoint_euler_node.html) | 二维 Euler / 2-D Euler | **格点** / node-centred | 177 KB |
 | [`adjoint_ns1d_cell.html`](adjoint_ns1d_cell.html) | 一维层流 N–S / 1-D laminar N–S | **格心** / cell-centred | 422 KB |
 | [`adjoint_ns1d_node.html`](adjoint_ns1d_node.html) | 一维层流 N–S / 1-D laminar N–S | **格点** / node-centred | 409 KB |
-| [`adjoint_ns2d_cell.html`](adjoint_ns2d_cell.html) | 二维层流 N–S / 2-D laminar N–S | **格心** / cell-centred | 561 KB |
-| [`adjoint_ns2d_node.html`](adjoint_ns2d_node.html) | 二维层流 N–S / 2-D laminar N–S | **格点** / node-centred | 579 KB |
+| [`adjoint_ns2d_cell.html`](adjoint_ns2d_cell.html) | 二维层流 N–S / 2-D laminar N–S | **格心** / cell-centred | 631 KB |
+| [`adjoint_ns2d_node.html`](adjoint_ns2d_node.html) | 二维层流 N–S / 2-D laminar N–S | **格点** / node-centred | 649 KB |
 
 直接用浏览器打开即可：**没有任何外部依赖**，不联网、不需要构建、不需要服务器。
 Just open any of them in a browser — **no external dependencies**, no network, no build step,
@@ -51,9 +51,9 @@ no server. Each page has a 中文 / English toggle in the top-right corner.
 
 ### 二维层流 N–S / 2-D laminar N–S
 
-[格心](adjoint_ns2d_cell.html)与[格点](adjoint_ns2d_node.html)保持二维标量的基础混合网格、配色和双语目录。四个守恒量、完整二维应力与 Fourier 热流，支持一阶／二阶对流和保守二次黏性重构。矩阵乘积使用精确计算图 JVP/VJP；GS 预处理显式组装一阶近似矩阵，附录 C 则组装完整矩阵并做 LU。新增每页 12 幅双语教学示意图，并逐步展开控制体收支、最小二乘、局部链式法则、伴随消元、GS 与 LU 手算。17 节正文与 A/B/C 附录提供推导、网格、执行回放、参数及全部坐标导数、多步长差分、独立复数残差与固定多边形域加密结果。
+[格心](adjoint_ns2d_cell.html)与[格点](adjoint_ns2d_node.html)保持二维标量的基础混合网格、配色和双语目录。四个守恒量、完整二维应力与 Fourier 热流，支持一阶／二阶对流和保守二次黏性重构。矩阵乘积使用精确计算图 JVP/VJP；GS 预处理显式组装一阶近似矩阵，附录 C 则组装完整矩阵并做 LU。演示沿用二维标量页的网格／逐句代码双栏、数组传递与播放器，支持面和 Gauss 点选择、四分量种子编辑、真实 Newton／GMRES 迭代回放。每页 12 幅双语教学示意图带图号与正文链接，并逐步展开控制体收支、最小二乘、局部链式法则、伴随消元、GS 与 LU 手算。17 节正文与 A/B/C 附录提供推导、网格、执行回放、参数及全部坐标导数、多步长差分、独立复数残差与固定多边形域加密结果。
 
-The [cell](adjoint_ns2d_cell.html) and [node](adjoint_ns2d_node.html) lessons preserve the scalar mesh, colours and bilingual navigation. They implement four conserved variables, full viscous stress and Fourier conduction, first/second-order convection and conservative quadratic viscous reconstruction. Exact graph products supply JVP/VJP; GS explicitly assembles a first-order preconditioner, and Appendix C assembles the full matrix for LU. Each page adds 12 bilingual teaching diagrams and step-by-step control-volume, least-squares, chain-rule, adjoint-elimination, GS and LU explanations. The 17 chapters and three appendices include derivations, mesh/assembly traces, all coordinate gradients, finite-difference sweeps, independent complex residuals and fixed-domain refinement.
+The [cell](adjoint_ns2d_cell.html) and [node](adjoint_ns2d_node.html) lessons preserve the scalar mesh, colours and bilingual navigation. They implement four conserved variables, full viscous stress and Fourier conduction, first/second-order convection and conservative quadratic viscous reconstruction. Exact graph products supply JVP/VJP; GS explicitly assembles a first-order preconditioner, and Appendix C assembles the full matrix for LU. Demos reuse the scalar lesson’s mesh/code panes, array lanes and player, with face/Gauss-point selection, four-component seed editing and actual Newton/GMRES iterate replay. Each page has 12 numbered bilingual diagrams linked from the text and step-by-step control-volume, least-squares, chain-rule, adjoint-elimination, GS and LU explanations. The 17 chapters and three appendices include derivations, mesh/assembly traces, all coordinate gradients, finite-difference sweeps, independent complex residuals and fixed-domain refinement.
 
 当前范围是无激波层流教学：绕流采用截断域入口／总牵引出口与无滑移固壁，必须满足正值、固定入出流分区和固定耗散波速的检查。制造解的内边界不是固壁。附录 A 提供二维形式连续分析及独立一维限制问题，不声称已实现一般二维绕流的连续伴随；也不将制造解精度推广到未验证的壁面载荷或工业 RANS。
 
