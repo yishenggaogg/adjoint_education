@@ -1013,6 +1013,57 @@ function run(){const btn=$('solve');btn.disabled=true;$('status').textContent=T(
 $('solve').onclick=run;window.REPAINT.push(()=>{if(sol)paint();else{shockLab();renderShockFitting();}});run();
 })();
 
+/* Display equations that are wider than their column are scaled down to fit,
+   to no less than 62 % of their natural size; below that the box keeps its own
+   sideways scroll, as before. Layout only: the mathematics is untouched.
+
+   The pages render KaTeX to MathML, and no browser line-breaks MathML, so a
+   long display can only be scaled or scrolled. At 375 px this brings most of
+   the equations inside the column instead of scrolling them.
+
+   Boxes: .equation (build.js, 16 px side padding) and .discrete-equation
+   (discrete/derivations.js, no side padding). The natural width is measured
+   with the inline size cleared, and the new size is set in px, because the
+   stylesheet gives the math its own font-size and a percentage would be read
+   against the parent's.
+
+   It runs on load, after the fonts are ready (a fit before that measures the
+   wrong width), on resize (debounced) and on the language switch (REPAINT),
+   whose text can change a width. */
+(function () {
+  "use strict";
+  var SEL = ".equation, .discrete-equation";
+  var FLOOR = 0.62;
+
+  function fitOne(box) {
+    var m = box.querySelector('math[display="block"]');
+    if (!m) return;
+    m.style.fontSize = "";
+    var cs = window.getComputedStyle(box);
+    var have = box.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    var need = m.scrollWidth;
+    if (!(need > have) || !(have > 0)) return;
+    var base = parseFloat(window.getComputedStyle(m).fontSize);
+    m.style.fontSize = Math.max(base * FLOOR, base * have / need) + "px";
+  }
+
+  function eqfit() {
+    var boxes = document.querySelectorAll(SEL);
+    for (var i = 0; i < boxes.length; i++) fitOne(boxes[i]);
+  }
+
+  var timer = null;
+  window.addEventListener("resize", function () {
+    clearTimeout(timer);
+    timer = setTimeout(eqfit, 120);
+  });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(eqfit);
+  (window.REPAINT = window.REPAINT || []).push(eqfit);
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", eqfit);
+  else eqfit();
+  window.EQFIT = eqfit;
+})();
+
 /* ---- side-nav collapse + current-section highlight ---- */
 (function () {
   /* window.t comes from i18n.js, which both builders list first in
