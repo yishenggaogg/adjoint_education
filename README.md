@@ -28,7 +28,7 @@ version, and 2-D RANS–SA also in an **adjoint-consistent** pair. If the discre
 | [`adjoint_node.html`](adjoint_node.html) | 二维对流 / 2-D advection | **格点** / node-centred | 1071 KB |
 | [`adjoint_ad_cell.html`](adjoint_ad_cell.html) | 二维对流扩散 / 2-D advection–diffusion | **格心** / cell-centred | 866 KB |
 | [`adjoint_ad_node.html`](adjoint_ad_node.html) | 二维对流扩散 / 2-D advection–diffusion | **格点** / node-centred | 1002 KB |
-| [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | 拟一维 Euler / quasi-1-D Euler | **格心** / cell-centred | 525 KB |
+| [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | 拟一维 Euler / quasi-1-D Euler | **格心** / cell-centred | 526 KB |
 | [`adjoint_q1d_node.html`](adjoint_q1d_node.html) | 拟一维 Euler / quasi-1-D Euler | **格点** / node-centred | 525 KB |
 | [`adjoint_euler_cell.html`](adjoint_euler_cell.html) | 二维 Euler / 2-D Euler | **格心** / cell-centred | 177 KB |
 | [`adjoint_euler_node.html`](adjoint_euler_node.html) | 二维 Euler / 2-D Euler | **格点** / node-centred | 177 KB |
@@ -321,8 +321,8 @@ The Burgers pair supports first-order constant states and second-order linear re
 16. Burgers 与拟一维 Euler：GS 固定点与 GS 预处理 GMRES；其余六页：总结 / Burgers and quasi-1-D Euler: GS fixed point and GS-preconditioned GMRES; other six: summary
 17. Burgers 与拟一维 Euler：总结 / Burgers and quasi-1-D Euler: summary
 
-拟一维新版使用精确 Jacobian 算子 $A_2$ 与一阶近似 $P$，截面积以 $A(x)$ 表示；连续附录使用 $B=F_U$ 表示物理通量 Jacobian。
-The quasi-1-D edition distinguishes the exact operator $A_2$, low-order approximation $P$, duct area $A(x)$ and continuous flux Jacobian $B=F_U$.
+拟一维新版的残差 Jacobian 记作 $J$（精确算子 $J_2$，一阶近似 $P=J_1$），目标函数记作 $Q$，截面积以 $A(x)$ 表示；连续附录使用 $B=F_U$ 表示物理通量 Jacobian。其他页面的残差 Jacobian 记作 $A$，目标函数记作 $J$。
+The quasi-1-D edition writes the residual Jacobian as $J$ (exact operator $J_2$, low-order approximation $P=J_1$), the objective as $Q$, the duct area as $A(x)$ and the continuous flux Jacobian as $B=F_U$; the other pages write the residual Jacobian as $A$ and the objective as $J$.
 
 ## 可以动手的地方 / What is interactive
 
