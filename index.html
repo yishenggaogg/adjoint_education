@@ -231,7 +231,7 @@ code { font-family:var(--font-mono); font-size:.86em; }
       <p>来流面取边界状态的物理通量，不加 Roe 耗散；附录 B 逐级比较两种来流处理下离散伴随与连续伴随之差。</p>
       <p class="facts">24 个单元 &middot; 48 个面 &middot; 120 个未知量<br>adjoint_rans_dc_cell.html</p></a>
     <a class="card node" href="adjoint_rans_dc_node.html"><h2>格点格式 · 伴随一致</h2><p class="en">Node-centred 2-D RANS–SA, median dual, adjoint-consistent far field</p>
-      <p>来流节点保留质量行，只替换 u、v、ν̃ 三行，能量行加上动量反作用的功；离散伴随在来流附近逐级趋于连续伴随。</p>
+      <p>来流节点保留质量行，只替换两个速度分量与 SA 变量这三行，能量行加上动量反作用的功；离散伴随在来流附近逐级趋于连续伴随。</p>
       <p class="facts">24 个节点 &middot; 80 个面 &middot; 120 个未知量<br>adjoint_rans_dc_node.html</p></a>
   </div>
 
