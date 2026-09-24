@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>离散伴随教学页 / Discrete adjoint, taught page by page</title>
-<meta name="description" content="十六个单文件、可交互的网页，把有限体积法的全离散伴随从头到尾讲一遍：一维 Burgers 方程、二维标量对流方程、二维标量对流扩散方程、拟一维 Euler 方程、一维层流 N–S 方程、二维 Euler 方程、二维层流 N–S 方程与二维 RANS–SA 方程，各有格心与格点两版，并排对照。">
+<meta name="description" content="十八个单文件、可交互的网页，把有限体积法的全离散伴随从头到尾讲一遍：一维 Burgers 方程、二维标量对流方程、二维标量对流扩散方程、拟一维 Euler 方程、一维层流 N–S 方程、二维 Euler 方程、二维层流 N–S 方程与二维 RANS–SA 方程，各有格心与格点两版（二维 RANS–SA 另有伴随一致的一对），并排对照。">
 <style>
 :root {
   --ground:#F3F5F7; --surface:#FFFFFF; --sunken:#EAEEF2;
@@ -72,11 +72,11 @@ code { font-family:var(--font-mono); font-size:.86em; }
   <p class="sub">Discrete adjoint, taught page by page &middot; 中文 / English</p>
 
   <p class="lede">
-    十六个<b>单文件、可交互</b>的网页，把有限体积法的<b>全离散伴随</b>从头到尾讲一遍：
+    十八个<b>单文件、可交互</b>的网页，把有限体积法的<b>全离散伴随</b>从头到尾讲一遍：
     从一个面上的一维通量开始，把同一个循环依次改写成 primal、matrix-free 前向与 matrix-free 伴随，
     再做前向与伴随求解、几何导数，最后用有限差分与复数步长逐项校验。
-    八组算例（<b>一维 Burgers</b>、<b>二维标量对流</b>、<b>二维标量对流扩散</b>、<b>拟一维 Euler</b>、<b>一维层流 N–S</b>、<b>二维 Euler</b>、<b>二维层流 N–S</b>与<b>二维 RANS–SA</b>）各有<b>格心</b>与<b>格点</b>两版，
-    <b>十六页教学主题相互对应</b>，可以任意两两并排对照。第一次接触离散伴随，请从一维 Burgers 那一对读起。
+    八组算例（<b>一维 Burgers</b>、<b>二维标量对流</b>、<b>二维标量对流扩散</b>、<b>拟一维 Euler</b>、<b>一维层流 N–S</b>、<b>二维 Euler</b>、<b>二维层流 N–S</b>与<b>二维 RANS–SA</b>）各有<b>格心</b>与<b>格点</b>两版，二维 RANS–SA 另有<b>伴随一致</b>的一对，
+    <b>十八页教学主题相互对应</b>，可以任意两两并排对照。第一次接触离散伴随，请从一维 Burgers 那一对读起。
   </p>
 
   <h3 style="margin-top:30px">一维 Burgers 方程/ The one-dimensional Burgers equation</h3>
@@ -217,22 +217,28 @@ code { font-family:var(--font-mono); font-size:.86em; }
 
   <h3 style="margin-top:30px">二维 RANS–SA 方程（无激波） / Two-dimensional RANS with Spalart–Allmaras (shock-free)</h3>
   <p style="margin:0 0 14px;color:var(--muted);font-size:.93rem">
-    沿用二维标量对流页的同一张混合网格与页面结构：可压缩 RANS 与标准 SA 模型，Roe 通量、无权最小二乘重构（不加限制器）与 SU2 式边上粘性通量，页首切换一阶／二阶。伪时间加对称块 Gauss–Seidel（近似 Jacobian 为一阶 Roe 与薄剪切层）；matrix-free tangent／adjoint 逐遍播放，前向、复数步长与重算差分三种办法核对全部 51 个设计导数。<br>
-    The scalar-advection pages’ hybrid mesh and lesson structure for compressible RANS with the standard SA model: Roe flux, unweighted least squares without a limiter, SU2-style edge viscous flux, and a first/second-order switch. Pseudo-time with symmetric block Gauss–Seidel on a first-order Roe plus thin-shear-layer Jacobian; matrix-free tangent and adjoint played pass by pass; all 51 design derivatives checked by the tangent, the complex step and re-solved finite differences.
+    沿用二维标量对流页的同一张混合网格与页面结构：可压缩 RANS 与标准 SA 模型，Roe 通量、无权最小二乘重构（不加限制器）与 SU2 式边上粘性通量，页首切换一阶／二阶。伪时间加对称块 Gauss–Seidel（近似 Jacobian 为一阶 Roe 与薄剪切层）；matrix-free tangent／adjoint 逐遍播放，前向、复数步长与重算差分三种办法核对全部 51 个设计导数。来流边界有两种处理：原来的一对<b>伴随不一致</b>（附录 B 说明原因）；另一对<b>伴随一致</b>（格点页来流节点保留质量行、能量行加上动量反作用的功，格心页来流面取边界状态的物理通量），加密时离散伴随在来流附近也趋于连续伴随。四页都有附录 A：同一问题的连续伴随推导、P1 有限元求解与逐级对照。<br>
+    The scalar-advection pages’ hybrid mesh and lesson structure for compressible RANS with the standard SA model: Roe flux, unweighted least squares without a limiter, SU2-style edge viscous flux, and a first/second-order switch. Pseudo-time with symmetric block Gauss–Seidel on a first-order Roe plus thin-shear-layer Jacobian; matrix-free tangent and adjoint played pass by pass; all 51 design derivatives checked by the tangent, the complex step and re-solved finite differences. The inflow boundary comes in two treatments: the original pair is <b>adjoint-inconsistent</b> (Appendix B explains why), the other pair is <b>adjoint-consistent</b> (inflow nodes keep their mass row and the energy row takes the work of the momentum reaction; cell inflow faces take the boundary state’s physical flux), and under refinement its discrete adjoint approaches the continuous one next to the inflow as well. All four pages carry Appendix A: the continuous adjoint of the same problem, derived, solved by P1 finite elements and compared level by level.
   </p>
   <div class="cards">
-    <a class="card" href="adjoint_rans_cell.html"><h2>格心格式</h2><p class="en">Cell-centred 2-D RANS–SA</p>
-      <p>弱条件的无滑移绝热壁：壁面面通量与两组最小二乘权重；梯度、面通量与 SA 源项逐遍执行，伴随倒序转置。</p>
+    <a class="card" href="adjoint_rans_cell.html"><h2>格心格式 · 原远场</h2><p class="en">Cell-centred 2-D RANS–SA, original far field</p>
+      <p>弱条件的无滑移绝热壁：壁面面通量与两组最小二乘权重；梯度、面通量与 SA 源项逐遍执行，伴随倒序转置。来流取 Roe 通量对虚拟状态（伴随不一致）。</p>
       <p class="facts">24 个单元 &middot; 48 个面 &middot; 120 个未知量<br>adjoint_rans_cell.html</p></a>
-    <a class="card node" href="adjoint_rans_node.html"><h2>格点格式</h2><p class="en">Node-centred 2-D RANS–SA, median dual</p>
-      <p>强条件壁面行与反作用力目标；伴随先处理被替换的行，再倒序执行各遍。</p>
+    <a class="card node" href="adjoint_rans_node.html"><h2>格点格式 · 原远场</h2><p class="en">Node-centred 2-D RANS–SA, median dual, original far field</p>
+      <p>强条件壁面行与反作用力目标；伴随先处理被替换的行，再倒序执行各遍。来流节点替换四行（伴随不一致）。</p>
       <p class="facts">24 个节点 &middot; 80 个面 &middot; 120 个未知量<br>adjoint_rans_node.html</p></a>
+    <a class="card" href="adjoint_rans_dc_cell.html"><h2>格心格式 · 伴随一致</h2><p class="en">Cell-centred 2-D RANS–SA, adjoint-consistent far field</p>
+      <p>来流面取边界状态的物理通量，不加 Roe 耗散；附录 B 逐级比较两种来流处理下离散伴随与连续伴随之差。</p>
+      <p class="facts">24 个单元 &middot; 48 个面 &middot; 120 个未知量<br>adjoint_rans_dc_cell.html</p></a>
+    <a class="card node" href="adjoint_rans_dc_node.html"><h2>格点格式 · 伴随一致</h2><p class="en">Node-centred 2-D RANS–SA, median dual, adjoint-consistent far field</p>
+      <p>来流节点保留质量行，只替换 u、v、ν̃ 三行，能量行加上动量反作用的功；离散伴随在来流附近逐级趋于连续伴随。</p>
+      <p class="facts">24 个节点 &middot; 80 个面 &middot; 120 个未知量<br>adjoint_rans_dc_node.html</p></a>
   </div>
 
   <p class="note">
-十六个页面都是<b>自包含的单个 HTML 文件</b>：不联网、不需要构建、不需要服务器，直接打开即可。
+十八个页面都是<b>自包含的单个 HTML 文件</b>：不联网、不需要构建、不需要服务器，直接打开即可。
     页面右上角可切换中文 / English。<br>
-    All sixteen are <b>self-contained single HTML files</b> — no network, no build step, no server.
+    All eighteen are <b>self-contained single HTML files</b> — no network, no build step, no server.
     A 中文 / English toggle sits in the top-right corner of each page.
   </p>
 
