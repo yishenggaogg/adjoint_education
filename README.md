@@ -22,18 +22,18 @@ version, and 2-D RANS–SA also in an **adjoint-consistent** pair. If the discre
 
 | 文件 / File | 算例 / Problem | 格式 / Scheme | 大小 / Size |
 |---|---|---|---|
-| [`adjoint_1d_cell.html`](adjoint_1d_cell.html) | 一维 Burgers/ 1-D Burgers | **格心** / cell-centred | 929 KB |
-| [`adjoint_1d_node.html`](adjoint_1d_node.html) | 一维 Burgers/ 1-D Burgers | **格点** / node-centred | 933 KB |
+| [`adjoint_1d_cell.html`](adjoint_1d_cell.html) | 一维 Burgers/ 1-D Burgers | **格心** / cell-centred | 1508 KB |
+| [`adjoint_1d_node.html`](adjoint_1d_node.html) | 一维 Burgers/ 1-D Burgers | **格点** / node-centred | 1522 KB |
 | [`adjoint_cell.html`](adjoint_cell.html) | 二维对流 / 2-D advection | **格心** / cell-centred | 1685 KB |
 | [`adjoint_node.html`](adjoint_node.html) | 二维对流 / 2-D advection | **格点** / node-centred | 1790 KB |
 | [`adjoint_ad_cell.html`](adjoint_ad_cell.html) | 二维对流扩散 / 2-D advection–diffusion | **格心** / cell-centred | 1423 KB |
 | [`adjoint_ad_node.html`](adjoint_ad_node.html) | 二维对流扩散 / 2-D advection–diffusion | **格点** / node-centred | 1607 KB |
-| [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | 拟一维 Euler / quasi-1-D Euler | **格心** / cell-centred | 526 KB |
-| [`adjoint_q1d_node.html`](adjoint_q1d_node.html) | 拟一维 Euler / quasi-1-D Euler | **格点** / node-centred | 526 KB |
+| [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | 拟一维 Euler / quasi-1-D Euler | **格心** / cell-centred | 640 KB |
+| [`adjoint_q1d_node.html`](adjoint_q1d_node.html) | 拟一维 Euler / quasi-1-D Euler | **格点** / node-centred | 639 KB |
 | [`adjoint_euler_cell.html`](adjoint_euler_cell.html) | 二维 Euler / 2-D Euler | **格心** / cell-centred | 1424 KB |
 | [`adjoint_euler_node.html`](adjoint_euler_node.html) | 二维 Euler / 2-D Euler | **格点** / node-centred | 1520 KB |
-| [`adjoint_ns1d_cell.html`](adjoint_ns1d_cell.html) | 一维层流 N–S / 1-D laminar N–S | **格心** / cell-centred | 421 KB |
-| [`adjoint_ns1d_node.html`](adjoint_ns1d_node.html) | 一维层流 N–S / 1-D laminar N–S | **格点** / node-centred | 409 KB |
+| [`adjoint_ns1d_cell.html`](adjoint_ns1d_cell.html) | 一维层流 N–S / 1-D laminar N–S | **格心** / cell-centred | 512 KB |
+| [`adjoint_ns1d_node.html`](adjoint_ns1d_node.html) | 一维层流 N–S / 1-D laminar N–S | **格点** / node-centred | 502 KB |
 | [`adjoint_ns2d_cell.html`](adjoint_ns2d_cell.html) | 二维层流 N–S / 2-D laminar N–S | **格心** / cell-centred | 3340 KB |
 | [`adjoint_ns2d_node.html`](adjoint_ns2d_node.html) | 二维层流 N–S / 2-D laminar N–S | **格点** / node-centred | 3484 KB |
 | [`adjoint_rans_cell.html`](adjoint_rans_cell.html) | 二维 RANS–SA / 2-D RANS–SA | **格心** / cell-centred | 1077 KB |
@@ -104,6 +104,10 @@ This is a low-Mach teaching case: Section 14 measures the scheme's order with a 
 两种 1D 页面新增同页中英文[附录 B：间断与激波伴随](adjoint_1d_cell.html#appendix-shocks)。独立的单元平均 Riemann 实验包含移动激波、驻定激波和稀疏波，一阶／minmod 重构、SSP-RK2、matrix-free tangent 和反向时间 adjoint；可查看网格、时间层、限幅分支、完整重算差分及网格加密结果。详细推导激波位移、连续伴随平台和稳态位置不唯一性，并区分离散求导正确与连续伴随一致性。格点页附录采用相同参考有限体积实现，不改变正文格式。
 
 Both 1D pages include bilingual [Appendix B: discontinuities and shock adjoints](adjoint_1d_node.html#appendix-shocks). An independent cell-average Riemann experiment implements moving/stationary shocks and rarefactions, first-order/minmod reconstruction, SSP-RK2, matrix-free tangents and reverse-time adjoints. Mesh/time/limiter inspection, full-rerun finite differences and refinement studies accompany derivations of shock displacement, continuous-adjoint plateaux and steady nonuniqueness. Discrete derivative correctness is explicitly separated from continuous consistency.
+
+四个附录（A–D）另新增由页面代码在构建时绘制的示意图与逐步推导：附录 A 推导入口伴随边界层为什么让全域误差只有半阶（一阶伴随递推的第二个根 $r=3/13$；二阶时边界层的净贡献在光滑方向上抵消，所以设计导数仍按格式的阶收敛）；附录 B 推导 Rankine–Hugoniot 条件、切割单元的初值投影、一个面与 SSP-RK2 的反向传播，以及由质量守恒得到的伴随平台；附录 C 画出本页的精确矩阵、带状消元，并推导一次分解同时服务前向与伴随和后向误差界；附录 D 比较 minmod 尖点与光滑有理限幅的导数。新增 177 项检查（边界层另有 35 项）全部通过。
+
+All four appendices (A–D) also gained figures drawn by the page's own code at build time and step-by-step derivations. Appendix A derives why the inlet adjoint boundary layer limits the global error to order one half (the second root $r=3/13$ of the first-order adjoint recurrence; at second order the layer's net contribution cancels in smooth directions, so design derivatives still converge at the order of the scheme). Appendix B derives the Rankine–Hugoniot condition, the cut-cell initial projection, the reverse pass through one face and through SSP-RK2, and the adjoint plateau from mass conservation. Appendix C draws the page's exact matrix and a banded elimination step, and derives one factorisation serving both tangent and adjoint and the backward-error bound. Appendix D compares the minmod kink with the derivatives of the smooth rational limiter. 177 new checks pass (plus 35 for the boundary layer).
 
 ### Burgers 一阶／二阶与 GS / Burgers reconstruction and GS
 
@@ -435,7 +439,7 @@ shows against so small a gradient. It is not an error of the complex step.
 每一对页面的第 14 节都测格式的精度阶，网格族都由基础网格逐次一致加密得到。伴随给出的是
 离散格式的精确导数，而格式的精度阶决定这个导数离连续问题的导数有多远：
 
-- **一维 Burgers**：对照精确单元平均值／节点值，在 N=8…256 上测得一阶与二阶原始解和固定物理扰动 tangent 的网格收敛。默认耗散边界下，二阶内部伴随接近二阶，但全域误差因边界层趋近半阶；连续伴随仍是适定的终端值问题。格心迎风入口改善一致性，格点二阶迎风对照仍有边界层。具体数据随页面边界选项同步切换。
+- **一维 Burgers**：对照精确单元平均值／节点值，在 N=8…256 上测得一阶与二阶原始解和固定物理扰动 tangent 的网格收敛。默认耗散边界下，二阶内部伴随接近二阶，但全域误差因边界层趋近半阶（附录 A 推导了其来源）；连续伴随仍是适定的终端值问题。格心迎风入口改善一致性，格点二阶迎风对照仍有边界层。具体数据随页面边界选项同步切换。
 - **二维对流**：一阶，但来得很慢——七层网格上 $L_2$ 阶格心从 0.42 爬到 0.87，格点从 0.47 爬到
   0.82。在这张不规则网格上，格心格式的截断误差几乎不随网格变化，解的误差靠相邻单元之间的抵消
   （超收敛）照样减小。构造解问题的物面按特征方向处理；若照搬本页在每个壁面面上规定通量的做法，
@@ -449,7 +453,7 @@ Section 14 of every pair measures the scheme's order, on a mesh family refined u
 base mesh. The adjoint gives the exact derivative of the discrete scheme; the scheme's order
 decides how far that derivative is from the continuous problem's:
 
-- **1-D Burgers**: first- and second-order primal/tangent convergence is measured against exact cell averages or point values on N=8…256. The tangent uses a fixed physical perturbation. With dissipative boundaries, second-order interior adjoint errors approach order two while global errors approach order one-half because of a boundary layer; the continuous adjoint remains well posed. Cell-based upwinding improves consistency, but second-order node-based upwinding can retain a boundary layer. Live tables follow the selected boundary closure.
+- **1-D Burgers**: first- and second-order primal/tangent convergence is measured against exact cell averages or point values on N=8…256. The tangent uses a fixed physical perturbation. With dissipative boundaries, second-order interior adjoint errors approach order two while global errors approach order one-half because of a boundary layer (Appendix A derives why); the continuous adjoint remains well posed. Cell-based upwinding improves consistency, but second-order node-based upwinding can retain a boundary layer. Live tables follow the selected boundary closure.
 - **2-D advection**: first order, reached slowly — over seven meshes the $L_2$ order climbs from
   0.42 to 0.87 cell-centred and from 0.47 to 0.82 node-centred. On this irregular mesh the
   cell-centred truncation error hardly changes; the solution error falls anyway, through
@@ -566,6 +570,10 @@ The smooth case exposes 6/12/24 grid intervals, contraction depth, back pressure
 
 Appendix B.5 uses an independent choked duct: isentropic smooth regions and normal-shock jumps determine exit pressure, whose root fixes shock position. A reduced adjoint provides back-pressure gradients. The experiment includes a Mach plot, interface-motion contribution, the incorrect gradient when that term is omitted, full-rerun finite differences, conservation checks and complete embedded source. Added validation covers 21 parameter/reference/tolerance cases and 108 shock-fitting checks.
 
+附录 B.3（续）另推导喉部面积的推力导数：推力等于两端动量通量之差，两端面积与背压固定时两端状态只通过喉部面积 $A^*$ 变化，得到闭式 $\mathrm dQ_T/\mathrm dA^*=\frac{\dot m u_1}{A^*}\frac{2+(\gamma-1)M_1^2}{1+(\gamma-1)M_1^2}-\frac{\gamma p(0)A(0)M_0^2}{A^*}$；默认背压下为 0.3480，与独立的喉部凸起重求激波位置差分之差小于 $10^{-7}$（13 项检查）。保持两端面积的任何扰动都有 $\delta Q_T=(\mathrm dQ_T/\mathrm dA^*)\,\delta A(0.5)$。
+
+Appendix B.3 (continued) also derives the thrust derivative with respect to the throat area: the thrust is the difference of the end momentum fluxes, and with both end areas and the back pressure fixed the end states change only through the throat area $A^*$, which gives the closed form $\mathrm dQ_T/\mathrm dA^*=\frac{\dot m u_1}{A^*}\frac{2+(\gamma-1)M_1^2}{1+(\gamma-1)M_1^2}-\frac{\gamma p(0)A(0)M_0^2}{A^*}$. At the default back pressure it equals 0.3480, within $10^{-7}$ of an independent re-solve with a throat bump (13 checks). Every perturbation that keeps both end areas gives $\delta Q_T=(\mathrm dQ_T/\mathrm dA^*)\,\delta A(0.5)$.
+
 ## 1D 光滑性与激波捕捉实验 / 1-D smoothness and shock-capturing experiments
 
 四个 1D 页面新增同页中英文附录 D，保留原正文和主算例。三单元 minmod 实验解释为什么线性基态也可能处于不可微切换点；光滑带源黏性 Burgers 比较完整与冻结 limiter 导数、GS／GMRES／LU、条件数、分支变化和重新求解的单侧／中心差分。独立 SSP-RK2 过渡层实验提供黏性、初始层宽、limiter 平滑参数、时间反传与网格加密，区分 tangent 峰值集中与数值失稳。
@@ -589,6 +597,10 @@ The new cell/node pair solves plane one-dimensional constant-area compressible l
 精确 matrix-free JVP/VJP 包含状态转换、重构、耗散速度、温度物性、面梯度、边界和目标。块 GS 保留黏性与热传导，GMRES 使用其右预处理，伴随转置整个单次 GS 映射；附录 C 显式组装精确矩阵并作带主元 LU。独立连续参考通过恒定质量流率消元后的四维空间边值问题及其连续伴随计算梯度，不复用有限体积残差。图中连续乘子明确属于约化变量 (u,T,Π,H)。
 
 Exact matrix-free JVP/VJP includes state conversion, reconstruction, dissipation speed, transport, gradients, boundaries and objectives. Block-GS right preconditioning retains physical diffusion and is transposed for the adjoint. Appendix C explicitly assembles and factors the exact transpose using pivoted LU. An independent continuous spatial BVP and its continuous adjoint eliminate density through fixed mass flow; their four multipliers belong to (u,T,Π,H), not to three conservative components.
+
+第 15 节推导两组乘子的对应：动量行与能量行正是总通量 Π、H 的积分平衡，所以 $\psi_{i,2}\approx-\lambda_\Pi(x_i)$、$\psi_{i,3}\approx-\lambda_H(x_i)$；质量行与 $\lambda_u$、$\lambda_T$ 没有对应。加密到 96 个区间，内部按格式的阶收敛；格心的最大偏差位于首末单元并随 $h$ 减小；格点紧邻出口约束的节点不是连续场的取值，偏差几乎不随加密减小，但设计导数仍然收敛（37 项检查）。
+
+Section 15 derives how the two sets of multipliers correspond: the momentum and energy rows are exactly the integrated balances of the total fluxes Π and H, so $\psi_{i,2}\approx-\lambda_\Pi(x_i)$ and $\psi_{i,3}\approx-\lambda_H(x_i)$; the mass row and $\lambda_u$, $\lambda_T$ have no counterpart. Refined to 96 intervals, the interior converges at the order of the scheme and the cell-centred maximum sits in the end cells and shrinks with $h$; on the node layout the node next to the outlet constraints is not a value of the continuous field and its deviation barely decreases, while the design derivatives still converge (37 checks).
 
 页面包含双语导航、网格数值图、实际残差／前向／反向逐步播放器、Newton 轨迹、六参数全链路差分、Taylor 检验、独立复数残差、制造解加密、连续伴随和 LU 消元交互。制造源项在当前模型的参数差分中固定；顶部重建物性时才建立新的制造算例。一阶粗网格误差可能尚未进入渐近区间，展示实际斜率而不替换为理论阶数。
 
