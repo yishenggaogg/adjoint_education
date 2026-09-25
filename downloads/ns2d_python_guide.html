@@ -1,0 +1,129 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>NS2D · Python 大网格计算 / Offline refinement</title><style>body{max-width:900px;margin:48px auto;padding:0 24px;color:#263241;background:#fafbfc;font:16px/1.8 system-ui,sans-serif}h1{font-size:30px}h2{margin-top:44px;font-size:22px}a{color:#7945ad}pre{padding:18px;background:#edf0f4;overflow:auto;font:13px/1.7 monospace}table{border-collapse:collapse;width:100%}th,td{padding:10px;text-align:left;border-bottom:1px solid #d6dde6}.note{border-left:3px solid #8050b0;padding:6px 18px;background:#f1edf8}code{font-size:14px}.en{color:#566376}</style></head><body>
+<h1>二维 N–S：纯 Python 加密计算<br><span class="en">2D N–S: pure Python refinement</span></h1>
+<p>网页负责能在 2 秒预算内完成的小网格演示；此程序负责离线加密计算。无需 JavaScript、Node.js、浏览器、OVERU 可执行文件或平台专用动态库。安装依赖后可断网运行。</p>
+<p class="en">The browser is for demonstrations within a two-second budget; this package performs offline refinement. No JavaScript, Node.js, browser, OVERU executable or platform-specific custom library is needed. After installing dependencies, it works offline.</p>
+<div class="note"><strong>范围 / Scope</strong><p>与网页相同的固定多边形，支持开口内圈制造解及真实无滑移壁面绕流；格心／格点、一阶／二阶对流、完整黏性重构与 Sutherland／常物性。支持等温／绝热壁面、温度跟踪、x／y 方向力及热流目标，原始／前向／伴随、六个物理参数梯度、固定拓扑的完整坐标导数和多步长全重算差分。暂不含重划网格拓扑变化、激波、湍流和独立连续有限元参考求解器。不是工业 OVERU 的性能替代品。</p><p class="en">Same fixed polygon as the lesson: open-inner-boundary MMS or no-slip wall flow, cell/node schemes, both convection orders and transport laws. Supports isothermal/adiabatic walls, temperature tracking, x/y forces and heat flux, primal/tangent/adjoint six physical parameter gradients, and frozen-topology coordinate derivatives with reconverged FD sweeps. Remeshing/topology changes, shocks, turbulence and an independent continuous FEM solver are not included. This is not a performance replacement for industrial OVERU.</p></div>
+<h2>1. 安装与小算例 / Installation and first run</h2>
+<p>Python 3.10 或更高版本。解压后进入包目录。建议先运行核验，再运行加密。完整求解会超过网页的两秒限制，属于正常离线计算。</p>
+<pre>python -m venv .venv
+# macOS / Linux:
+source .venv/bin/activate
+# Windows PowerShell:
+# .venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python verify.py
+# Optional deeper checks (take longer):
+python verify_extended.py
+python verify_solvers.py
+python verify_flow.py
+python verify_flow_solvers.py
+python verify_geometry.py
+python verify_geometry_solvers.py
+python run.py --scheme node --order 2 --level 0 --fd 1e-4 --output results/check</pre>
+<p class="en">Use Python 3.10 or newer. Start with the independent kernel checks, then a small full solve. Offline runs are expected to exceed two seconds.</p>
+<h2>2. 同一多边形逐级加密 / Refine the same polygon</h2>
+<pre>python refine.py --scheme node --order 2 --transport sutherland \
+  --max-level 3 --parts 4 --overlap 1 --fill 1 --ordering natural \
+  --global-its 1 --local-its 1 --restart 100 --output results/node_o2
+
+python refine.py --scheme node --order 1 --transport sutherland \
+  --max-level 3 --parts 4 --overlap 1 --fill 1 --restart 100 \
+  --output results/node_o1
+
+# A single finer grid, after checking memory and the smaller runs:
+python run.py --scheme node --order 2 --level 4 --transport sutherland \
+  --parts 4 --overlap 1 --fill 1 --ordering rcm --restart 100 \
+  --output results/node_o2_l4</pre>
+<p>把 <code>node</code> 换为 <code>cell</code> 可运行格心。细分原始三角形和四边形，不重新生成多边形边界。不要用增加 GMRES 向量数替代预处理改善；应同时比较准备时间、求解时间、内存和真残差。程序打印的 V/Z 内存只计 Arnoldi 基向量，不包含稀疏矩阵、网格、重叠子域和 ILU 填充。</p>
+<p class="en">Use <code>cell</code> for cell averages. Uniform subdivision preserves the original polygon. Compare PC setup, solve time, memory and true residual, rather than increasing the Krylov space alone. The printed V/Z memory estimate excludes sparse matrices, geometry, overlap and factor fill. Large-grid cost depends on the machine; the Python reference prioritizes reproducibility over industrial optimization.</p>
+<h2>真实壁面绕流 / Physical wall flow</h2>
+<pre>python run.py --case flow --scheme node --order 2 \
+  --thermal isothermal --wall-temperature 1.05 --objective forcex \
+  --mach 0.12 --angle 10 --mu 0.2 --prandtl 0.72 \
+  --fd-steps 1e-3 1e-4 1e-5 --fd-parameters 1 2 4 \
+  --output results/wall_force
+
+python refine.py --case flow --scheme cell --order 2 \
+  --thermal adiabatic --objective forcey --transport sutherland \
+  --max-level 2 --ordering rcm --restart 100 --output results/wall_lift
+
+python plot.py results/wall_lift/refinement.json --parameter 1 \
+  --output wall_lift.png</pre>
+<p><code>--case mms</code> 是默认制造解；<code>--case flow</code> 使用内圈真实固壁。固壁无滑移：u=v=0。等温壁指定温度；绝热壁使法向热通量严格为零。格点格式中，壁面动量行被无滑移条件替换；能量行由壁温或重构的法向热通量条件替换。绝热条件包含温度梯度与物性导数，不能把它当作指定温度。</p>
+<p class="en">The default <code>mms</code> case uses manufactured open boundaries; <code>flow</code> uses a no-slip inner wall. Isothermal walls prescribe temperature; adiabatic walls enforce zero normal heat flux. Node-centred wall momentum rows impose no-slip; the energy row imposes temperature or reconstructed normal heat flux, including gradient and transport derivatives.</p>
+<p><code>--objective</code> 可选 <code>tracking</code>、<code>forcex</code>、<code>forcey</code>、<code>heatflux</code>。力为内圈积分 ∫(p n − τn) ds，n 是流体域外法向；热流为 ∫q·n ds，正号表示流出流体。MMS 的内圈仍是开口，这些积分不是实际固壁受力。真实绝热壁的热流目标、状态梯度及全部参数梯度严格为零；这不是求解器失败。</p>
+<p class="en">Force is ∫(p n − τn) ds on the inner boundary, with the outward fluid normal. Positive heat flux leaves the fluid. The MMS inner boundary remains open, so its integrals are not physical wall loads. An adiabatic wall has identically zero heat-flux objective and derivatives.</p>
+<table><tr><th>参数索引</th><th>MMS</th><th>真实绕流 / Wall flow</th></tr><tr><td>0</td><td>入口 x 速度幅度参数</td><td>Mach</td></tr><tr><td>1</td><td>入口 y 方向参数</td><td>来流角：梯度对弧度求导</td></tr><tr><td>2</td><td colspan="2">参考黏度 / Reference viscosity</td></tr><tr><td>3</td><td colspan="2">Prandtl</td></tr><tr><td>4</td><td>内圈入口温度偏移</td><td>壁温；绝热时无效</td></tr><tr><td>5</td><td colspan="2">体积热源幅度 / Volumetric heating amplitude</td></tr></table>
+<p>命令行 <code>--angle</code> 使用度，保存的参数和索引 1 的导数使用弧度。MMS 初始温度基准固定为 1，不能用 <code>--wall-temperature</code> 改写制造解；温度敏感度仍可用索引 4 检查。入流／出流面分类与网页一致，导数保持该分支不变；若计算出的面流向越过该分支，程序拒绝把结果标为收敛。</p>
+<p class="en"><code>--angle</code> is in degrees, but stored parameters and derivatives use radians. MMS keeps its unit-temperature baseline; parameter 4 still checks the local temperature sensitivity. Inflow/outflow classification matches the browser and remains fixed during differentiation; branch violations are rejected.</p>
+<p>多步长扫描中，每组正负扰动流场均重新收敛到 10⁻¹²。<code>fd_checks</code> 保存单边／中心差分、绝对／相对误差、Taylor 余项及正负残差。<code>--fd-parameters 0 1 2 3 4 5</code> 可检查全部方向。目标接近零时应看绝对误差；很小的步长可能放大舍入和求解误差。</p>
+<p class="en">Every perturbed flow is reconverged to 10⁻¹². <code>fd_checks</code> stores forward/backward/central differences, absolute/relative discrepancies, Taylor remainders and both residuals. List all six indices to check every direction; use absolute errors near zero.</p>
+<p>真实绕流没有给定精确解，输出 <code>primal_error: null</code>，绘图只给真实残差和加密梯度。收敛残差小，不代表网格误差小。所有目标使用同一个残差；切换目标不会改变流场。</p>
+<p class="en">No exact wall-flow solution is supplied: <code>primal_error</code> is null. Plots show true residuals and gradient refinement, without inventing an exact-state error. Small solver residuals do not certify small discretization error. All objectives share the same flow residual.</p>
+
+<h2>3. 预处理结构 / Preconditioning</h2>
+<pre>exact sparse A or A.T
+    → right FGMRES, storing every actual preconditioned vector z[j]
+    → fixed-count global Richardson using approximate P
+    → restricted overlapping additive Schwarz
+    → optional local Richardson
+    → local ILU(k), natural or block RCM ordering</pre>
+<p>结构参考 OVERU 的 <code>global_krylov_petsc_driver_mod.F90</code> hierarchical 路径及 <code>global_krylov_lhs_petsc_matrix_mod.F90</code>。独立实现，不绑定 PETSc；子域在一个 Python 进程里运行，不是 MPI。默认四个子域、一级重叠、ILU(1)、一个全局／局部修正；页面与 Python 的子域分割实现不要求逐位相同。每个状态的四个分量一起分区。</p>
+<p class="en">The structure follows OVERU's hierarchical path in <code>global_krylov_petsc_driver_mod.F90</code> and the approximate matrix interface. This is an independent serial implementation, not a PETSc or MPI binding. The default is four subdomains, one overlap layer, ILU(1), one global/local correction. Browser and Python partitions need not be bitwise identical. Each four-component state stays together.</p>
+<table><tr><th>选项 / Option</th><th>意义 / Meaning</th></tr><tr><td>--parts 1..32</td><td>子域数 / Number of subdomains</td></tr><tr><td>--overlap 0..3</td><td>近似矩阵图的重叠层数 / Overlap in the approximate-matrix graph</td></tr><tr><td>--fill 0..3</td><td>ILU 填充级别，非 drop tolerance / ILU level of fill, not a drop tolerance</td></tr><tr><td>--ordering natural|rcm</td><td>保留四分量块的排序 / Ordering preserves each four-component block</td></tr><tr><td>--global-its / --local-its 1..5</td><td>固定次数 Richardson，从零初值开始 / Fixed-count Richardson from zero</td></tr><tr><td>--omega (0,1]</td><td>全局内层阻尼 / Global inner damping</td></tr><tr><td>--shift ≥0</td><td>仅加入 P 的体积加权对角量；强约束行为零 / Volume-weighted shift only in P; zero for strong constraints</td></tr><tr><td>--restart / --cycles</td><td>外层子空间与重启次数 / Outer subspace and restart cycles</td></tr></table>
+<p>先建立一阶对流近似 Jacobian，保留黏性、边界和物性求导。伴随先转置这个矩阵，再建立 ASM／ILU；限制型 ASM(Pᵀ) 不必等于 ASM(P) 的精确转置。P 只影响迭代，不替换最终方程的 A。小主元保护计入 <code>shifted_pivots</code>；没有通过真残差门限的运行会退出，不输出“收敛”的结果。</p>
+<h2>4. 导数与验证 / Derivatives and checks</h2>
+<p>Python 用 h=10⁻³⁰ 的着色复数步长计算实际离散残差的一阶导数，并显式组装稀疏 A；无需实数相减。温度跟踪目标状态导数解析实现；力和热流目标先对局部目标贡献着色求导，再累加为全局梯度，避免把全局标量上的多个方向混叠。前向解 A v = −Rₚ，伴随解 Aᵀ ψ = −Jᵤᵀ，梯度为 Jₚ + ψᵀRₚ。这里只针对光滑固定分支，并非 limiter 或激波求导方法。Python 的矩阵存储路径不是网页正文的 matrix-free 计算图。</p>
+<p class="en">Coloured complex-step arithmetic with h=10⁻³⁰ assembles the exact-discretization sparse state Jacobian without real subtraction. Tracking uses an analytic state gradient. Force and heat-flux gradients differentiate coloured local objective contributions before global summation, avoiding aliasing in a scalar objective. The tangent and adjoint solve the same A/Aᵀ system. This applies to the smooth fixed branch, not limiters or shocks. The Python path explicitly stores matrices; it is distinct from the browser's matrix-free graph.</p>
+<p><code>verify.py</code> 对照包内从网页原始 AD 内核导出的八组数据：两种格式 × 两种阶数 × 两种物性，逐项检查残差、完整矩阵、目标状态导数和六个物理参数导数。另检查已知解线性系统的两种转置方向、不同子域和内迭代设置。<code>verify_flow.py</code> 另外对照 96 组网页 AD 导出基准，覆盖所有目标及壁面分支；<code>verify_flow_solvers.py</code> 对壁面算例执行前向／伴随、LU 和全重算差分检查。最新实测信息见包内 <code>validation.json</code>，只代表列出的网格与设置，不代表任意细网格都已验证。</p>
+<pre># Heating is parameter 5; FD reconverges both perturbed primal problems.
+python run.py --scheme node --order 2 --level 1 --fd 1e-4 \
+  --parameter 5 --output results/fd
+# Parameter indices: 0 inlet x amplitude; 1 inlet y parameter;
+# 2 reference viscosity; 3 Prandtl; 4 inner inlet temperature; 5 heating.</pre>
+<p>扩展检查还包括一级加密网格的未着色方向导数、非平凡 ILU 填充、变化预处理器、零右端项和不收敛拒绝。<code>verify_solvers.py</code> 检查八个小网格组合的全部六个参数，并检查两级加密的格心／格点二阶问题，与稀疏 LU 独立对照；结果写入当前目录的 <code>audit_python_solvers.json</code>。差分验证的基准和正负扰动流场使用 10⁻¹² 残差容差，仍应同时考察步长和求解残差。</p>
+<p class="en">Extended checks cover uncoloured directional derivatives on a refined grid, nontrivial ILU fill, variable preconditioning, zero RHS and rejection of unconverged solves. <code>verify_solvers.py</code> checks all six parameters in eight small cases plus level-two cell/node second-order cases against sparse LU, writing <code>audit_python_solvers.json</code> in the working directory. FD runs reconverge the base and perturbed states to a 10⁻¹² residual tolerance; inspect both step size and residuals.</p>
+<p>本轮扩展实测：96 组网页 AD 对照的最大差异 3.38×10⁻¹⁴；18 组流场配置（包含两组一级加密）、72 个目标组合的伴随与稀疏 LU 最大分量差 5.92×10⁻¹¹。一级加密格点的热源方向还进行了四步长扫描，中心差分误差按二阶下降。绝热壁热流目标及其全部梯度严格为零。这些结果不代表任意细网格都已经测试。</p>
+<p class="en">Extension checks: 96 browser AD comparisons, maximum difference 3.38×10⁻¹⁴; 18 flow configurations including two level-one refinements and 72 objective cases, maximum adjoint-versus-sparse-LU component difference 5.92×10⁻¹¹. A four-step sweep for the refined node heating direction shows second-order central-FD error decay. Adiabatic heat-flux objectives and all gradients are exactly zero. Arbitrarily finer meshes have not been tested.</p>
+<h2>几何与形状导数 / Geometry and shape derivatives</h2>
+<p>设计坐标 X 指原始三角形／四边形网格的顶点，格心格式也对这些顶点求导，而不是把控制体中心当作独立设计变量。设 X(α)=X₀+αD，D 是选定变形方向，保持连接关系、重构邻域和边界分类固定：</p>
+<pre>Aₕ = ∂Rₕ/∂Uₕ,    Rₕ,X = ∂Rₕ/∂X
+Aₕ vₕ = −Rₕ,X D
+Aₕᵀ ψₕ = −jᵤ
+∂Jₕ/∂α = jₓᵀ D + ψₕᵀ Rₕ,X D
+∇ₓ Jₕ = jₓ + Rₕ,Xᵀ ψₕ</pre>
+<p>其中 jᵤ 与 jₓ 是目标对状态和坐标的显式偏导列向量。几何变化贯穿控制体面积、体积矩、面长和法向、求积点、重构最小二乘矩阵、黏性边界距离、强边界行、源项积分及目标积分。有限差分会重建这些量，并在两个变形网格上重新求解流场；不会冻结旧几何量。</p>
+<p class="en">X denotes primal mesh vertices, also for cell-centred schemes. With fixed connectivity, reconstruction stencils and boundary classification, the tangent and adjoint include all metric, moment, quadrature, reconstruction, viscous-boundary, source and objective dependencies. FD rebuilds these data and reconverges on both deformed meshes.</p>
+<pre># Unit motion of refined mesh vertex 0 in x; full coordinate gradient too:
+python run.py --case mms --scheme node --order 2 \
+  --geometry-node 0 --geometry-axis x --geometry-all \
+  --geometry-fd-steps 1e-3 1e-4 1e-5 --save-matrices \
+  --output results/coordinate_check
+
+# One consistent body-scaling deformation through all refinement levels:
+python refine.py --case flow --scheme node --order 2 \
+  --thermal adiabatic --objective forcey --geometry-shape inner-scale \
+  --max-level 2 --output results/shape_refinement
+python plot.py results/shape_refinement/refinement.json --geometry \
+  --output shape_gradient.png
+
+# User-supplied direction: one [dx,dy] pair per mesh vertex at this level.
+python run.py --case flow --objective forcex --geometry-direction direction.json \
+  --geometry-fd-steps 1e-4 1e-5 --output results/custom_shape</pre>
+<p><code>--geometry-node</code>、<code>--geometry-shape</code> 和 <code>--geometry-direction</code> 三选一。方向不会被自动归一化；步长乘以给定方向就是实际坐标位移。<code>inner-scale</code> 在粗网格上令内边界按比例缩放、远场固定，中间顶点作平滑径向过渡，再用网格加密时同一个线性插值映射传播方向。这样各级加密对应同一个粗网格设计参数。单个细网格顶点的偏导具有不同的局部支撑，不能把不同网格上的任意单点导数直接当作同一个形状参数的收敛序列。</p>
+<p class="en">Choose a vertex, the built-in shape, or a JSON direction. Directions are not normalized. <code>inner-scale</code> scales the inner polygon, holds the far boundary fixed, and propagates a tapered coarse-grid deformation through the same linear refinement map. This preserves the design parameter across levels; unrelated fine-grid vertex derivatives do not define the same physical deformation.</p>
+<p>默认只计算选定方向 Rₕ,X D，不装配全部坐标矩阵。加上 <code>--geometry-all</code> 后按几何依赖图着色，显式组装稀疏 Rₕ,X，并输出所有坐标的伴随梯度。两条路径都包含完整几何依赖；完整矩阵路径需要额外准备时间和内存，不是反向 matrix-free 几何求导。离散状态 Aₕ 仍使用现有稀疏组装与分层预处理。</p>
+<p class="en">A selected direction evaluates Rₕ,X D without storing the full coordinate matrix. <code>--geometry-all</code> uses a geometry dependency colouring to assemble sparse Rₕ,X and all coordinate gradients. Both paths include complete geometry dependencies. Full assembly costs extra time and memory and is not a reverse matrix-free geometry implementation.</p>
+<p>实现上使用 10⁻³⁰ 复数步长。几何长度按 √(x²+y²) 延拓，不使用会共轭复数的范数；制造解源项改用解析空间一、二阶导数，避免嵌套取虚部丢失坐标导数。只在实数基态的固定光滑分支上求导；退化或翻转单元、错误方向尺寸和非有限值会拒绝。MMS 的解析流场、源项和目标温度以物理坐标为自变量，因此移动求积点也必须对这些空间函数求导。</p>
+<p class="en">Complex-step geometry uses the holomorphic extension of real lengths, without conjugation. Analytic spatial derivatives compute MMS source divergence, preserving the outer coordinate perturbation. Analytic fields and targets are Eulerian functions of physical coordinates. Degenerate/inverted meshes, invalid direction sizes and nonfinite data are rejected; remeshing and boundary reclassification are outside this derivative contract.</p>
+<p><code>result.json</code> 的 <code>geometry.directional</code> 保存 tangent／adjoint 方向导数与真残差，<code>geometry.fd_checks</code> 保存变形网格差分；完整梯度位于 <code>geometry.gradient</code>。<code>fields.npz</code> 新增 <code>mesh_coordinates</code>（设计顶点），以及所选方向、几何 tangent 和完整梯度；原有 <code>coordinates</code> 仍是状态存储位置。全矩阵选项配合 <code>--save-matrices</code> 另存 <code>geometry_jacobian.npz</code>，列顺序为 x₀,y₀,x₁,y₁,…。</p>
+<p class="en">The geometry result records tangent/adjoint derivatives, residuals, deformed-mesh FD and optionally the full gradient. <code>mesh_coordinates</code> in the NPZ file contains design vertices; the existing <code>coordinates</code> remains the state-storage positions. <code>--geometry-all --save-matrices</code> also saves the sparse coordinate Jacobian ordered x₀,y₀,x₁,y₁,….</p>
+<p><code>verify_geometry.py</code> 对照 96 组网页 AD 导出的几何方向／转置结果，并检查一级加密着色与独立方向；最大跨语言差异 6.03×10⁻¹⁵。另在 1,536／1,152 个状态未知量的二级加密网格上验证稀疏着色。<code>verify_geometry_solvers.py</code> 检查 14 组流场配置、37 个目标组合；前向／伴随最大差异 1.67×10⁻¹³，步长 10⁻⁴ 的重算网格差分最大绝对差 2.24×10⁻¹⁰。详细记录在 <code>validation.json</code> 中。</p>
+<p class="en">Geometry checks include 96 browser AD cases, refined colouring versus independent directions, and full solves for 14 configurations and 37 objective cases. Maximum cross-language difference: 6.03×10⁻¹⁵; maximum tangent/adjoint discrepancy: 1.67×10⁻¹³; maximum reconverged geometry FD discrepancy at h=10⁻⁴: 2.24×10⁻¹⁰. Only the recorded resolutions and settings are validated.</p>
+
+<h2>5. 输出和图 / Outputs and plots</h2>
+<p><code>result.json</code> 含物理目标、六分量梯度、真实线性残差、前向／伴随一致性、制造解的原始误差、力／热流、完整参数、预处理设置和时间。<code>fields.npz</code> 含状态、伴随、前向、控制体坐标和体积。<code>--save-matrices</code> 可另存 A 和 P。<code>refine.py</code> 每完成一个网格就保存记录，失败时保留此前完成结果。</p>
+<pre>python -m pip install -r requirements-plot.txt
+python plot.py results/node_o2/refinement.json --output node_o2.png</pre>
+<p class="en">The refinement plot shows signed gradients for the selected parameter, MMS exact-state errors and true primal/adjoint residuals. It does not claim an exact continuum adjoint or a certified common limit. Compare continuous references only for the same physical problem, and retain their own mesh and stabilization uncertainty.</p>
+</body></html>
