@@ -22,24 +22,24 @@ version, and 2-D RANS–SA also in an **adjoint-consistent** pair. If the discre
 
 | 文件 / File | 算例 / Problem | 格式 / Scheme | 大小 / Size |
 |---|---|---|---|
-| [`adjoint_1d_cell.html`](adjoint_1d_cell.html) | 一维 Burgers/ 1-D Burgers | **格心** / cell-centred | 1753 KB |
-| [`adjoint_1d_node.html`](adjoint_1d_node.html) | 一维 Burgers/ 1-D Burgers | **格点** / node-centred | 1772 KB |
-| [`adjoint_cell.html`](adjoint_cell.html) | 二维对流 / 2-D advection | **格心** / cell-centred | 1685 KB |
-| [`adjoint_node.html`](adjoint_node.html) | 二维对流 / 2-D advection | **格点** / node-centred | 1790 KB |
-| [`adjoint_ad_cell.html`](adjoint_ad_cell.html) | 二维对流扩散 / 2-D advection–diffusion | **格心** / cell-centred | 1423 KB |
-| [`adjoint_ad_node.html`](adjoint_ad_node.html) | 二维对流扩散 / 2-D advection–diffusion | **格点** / node-centred | 1607 KB |
-| [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | 拟一维 Euler / quasi-1-D Euler | **格心** / cell-centred | 890 KB |
-| [`adjoint_q1d_node.html`](adjoint_q1d_node.html) | 拟一维 Euler / quasi-1-D Euler | **格点** / node-centred | 892 KB |
-| [`adjoint_euler_cell.html`](adjoint_euler_cell.html) | 二维 Euler / 2-D Euler | **格心** / cell-centred | 1425 KB |
-| [`adjoint_euler_node.html`](adjoint_euler_node.html) | 二维 Euler / 2-D Euler | **格点** / node-centred | 1520 KB |
-| [`adjoint_ns1d_cell.html`](adjoint_ns1d_cell.html) | 一维层流 N–S / 1-D laminar N–S | **格心** / cell-centred | 698 KB |
-| [`adjoint_ns1d_node.html`](adjoint_ns1d_node.html) | 一维层流 N–S / 1-D laminar N–S | **格点** / node-centred | 696 KB |
-| [`adjoint_ns2d_cell.html`](adjoint_ns2d_cell.html) | 二维层流 N–S / 2-D laminar N–S | **格心** / cell-centred | 3340 KB |
-| [`adjoint_ns2d_node.html`](adjoint_ns2d_node.html) | 二维层流 N–S / 2-D laminar N–S | **格点** / node-centred | 3484 KB |
-| [`adjoint_rans_cell.html`](adjoint_rans_cell.html) | 二维 RANS–SA / 2-D RANS–SA | **格心** / cell-centred | 1077 KB |
-| [`adjoint_rans_node.html`](adjoint_rans_node.html) | 二维 RANS–SA / 2-D RANS–SA | **格点** / node-centred | 1106 KB |
-| [`adjoint_rans_dc_cell.html`](adjoint_rans_dc_cell.html) | 二维 RANS–SA，伴随一致 / 2-D RANS–SA, adjoint-consistent | **格心** / cell-centred | 1076 KB |
-| [`adjoint_rans_dc_node.html`](adjoint_rans_dc_node.html) | 二维 RANS–SA，伴随一致 / 2-D RANS–SA, adjoint-consistent | **格点** / node-centred | 1107 KB |
+| [`adjoint_1d_cell.html`](adjoint_1d_cell.html) | 一维 Burgers/ 1-D Burgers | **格心** / cell-centred | 1752 KB |
+| [`adjoint_1d_node.html`](adjoint_1d_node.html) | 一维 Burgers/ 1-D Burgers | **格点** / node-centred | 1771 KB |
+| [`adjoint_cell.html`](adjoint_cell.html) | 二维对流 / 2-D advection | **格心** / cell-centred | 1721 KB |
+| [`adjoint_node.html`](adjoint_node.html) | 二维对流 / 2-D advection | **格点** / node-centred | 1826 KB |
+| [`adjoint_ad_cell.html`](adjoint_ad_cell.html) | 二维对流扩散 / 2-D advection–diffusion | **格心** / cell-centred | 1459 KB |
+| [`adjoint_ad_node.html`](adjoint_ad_node.html) | 二维对流扩散 / 2-D advection–diffusion | **格点** / node-centred | 1644 KB |
+| [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | 拟一维 Euler / quasi-1-D Euler | **格心** / cell-centred | 928 KB |
+| [`adjoint_q1d_node.html`](adjoint_q1d_node.html) | 拟一维 Euler / quasi-1-D Euler | **格点** / node-centred | 930 KB |
+| [`adjoint_euler_cell.html`](adjoint_euler_cell.html) | 二维 Euler / 2-D Euler | **格心** / cell-centred | 1464 KB |
+| [`adjoint_euler_node.html`](adjoint_euler_node.html) | 二维 Euler / 2-D Euler | **格点** / node-centred | 1560 KB |
+| [`adjoint_ns1d_cell.html`](adjoint_ns1d_cell.html) | 一维层流 N–S / 1-D laminar N–S | **格心** / cell-centred | 746 KB |
+| [`adjoint_ns1d_node.html`](adjoint_ns1d_node.html) | 一维层流 N–S / 1-D laminar N–S | **格点** / node-centred | 744 KB |
+| [`adjoint_ns2d_cell.html`](adjoint_ns2d_cell.html) | 二维层流 N–S / 2-D laminar N–S | **格心** / cell-centred | 3386 KB |
+| [`adjoint_ns2d_node.html`](adjoint_ns2d_node.html) | 二维层流 N–S / 2-D laminar N–S | **格点** / node-centred | 3530 KB |
+| [`adjoint_rans_cell.html`](adjoint_rans_cell.html) | 二维 RANS–SA / 2-D RANS–SA | **格心** / cell-centred | 1114 KB |
+| [`adjoint_rans_node.html`](adjoint_rans_node.html) | 二维 RANS–SA / 2-D RANS–SA | **格点** / node-centred | 1142 KB |
+| [`adjoint_rans_dc_cell.html`](adjoint_rans_dc_cell.html) | 二维 RANS–SA，伴随一致 / 2-D RANS–SA, adjoint-consistent | **格心** / cell-centred | 1112 KB |
+| [`adjoint_rans_dc_node.html`](adjoint_rans_dc_node.html) | 二维 RANS–SA，伴随一致 / 2-D RANS–SA, adjoint-consistent | **格点** / node-centred | 1143 KB |
 
 直接用浏览器打开即可：**没有任何外部依赖**，不联网、不需要构建、不需要服务器。
 Just open any of them in a browser — **no external dependencies**, no network, no build step,
@@ -300,6 +300,9 @@ design variables are the 8 interval sources and $u_{\mathrm{in}}$.
 The Burgers pair supports first-order constant states and second-order linear reconstruction. Its primal uses GS predictor–corrector with a first-order approximate Jacobian; exact tangent and adjoint equations offer GS fixed point or **GS-preconditioned GMRES**. The first-order matrix is used only for correction and preconditioning. Quasi-1-D Euler also supports both orders, 3×3 block-GS defect correction and GS-preconditioned GMRES. Each preconditioner application performs 12 zero-start GS sweeps with an exact transpose of the full map. The four 2-D scalar pages retain Jacobi.
 
 ## 每页的各节 / The sections
+
+每页正文前有一幅全页路线图：设计输入 → 求解 → 状态 → 目标 → 梯度，并排画出前向路线（每个设计分量一次线性求解）与伴随路线（一次转置求解）；图中的个数取自本页默认设置，方框下的节号可以点击。
+Each page opens with a page roadmap: design input → solve → state → objective → gradient, with the tangent route (one linear solve per design component) beside the adjoint route (one transposed solve); the counts are the page's default settings and the section numbers under the boxes are links.
 
 1. 网格（或流道）/ Mesh, or the duct
 2. 方程与面上的一维通量 / The equations and the one-dimensional flux
