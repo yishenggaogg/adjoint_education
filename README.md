@@ -22,20 +22,20 @@ version, and 2-D RANS–SA also in an **adjoint-consistent** pair. If the discre
 
 | 文件 / File | 算例 / Problem | 格式 / Scheme | 大小 / Size |
 |---|---|---|---|
-| [`adjoint_1d_cell.html`](adjoint_1d_cell.html) | 一维 Burgers/ 1-D Burgers | **格心** / cell-centred | 1854 KB |
-| [`adjoint_1d_node.html`](adjoint_1d_node.html) | 一维 Burgers/ 1-D Burgers | **格点** / node-centred | 1880 KB |
-| [`adjoint_cell.html`](adjoint_cell.html) | 二维对流 / 2-D advection | **格心** / cell-centred | 1777 KB |
-| [`adjoint_node.html`](adjoint_node.html) | 二维对流 / 2-D advection | **格点** / node-centred | 1882 KB |
+| [`adjoint_1d_cell.html`](adjoint_1d_cell.html) | 一维 Burgers/ 1-D Burgers | **格心** / cell-centred | 1856 KB |
+| [`adjoint_1d_node.html`](adjoint_1d_node.html) | 一维 Burgers/ 1-D Burgers | **格点** / node-centred | 1882 KB |
+| [`adjoint_cell.html`](adjoint_cell.html) | 二维对流 / 2-D advection | **格心** / cell-centred | 1776 KB |
+| [`adjoint_node.html`](adjoint_node.html) | 二维对流 / 2-D advection | **格点** / node-centred | 1881 KB |
 | [`adjoint_ad_cell.html`](adjoint_ad_cell.html) | 二维对流扩散 / 2-D advection–diffusion | **格心** / cell-centred | 1491 KB |
 | [`adjoint_ad_node.html`](adjoint_ad_node.html) | 二维对流扩散 / 2-D advection–diffusion | **格点** / node-centred | 1678 KB |
 | [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | 拟一维 Euler / quasi-1-D Euler | **格心** / cell-centred | 971 KB |
 | [`adjoint_q1d_node.html`](adjoint_q1d_node.html) | 拟一维 Euler / quasi-1-D Euler | **格点** / node-centred | 975 KB |
-| [`adjoint_euler_cell.html`](adjoint_euler_cell.html) | 二维 Euler / 2-D Euler | **格心** / cell-centred | 1548 KB |
-| [`adjoint_euler_node.html`](adjoint_euler_node.html) | 二维 Euler / 2-D Euler | **格点** / node-centred | 1644 KB |
-| [`adjoint_ns1d_cell.html`](adjoint_ns1d_cell.html) | 一维层流 N–S / 1-D laminar N–S | **格心** / cell-centred | 791 KB |
-| [`adjoint_ns1d_node.html`](adjoint_ns1d_node.html) | 一维层流 N–S / 1-D laminar N–S | **格点** / node-centred | 788 KB |
-| [`adjoint_ns2d_cell.html`](adjoint_ns2d_cell.html) | 二维层流 N–S / 2-D laminar N–S | **格心** / cell-centred | 3452 KB |
-| [`adjoint_ns2d_node.html`](adjoint_ns2d_node.html) | 二维层流 N–S / 2-D laminar N–S | **格点** / node-centred | 3597 KB |
+| [`adjoint_euler_cell.html`](adjoint_euler_cell.html) | 二维 Euler / 2-D Euler | **格心** / cell-centred | 1547 KB |
+| [`adjoint_euler_node.html`](adjoint_euler_node.html) | 二维 Euler / 2-D Euler | **格点** / node-centred | 1642 KB |
+| [`adjoint_ns1d_cell.html`](adjoint_ns1d_cell.html) | 一维层流 N–S / 1-D laminar N–S | **格心** / cell-centred | 790 KB |
+| [`adjoint_ns1d_node.html`](adjoint_ns1d_node.html) | 一维层流 N–S / 1-D laminar N–S | **格点** / node-centred | 787 KB |
+| [`adjoint_ns2d_cell.html`](adjoint_ns2d_cell.html) | 二维层流 N–S / 2-D laminar N–S | **格心** / cell-centred | 3449 KB |
+| [`adjoint_ns2d_node.html`](adjoint_ns2d_node.html) | 二维层流 N–S / 2-D laminar N–S | **格点** / node-centred | 3595 KB |
 | [`adjoint_rans_cell.html`](adjoint_rans_cell.html) | 二维 RANS–SA / 2-D RANS–SA | **格心** / cell-centred | 1131 KB |
 | [`adjoint_rans_node.html`](adjoint_rans_node.html) | 二维 RANS–SA / 2-D RANS–SA | **格点** / node-centred | 1160 KB |
 | [`adjoint_rans_dc_cell.html`](adjoint_rans_dc_cell.html) | 二维 RANS–SA，伴随一致 / 2-D RANS–SA, adjoint-consistent | **格心** / cell-centred | 1129 KB |
@@ -268,7 +268,7 @@ also where a Dirichlet wall is finally well posed.
 $\frac{\mathrm d}{\mathrm dx}\big(\tfrac12u^2\big)=s(x)$，$0<x<1$，$u(0)=u_{\mathrm{in}}=1$；面通量是二维页的
 通量取 $n=1$：$h=\tfrac14(u_L^2+u_R^2)-\varepsilon(u_R-u_L)$，$\varepsilon=0.8$；8 个单元（格心）或 9 个节点
 （格点）；源项在 8 个区间上逐段为常数，当前设计 $\sigma=0.5$（精确解 $u=\sqrt{1+x}$）；目标是反设计
-$J=\tfrac12\sum_iw_i(u_i-u^{\mathrm{tgt}}_i)^2$，$u^{\mathrm{tgt}}$ 是源项取 $\sin\pi x$ 的区间平均时的解；设计变量是 8 个区间
+$J=\tfrac12\sum_iw_i(u_i-u^{\mathrm{tgt}}_i)^2$，$u^{\mathrm{tgt}}$ 是源项取 $\sin\pi x$ 的区间平均时的解；设计变量 $D$ 是 8 个区间
 源项与 $u_{\mathrm{in}}$。
 
 **二维对流 / 2-D advection** — 标量守恒律 $F(u)=\tfrac12u^2\beta$，$\beta=(1,\,0.5)$，常数耗散
@@ -295,7 +295,7 @@ of the two-dimensional pages at $n=1$, $h=\tfrac14(u_L^2+u_R^2)-\varepsilon(u_R-
 (cell-centred) or 9 nodes (node-centred); the source is constant on each of the 8 intervals, $\sigma=0.5$ in the
 current design (exact solution $u=\sqrt{1+x}$); the objective is inverse design,
 $J=\tfrac12\sum_iw_i(u_i-u^{\mathrm{tgt}}_i)^2$, with $u^{\mathrm{tgt}}$ the solution for the interval averages of $\sin\pi x$; the
-design variables are the 8 interval sources and $u_{\mathrm{in}}$.
+design variables $D$ are the 8 interval sources and $u_{\mathrm{in}}$.
 
 The Burgers pair supports first-order constant states and second-order linear reconstruction. Its primal uses GS predictor–corrector with a first-order approximate Jacobian; exact tangent and adjoint equations offer GS fixed point or **GS-preconditioned GMRES**. The first-order matrix is used only for correction and preconditioning. Quasi-1-D Euler also supports both orders, 3×3 block-GS defect correction and GS-preconditioned GMRES. Each preconditioner application performs 12 zero-start GS sweeps with an exact transpose of the full map. The four 2-D scalar pages retain Jacobi.
 
