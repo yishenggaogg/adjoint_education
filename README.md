@@ -22,24 +22,24 @@ version, and 2-D RANS–SA also in an **adjoint-consistent** pair. If the discre
 
 | 文件 / File | 算例 / Problem | 格式 / Scheme | 大小 / Size |
 |---|---|---|---|
-| [`adjoint_1d_cell.html`](adjoint_1d_cell.html) | 一维 Burgers/ 1-D Burgers | **格心** / cell-centred | 1752 KB |
-| [`adjoint_1d_node.html`](adjoint_1d_node.html) | 一维 Burgers/ 1-D Burgers | **格点** / node-centred | 1771 KB |
-| [`adjoint_cell.html`](adjoint_cell.html) | 二维对流 / 2-D advection | **格心** / cell-centred | 1721 KB |
-| [`adjoint_node.html`](adjoint_node.html) | 二维对流 / 2-D advection | **格点** / node-centred | 1826 KB |
-| [`adjoint_ad_cell.html`](adjoint_ad_cell.html) | 二维对流扩散 / 2-D advection–diffusion | **格心** / cell-centred | 1459 KB |
-| [`adjoint_ad_node.html`](adjoint_ad_node.html) | 二维对流扩散 / 2-D advection–diffusion | **格点** / node-centred | 1644 KB |
-| [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | 拟一维 Euler / quasi-1-D Euler | **格心** / cell-centred | 928 KB |
-| [`adjoint_q1d_node.html`](adjoint_q1d_node.html) | 拟一维 Euler / quasi-1-D Euler | **格点** / node-centred | 930 KB |
-| [`adjoint_euler_cell.html`](adjoint_euler_cell.html) | 二维 Euler / 2-D Euler | **格心** / cell-centred | 1464 KB |
-| [`adjoint_euler_node.html`](adjoint_euler_node.html) | 二维 Euler / 2-D Euler | **格点** / node-centred | 1560 KB |
-| [`adjoint_ns1d_cell.html`](adjoint_ns1d_cell.html) | 一维层流 N–S / 1-D laminar N–S | **格心** / cell-centred | 746 KB |
-| [`adjoint_ns1d_node.html`](adjoint_ns1d_node.html) | 一维层流 N–S / 1-D laminar N–S | **格点** / node-centred | 744 KB |
-| [`adjoint_ns2d_cell.html`](adjoint_ns2d_cell.html) | 二维层流 N–S / 2-D laminar N–S | **格心** / cell-centred | 3386 KB |
-| [`adjoint_ns2d_node.html`](adjoint_ns2d_node.html) | 二维层流 N–S / 2-D laminar N–S | **格点** / node-centred | 3530 KB |
-| [`adjoint_rans_cell.html`](adjoint_rans_cell.html) | 二维 RANS–SA / 2-D RANS–SA | **格心** / cell-centred | 1114 KB |
-| [`adjoint_rans_node.html`](adjoint_rans_node.html) | 二维 RANS–SA / 2-D RANS–SA | **格点** / node-centred | 1142 KB |
-| [`adjoint_rans_dc_cell.html`](adjoint_rans_dc_cell.html) | 二维 RANS–SA，伴随一致 / 2-D RANS–SA, adjoint-consistent | **格心** / cell-centred | 1112 KB |
-| [`adjoint_rans_dc_node.html`](adjoint_rans_dc_node.html) | 二维 RANS–SA，伴随一致 / 2-D RANS–SA, adjoint-consistent | **格点** / node-centred | 1143 KB |
+| [`adjoint_1d_cell.html`](adjoint_1d_cell.html) | 一维 Burgers/ 1-D Burgers | **格心** / cell-centred | 1854 KB |
+| [`adjoint_1d_node.html`](adjoint_1d_node.html) | 一维 Burgers/ 1-D Burgers | **格点** / node-centred | 1880 KB |
+| [`adjoint_cell.html`](adjoint_cell.html) | 二维对流 / 2-D advection | **格心** / cell-centred | 1777 KB |
+| [`adjoint_node.html`](adjoint_node.html) | 二维对流 / 2-D advection | **格点** / node-centred | 1882 KB |
+| [`adjoint_ad_cell.html`](adjoint_ad_cell.html) | 二维对流扩散 / 2-D advection–diffusion | **格心** / cell-centred | 1491 KB |
+| [`adjoint_ad_node.html`](adjoint_ad_node.html) | 二维对流扩散 / 2-D advection–diffusion | **格点** / node-centred | 1678 KB |
+| [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | 拟一维 Euler / quasi-1-D Euler | **格心** / cell-centred | 971 KB |
+| [`adjoint_q1d_node.html`](adjoint_q1d_node.html) | 拟一维 Euler / quasi-1-D Euler | **格点** / node-centred | 975 KB |
+| [`adjoint_euler_cell.html`](adjoint_euler_cell.html) | 二维 Euler / 2-D Euler | **格心** / cell-centred | 1548 KB |
+| [`adjoint_euler_node.html`](adjoint_euler_node.html) | 二维 Euler / 2-D Euler | **格点** / node-centred | 1644 KB |
+| [`adjoint_ns1d_cell.html`](adjoint_ns1d_cell.html) | 一维层流 N–S / 1-D laminar N–S | **格心** / cell-centred | 791 KB |
+| [`adjoint_ns1d_node.html`](adjoint_ns1d_node.html) | 一维层流 N–S / 1-D laminar N–S | **格点** / node-centred | 788 KB |
+| [`adjoint_ns2d_cell.html`](adjoint_ns2d_cell.html) | 二维层流 N–S / 2-D laminar N–S | **格心** / cell-centred | 3452 KB |
+| [`adjoint_ns2d_node.html`](adjoint_ns2d_node.html) | 二维层流 N–S / 2-D laminar N–S | **格点** / node-centred | 3597 KB |
+| [`adjoint_rans_cell.html`](adjoint_rans_cell.html) | 二维 RANS–SA / 2-D RANS–SA | **格心** / cell-centred | 1131 KB |
+| [`adjoint_rans_node.html`](adjoint_rans_node.html) | 二维 RANS–SA / 2-D RANS–SA | **格点** / node-centred | 1160 KB |
+| [`adjoint_rans_dc_cell.html`](adjoint_rans_dc_cell.html) | 二维 RANS–SA，伴随一致 / 2-D RANS–SA, adjoint-consistent | **格心** / cell-centred | 1129 KB |
+| [`adjoint_rans_dc_node.html`](adjoint_rans_dc_node.html) | 二维 RANS–SA，伴随一致 / 2-D RANS–SA, adjoint-consistent | **格点** / node-centred | 1162 KB |
 
 直接用浏览器打开即可：**没有任何外部依赖**，不联网、不需要构建、不需要服务器。
 Just open any of them in a browser — **no external dependencies**, no network, no build step,
@@ -268,7 +268,7 @@ also where a Dirichlet wall is finally well posed.
 $\frac{\mathrm d}{\mathrm dx}\big(\tfrac12u^2\big)=s(x)$，$0<x<1$，$u(0)=u_{\mathrm{in}}=1$；面通量是二维页的
 通量取 $n=1$：$h=\tfrac14(u_L^2+u_R^2)-\varepsilon(u_R-u_L)$，$\varepsilon=0.8$；8 个单元（格心）或 9 个节点
 （格点）；源项在 8 个区间上逐段为常数，当前设计 $\sigma=0.5$（精确解 $u=\sqrt{1+x}$）；目标是反设计
-$J=\tfrac12\sum_iw_i(u_i-\bar u_i)^2$，$\bar u$ 是源项取 $\sin\pi x$ 的区间平均时的解；设计变量是 8 个区间
+$J=\tfrac12\sum_iw_i(u_i-u^{\mathrm{tgt}}_i)^2$，$u^{\mathrm{tgt}}$ 是源项取 $\sin\pi x$ 的区间平均时的解；设计变量是 8 个区间
 源项与 $u_{\mathrm{in}}$。
 
 **二维对流 / 2-D advection** — 标量守恒律 $F(u)=\tfrac12u^2\beta$，$\beta=(1,\,0.5)$，常数耗散
@@ -294,7 +294,7 @@ $\frac{\mathrm d}{\mathrm dx}\big(\tfrac12u^2\big)=s(x)$ on $0<x<1$, $u(0)=u_{\m
 of the two-dimensional pages at $n=1$, $h=\tfrac14(u_L^2+u_R^2)-\varepsilon(u_R-u_L)$, $\varepsilon=0.8$; 8 cells
 (cell-centred) or 9 nodes (node-centred); the source is constant on each of the 8 intervals, $\sigma=0.5$ in the
 current design (exact solution $u=\sqrt{1+x}$); the objective is inverse design,
-$J=\tfrac12\sum_iw_i(u_i-\bar u_i)^2$, with $\bar u$ the solution for the interval averages of $\sin\pi x$; the
+$J=\tfrac12\sum_iw_i(u_i-u^{\mathrm{tgt}}_i)^2$, with $u^{\mathrm{tgt}}$ the solution for the interval averages of $\sin\pi x$; the
 design variables are the 8 interval sources and $u_{\mathrm{in}}$.
 
 The Burgers pair supports first-order constant states and second-order linear reconstruction. Its primal uses GS predictor–corrector with a first-order approximate Jacobian; exact tangent and adjoint equations offer GS fixed point or **GS-preconditioned GMRES**. The first-order matrix is used only for correction and preconditioning. Quasi-1-D Euler also supports both orders, 3×3 block-GS defect correction and GS-preconditioned GMRES. Each preconditioner application performs 12 zero-start GS sweeps with an exact transpose of the full map. The four 2-D scalar pages retain Jacobi.
@@ -303,6 +303,9 @@ The Burgers pair supports first-order constant states and second-order linear re
 
 每页正文前有一幅全页路线图：设计输入 → 求解 → 状态 → 目标 → 梯度，并排画出前向路线（每个设计分量一次线性求解）与伴随路线（一次转置求解）；图中的个数取自本页默认设置，方框下的节号可以点击。
 Each page opens with a page roadmap: design input → solve → state → objective → gradient, with the tangent route (one linear solve per design component) beside the adjoint route (one transposed solve); the counts are the page's default settings and the section numbers under the boxes are links.
+
+各页前向与伴随的推导统一使用自动微分记号：变量 $x$ 的前向（tangent）导数写作 $\dot x$，伴随写作 $\bar x$，按逆序累加；代码中写作 `x_d`／`x_b`（拟一维页为 `x_bar`）。变分符号 $\delta$ 只用于连续伴随的推导。
+The forward and adjoint derivations on every page use the notation of algorithmic differentiation: the forward-mode (tangent) derivative of a variable $x$ is $\dot x$ and its adjoint is $\bar x$, accumulated in reverse order; in code they are `x_d` / `x_b` (`x_bar` on the quasi-1-D pages). The variation symbol $\delta$ is used only in the continuous-adjoint derivations.
 
 1. 网格（或流道）/ Mesh, or the duct
 2. 方程与面上的一维通量 / The equations and the one-dimensional flux
@@ -577,9 +580,9 @@ The smooth case exposes 6/12/24 grid intervals, contraction depth, back pressure
 
 Appendix B.5 uses an independent choked duct: isentropic smooth regions and normal-shock jumps determine exit pressure, whose root fixes shock position. A reduced adjoint provides back-pressure gradients. The experiment includes a Mach plot, interface-motion contribution, the incorrect gradient when that term is omitted, full-rerun finite differences, conservation checks and complete embedded source. Added validation covers 21 parameter/reference/tolerance cases and 108 shock-fitting checks.
 
-附录 B.3（续）另推导喉部面积的推力导数：推力等于两端动量通量之差，两端面积与背压固定时两端状态只通过喉部面积 $A^*$ 变化，得到闭式 $\mathrm dQ_T/\mathrm dA^*=\frac{\dot m u_1}{A^*}\frac{2+(\gamma-1)M_1^2}{1+(\gamma-1)M_1^2}-\frac{\gamma p(0)A(0)M_0^2}{A^*}$；默认背压下为 0.3480，与独立的喉部凸起重求激波位置差分之差小于 $10^{-7}$（13 项检查）。保持两端面积的任何扰动都有 $\delta Q_T=(\mathrm dQ_T/\mathrm dA^*)\,\delta A(0.5)$。
+附录 B.3（续）另推导喉部面积的推力导数：推力等于两端动量通量之差，两端面积与背压固定时两端状态只通过喉部面积 $A^*$ 变化，得到闭式 $\mathrm dQ_T/\mathrm dA^*=\frac{q_m u_1}{A^*}\frac{2+(\gamma-1)M_1^2}{1+(\gamma-1)M_1^2}-\frac{\gamma p(0)A(0)M_0^2}{A^*}$（$q_m=\rho uA$ 为质量流量）；默认背压下为 0.3480，与独立的喉部凸起重求激波位置差分之差小于 $10^{-7}$（13 项检查）。保持两端面积的任何扰动都有 $\delta Q_T=(\mathrm dQ_T/\mathrm dA^*)\,\delta A(0.5)$。
 
-Appendix B.3 (continued) also derives the thrust derivative with respect to the throat area: the thrust is the difference of the end momentum fluxes, and with both end areas and the back pressure fixed the end states change only through the throat area $A^*$, which gives the closed form $\mathrm dQ_T/\mathrm dA^*=\frac{\dot m u_1}{A^*}\frac{2+(\gamma-1)M_1^2}{1+(\gamma-1)M_1^2}-\frac{\gamma p(0)A(0)M_0^2}{A^*}$. At the default back pressure it equals 0.3480, within $10^{-7}$ of an independent re-solve with a throat bump (13 checks). Every perturbation that keeps both end areas gives $\delta Q_T=(\mathrm dQ_T/\mathrm dA^*)\,\delta A(0.5)$.
+Appendix B.3 (continued) also derives the thrust derivative with respect to the throat area: the thrust is the difference of the end momentum fluxes, and with both end areas and the back pressure fixed the end states change only through the throat area $A^*$, which gives the closed form $\mathrm dQ_T/\mathrm dA^*=\frac{q_m u_1}{A^*}\frac{2+(\gamma-1)M_1^2}{1+(\gamma-1)M_1^2}-\frac{\gamma p(0)A(0)M_0^2}{A^*}$, with $q_m=\rho uA$ the mass flow. At the default back pressure it equals 0.3480, within $10^{-7}$ of an independent re-solve with a throat bump (13 checks). Every perturbation that keeps both end areas gives $\delta Q_T=(\mathrm dQ_T/\mathrm dA^*)\,\delta A(0.5)$.
 
 附录 A 另新增特征线计数、边界零空间几何与 λ 的图示，以及推力对端面积的导数推导（$\partial Q_T/\partial A(0)=-p(0)$）；附录 C 新增 LU 非零模式与因子图、选主元与填充分析，以及由后向误差到前向误差的误差界。
 
