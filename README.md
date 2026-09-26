@@ -24,22 +24,22 @@ version, and 2-D RANS–SA also in an **adjoint-consistent** pair. If the discre
 |---|---|---|---|
 | [`adjoint_1d_cell.html`](adjoint_1d_cell.html) | 一维 Burgers/ 1-D Burgers | **格心** / cell-centred | 1966 KB |
 | [`adjoint_1d_node.html`](adjoint_1d_node.html) | 一维 Burgers/ 1-D Burgers | **格点** / node-centred | 1992 KB |
-| [`adjoint_cell.html`](adjoint_cell.html) | 二维对流 / 2-D advection | **格心** / cell-centred | 1908 KB |
-| [`adjoint_node.html`](adjoint_node.html) | 二维对流 / 2-D advection | **格点** / node-centred | 2027 KB |
-| [`adjoint_ad_cell.html`](adjoint_ad_cell.html) | 二维对流扩散 / 2-D advection–diffusion | **格心** / cell-centred | 1622 KB |
-| [`adjoint_ad_node.html`](adjoint_ad_node.html) | 二维对流扩散 / 2-D advection–diffusion | **格点** / node-centred | 1813 KB |
-| [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | 拟一维 Euler / quasi-1-D Euler | **格心** / cell-centred | 1118 KB |
+| [`adjoint_cell.html`](adjoint_cell.html) | 二维对流 / 2-D advection | **格心** / cell-centred | 1917 KB |
+| [`adjoint_node.html`](adjoint_node.html) | 二维对流 / 2-D advection | **格点** / node-centred | 2035 KB |
+| [`adjoint_ad_cell.html`](adjoint_ad_cell.html) | 二维对流扩散 / 2-D advection–diffusion | **格心** / cell-centred | 1625 KB |
+| [`adjoint_ad_node.html`](adjoint_ad_node.html) | 二维对流扩散 / 2-D advection–diffusion | **格点** / node-centred | 1818 KB |
+| [`adjoint_q1d_cell.html`](adjoint_q1d_cell.html) | 拟一维 Euler / quasi-1-D Euler | **格心** / cell-centred | 1119 KB |
 | [`adjoint_q1d_node.html`](adjoint_q1d_node.html) | 拟一维 Euler / quasi-1-D Euler | **格点** / node-centred | 1122 KB |
-| [`adjoint_euler_cell.html`](adjoint_euler_cell.html) | 二维 Euler / 2-D Euler | **格心** / cell-centred | 1670 KB |
-| [`adjoint_euler_node.html`](adjoint_euler_node.html) | 二维 Euler / 2-D Euler | **格点** / node-centred | 1771 KB |
-| [`adjoint_ns1d_cell.html`](adjoint_ns1d_cell.html) | 一维层流 N–S / 1-D laminar N–S | **格心** / cell-centred | 1007 KB |
-| [`adjoint_ns1d_node.html`](adjoint_ns1d_node.html) | 一维层流 N–S / 1-D laminar N–S | **格点** / node-centred | 1009 KB |
-| [`adjoint_ns2d_cell.html`](adjoint_ns2d_cell.html) | 二维层流 N–S / 2-D laminar N–S | **格心** / cell-centred | 3581 KB |
-| [`adjoint_ns2d_node.html`](adjoint_ns2d_node.html) | 二维层流 N–S / 2-D laminar N–S | **格点** / node-centred | 3727 KB |
-| [`adjoint_rans_cell.html`](adjoint_rans_cell.html) | 二维 RANS–SA / 2-D RANS–SA | **格心** / cell-centred | 1136 KB |
-| [`adjoint_rans_node.html`](adjoint_rans_node.html) | 二维 RANS–SA / 2-D RANS–SA | **格点** / node-centred | 1165 KB |
-| [`adjoint_rans_dc_cell.html`](adjoint_rans_dc_cell.html) | 二维 RANS–SA，伴随一致 / 2-D RANS–SA, adjoint-consistent | **格心** / cell-centred | 1135 KB |
-| [`adjoint_rans_dc_node.html`](adjoint_rans_dc_node.html) | 二维 RANS–SA，伴随一致 / 2-D RANS–SA, adjoint-consistent | **格点** / node-centred | 1166 KB |
+| [`adjoint_euler_cell.html`](adjoint_euler_cell.html) | 二维 Euler / 2-D Euler | **格心** / cell-centred | 1671 KB |
+| [`adjoint_euler_node.html`](adjoint_euler_node.html) | 二维 Euler / 2-D Euler | **格点** / node-centred | 1773 KB |
+| [`adjoint_ns1d_cell.html`](adjoint_ns1d_cell.html) | 一维层流 N–S / 1-D laminar N–S | **格心** / cell-centred | 1010 KB |
+| [`adjoint_ns1d_node.html`](adjoint_ns1d_node.html) | 一维层流 N–S / 1-D laminar N–S | **格点** / node-centred | 1012 KB |
+| [`adjoint_ns2d_cell.html`](adjoint_ns2d_cell.html) | 二维层流 N–S / 2-D laminar N–S | **格心** / cell-centred | 3587 KB |
+| [`adjoint_ns2d_node.html`](adjoint_ns2d_node.html) | 二维层流 N–S / 2-D laminar N–S | **格点** / node-centred | 3734 KB |
+| [`adjoint_rans_cell.html`](adjoint_rans_cell.html) | 二维 RANS–SA / 2-D RANS–SA | **格心** / cell-centred | 1139 KB |
+| [`adjoint_rans_node.html`](adjoint_rans_node.html) | 二维 RANS–SA / 2-D RANS–SA | **格点** / node-centred | 1168 KB |
+| [`adjoint_rans_dc_cell.html`](adjoint_rans_dc_cell.html) | 二维 RANS–SA，伴随一致 / 2-D RANS–SA, adjoint-consistent | **格心** / cell-centred | 1138 KB |
+| [`adjoint_rans_dc_node.html`](adjoint_rans_dc_node.html) | 二维 RANS–SA，伴随一致 / 2-D RANS–SA, adjoint-consistent | **格点** / node-centred | 1169 KB |
 
 直接用浏览器打开即可：**没有任何外部依赖**，不联网、不需要构建、不需要服务器。
 Just open any of them in a browser — **no external dependencies**, no network, no build step,
@@ -277,18 +277,18 @@ $J=\tfrac12\sum_iw_i(u_i-u^{\mathrm{tgt}}_i)^2$，$u^{\mathrm{tgt}}$ 是源项�
 
 **二维对流 / 2-D advection** — 标量守恒律 $F(u)=\tfrac12u^2\beta$，$\beta=(1,\,0.5)$，常数耗散
 $\varepsilon=0.8$；环形 O 型混合网格（8 个四边形 + 16 个三角形，24 个未知量）；内圈物面是
-零数值通量闭合（连续相容性限制见第 16 节）、外圈远场特征边界；目标是类似阻力的物面积分；设计变量是来流值 $u_\infty$ 与全部 48 个
+零数值通量闭合（连续相容性限制见第 16 节）、外圈远场特征边界；目标是类似阻力的物面积分；设计变量 $D$ 是来流值 $u_\infty$ 与全部 48 个
 节点坐标，共 49 个。
 
 **二维对流扩散 / 2-D advection–diffusion** — 同一个对流通量（同样的 $\beta$ 与 $\varepsilon$），
 加上常数扩散 $\nu=0.5$：$\nabla\cdot(\tfrac12u^2\beta)-\nabla\cdot(\nu\nabla u)=0$；扩散通量是
 沿两侧连线的两点差，加上两侧最小二乘梯度（不加权）平均后的非正交修正；网格同上；物面
-$u=u_w=0$，远场数值通量使用 $u_\infty=1$、不另加扩散面通量（连续极限按总通量 Robin 条件解释，见第 16 节）；目标是流进物面的总通量；设计变量是来流值、各控制体的源项强度、各壁面值与全部 48 个
+$u=u_w=0$，远场数值通量使用 $u_\infty=1$、不另加扩散面通量（连续极限按总通量 Robin 条件解释，见第 16 节）；目标是流进物面的总通量；设计变量 $D$ 是来流值、各控制体的源项强度、各壁面值与全部 48 个
 节点坐标，共 81 个。
 
 **拟一维 Euler / quasi-1-D Euler** — 变截面流道 $A(x)=1-0.3\sin^2(\pi x)$，两端为 1、喉部 0.7；
 入口给**总压与总温**、出口给**背压**，全场亚声速；Rusanov 通量（耗散系数取两侧平均而非
-$\max$，以保可微）；目标有两个可切换：**反设计**（压力分布匹配）与**推力**；设计变量是
+$\max$，以保可微）；目标有两个可切换：**反设计**（压力分布匹配）与**推力**；设计变量 $D$ 是
 13 个截面积及出口背压、入口总压和总温。
 
 一维 Burgers 支持一阶常值和二阶线性重构。原始方程采用一阶近似 Jacobian 的 GS 预估矫正；精确 tangent / adjoint 可选 GS 固定点或 **GS 预处理 GMRES**。一阶矩阵仅参与修正与预处理，精确导数始终对应完整离散残差。拟一维 Euler 同样支持一阶／二阶重构，采用 3×3 块 GS 固定点或 GS 预处理 GMRES；一次预处理从零开始做 12 次 GS 扫描，并对整个映射实施精确转置。二维标量四页保留 Jacobi。
@@ -308,8 +308,8 @@ The Burgers pair supports first-order constant states and second-order linear re
 每页正文前有一幅全页路线图：设计输入 → 求解 → 状态 → 目标 → 梯度，并排画出前向路线（每个设计分量一次线性求解）与伴随路线（一次转置求解）；图中的个数取自本页默认设置，方框下的节号可以点击。
 Each page opens with a page roadmap: design input → solve → state → objective → gradient, with the tangent route (one linear solve per design component) beside the adjoint route (one transposed solve); the counts are the page's default settings and the section numbers under the boxes are links.
 
-各页前向与伴随的推导统一使用自动微分记号：变量 $x$ 的前向（tangent）导数写作 $\dot x$，伴随写作 $\bar x$，按逆序累加；代码中写作 `x_d`／`x_b`（拟一维页为 `x_bar`）。变分符号 $\delta$ 只用于连续伴随的推导。
-The forward and adjoint derivations on every page use the notation of algorithmic differentiation: the forward-mode (tangent) derivative of a variable $x$ is $\dot x$ and its adjoint is $\bar x$, accumulated in reverse order; in code they are `x_d` / `x_b` (`x_bar` on the quasi-1-D pages). The variation symbol $\delta$ is used only in the continuous-adjoint derivations.
+各页前向与伴随的推导统一使用自动微分记号：变量 $x$ 的前向（tangent）导数写作 $\dot x$，伴随写作 $\bar x$，按逆序累加；代码中写作 `x_d`／`x_b`（拟一维页为 `x_bar`）。变分符号 $\delta$ 只用于连续伴随的推导。按伴随优化文献的通常写法，各页的设计变量都记作 $D$；二维各页的网格坐标 $X$ 是 $D$ 的一部分。
+The forward and adjoint derivations on every page use the notation of algorithmic differentiation: the forward-mode (tangent) derivative of a variable $x$ is $\dot x$ and its adjoint is $\bar x$, accumulated in reverse order; in code they are `x_d` / `x_b` (`x_bar` on the quasi-1-D pages). The variation symbol $\delta$ is used only in the continuous-adjoint derivations. As is usual in the adjoint-optimization literature, every page writes its design variables as $D$; on the 2-D pages the grid coordinates $X$ are part of $D$.
 
 1. 方程与它的作用（Euler、N–S 与 RANS–SA 各页是方程组）/ The equation and what it is for (a system on the Euler, N–S and RANS–SA pages)
 2. 网格（或流道）/ The mesh, or the duct
