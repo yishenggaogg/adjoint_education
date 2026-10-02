@@ -1,0 +1,11 @@
+test_constant_exact_and_parameter_boundaries (test_solver.Tests.test_constant_exact_and_parameter_boundaries) ... ok
+test_continuous_adjoint_boundary_pairing (test_solver.Tests.test_continuous_adjoint_boundary_pairing) ... ok
+test_exact_jacobian_and_transpose (test_solver.Tests.test_exact_jacobian_and_transpose) ... ok
+test_gradient_and_refinement (test_solver.Tests.test_gradient_and_refinement) ... ok
+test_limits (test_solver.Tests.test_limits) ... ok
+test_original_javascript_snapshot (test_solver.Tests.test_original_javascript_snapshot) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 1.699s
+
+OK

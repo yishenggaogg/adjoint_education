@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>离散伴随教学页 / Discrete adjoint, taught page by page</title>
-<meta name="description" content="十八个单文件、可交互的网页，把有限体积法的全离散伴随从头到尾讲一遍：一维 Burgers 方程、二维标量对流方程、二维标量对流扩散方程、拟一维 Euler 方程、一维层流 N–S 方程、二维 Euler 方程、二维层流 N–S 方程与二维 RANS–SA 方程，各有格心与格点两版（二维 RANS–SA 另有伴随一致的一对），并排对照。">
+<meta name="description" content="十九个单文件、可交互的网页，把有限体积法的全离散伴随从头到尾讲一遍：一维 Burgers 方程、二维标量对流方程、二维标量对流扩散方程、拟一维 Euler 方程、一维层流 N–S 方程、二维 Euler 方程、二维层流 N–S 方程与二维 RANS–SA 方程，各有格心与格点两版（二维 RANS–SA 另有伴随一致的一对），并排对照；另有独立的黏性 Burgers 页面与可复现的 Python 程序。">
 <style>
 :root {
   --ground:#F3F5F7; --surface:#FFFFFF; --sunken:#EAEEF2;
@@ -72,11 +72,11 @@ code { font-family:var(--font-mono); font-size:.86em; }
   <p class="sub">Discrete adjoint, taught page by page &middot; 中文 / English</p>
 
   <p class="lede">
-    十八个<b>单文件、可交互</b>的网页，把有限体积法的<b>全离散伴随</b>从头到尾讲一遍：
+    十九个<b>单文件、可交互</b>的网页，把有限体积法的<b>全离散伴随</b>从头到尾讲一遍：
     从一个面上的一维通量开始，把同一个循环依次改写成 primal、matrix-free 前向与 matrix-free 伴随，
     再做前向与伴随求解、几何导数，最后用有限差分与复数步长逐项校验。
     八组算例（<b>一维 Burgers</b>、<b>二维标量对流</b>、<b>二维标量对流扩散</b>、<b>拟一维 Euler</b>、<b>一维层流 N–S</b>、<b>二维 Euler</b>、<b>二维层流 N–S</b>与<b>二维 RANS–SA</b>）各有<b>格心</b>与<b>格点</b>两版，二维 RANS–SA 另有<b>伴随一致</b>的一对，
-    <b>十八页教学主题相互对应</b>，可以任意两两并排对照。第一次接触离散伴随，请从一维 Burgers 那一对读起。
+    <b>十八页成对教学主题相互对应，另有独立黏性 Burgers 页</b>，可以任意两两并排对照。第一次接触离散伴随，请从一维 Burgers 那一对读起。
   </p>
 
   <h3 style="margin-top:30px">一维 Burgers 方程/ The one-dimensional Burgers equation</h3>
@@ -100,6 +100,17 @@ code { font-family:var(--font-mono); font-size:.86em; }
       <p class="facts">9 / 17 / 33 个节点 &middot; 一阶 / 二阶 &middot; GS / GMRES / LU（附录 C）<br>adjoint_1d_node.html</p>
     </a>
   </div>
+
+  <h3>一维黏性 Burgers / One-dimensional viscous Burgers</h3>
+  <div class="cards">
+    <a class="card" href="adjoint_burgers_viscous.html">
+      <h2>固定正黏性：独立模型与可复现结果</h2>
+      <p class="en">Fixed positive viscosity: a separate model and reproducible results</p>
+      <p>沿用附录 D.3 的光滑带源问题、两端 Dirichlet 条件与线性积分目标，完整求导源项和边界；另建混合边界论文基准，附稀疏 Python、梯度检查、解析证明范围及实际网格加密数据。</p>
+      <p class="facts">浏览器 16–128 单元 · Python 已实跑 65,536 单元<br>数值证据与待证数学义务分列 · adjoint_burgers_viscous.html</p>
+    </a>
+  </div>
+  <p><a href="python/burgers_viscous/README.md">黏性 Burgers 的 Python 程序与实测数据 / Python program and measured data for viscous Burgers</a></p>
 
   <h3 style="margin-top:30px">二维标量对流方程 / A two-dimensional scalar advection equation</h3>
   <p>保留原有正文、网格图和逐句播放器，各节新增光滑特征边界模型的一阶／二阶扩展；同页附录 B 提供对应连续伴随。精度切换仅作用于新增模型。<br>Original prose, mesh diagrams and players are preserved. Each section adds a first/second-order smooth characteristic-boundary model; Appendix B supplies its continuous adjoint. The order selector controls only the added model.</p>

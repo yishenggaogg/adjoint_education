@@ -40,6 +40,7 @@ version, and 2-D RANS–SA also in an **adjoint-consistent** pair. If the discre
 | [`adjoint_rans_node.html`](adjoint_rans_node.html) | 二维 RANS–SA / 2-D RANS–SA | **格点** / node-centred | 1504 KB |
 | [`adjoint_rans_dc_cell.html`](adjoint_rans_dc_cell.html) | 二维 RANS–SA，伴随一致 / 2-D RANS–SA, adjoint-consistent | **格心** / cell-centred | 1475 KB |
 | [`adjoint_rans_dc_node.html`](adjoint_rans_dc_node.html) | 二维 RANS–SA，伴随一致 / 2-D RANS–SA, adjoint-consistent | **格点** / node-centred | 1508 KB |
+| [`adjoint_burgers_viscous.html`](adjoint_burgers_viscous.html) | 一维黏性 Burgers（独立页）/ 1-D viscous Burgers (independent page) | **格心** / cell-centred（第 9 节：格点 / §9 nodal） | 128 KB |
 
 直接用浏览器打开即可：**没有任何外部依赖**，不联网、不需要构建、不需要服务器。
 Just open any of them in a browser — **no external dependencies**, no network, no build step,
@@ -50,6 +51,14 @@ no server. Each page has a 中文 / English toggle in the top-right corner.
 **仓库 / Repositories:**
 [GitHub](https://github.com/yishenggaogg/adjoint_education) ·
 [Gitee](https://gitee.com/gaoyishenggg/adjoint_education) — 内容相同 / identical content
+
+---
+
+### 一维黏性 Burgers（独立页）/ Independent 1-D viscous Burgers page
+
+[`adjoint_burgers_viscous.html`](adjoint_burgers_viscous.html) 不属于上述十八页：它单独展开附录 D.3 的光滑带源稳态实验，固定正黏性 ν，先写出 PDE、两端 Dirichlet 边界与目标，再对同一个离散残差求前向与伴随导数，并推导源项与边界数据一起求导时连续伴随不能丢的边界项。浏览器现场求解 N = 16、32、64、128 的小网格；较大网格由 [`python/burgers_viscous/`](python/burgers_viscous/README.md) 的稀疏 Python 程序运行（已实跑到 65,536 个单元），页面上的曲线与表格来自该程序带版本、命令与哈希的实际输出。第 9 节另列一个独立的 Dirichlet–Neumann 论文基准，不与上面的格心模型混用。两个算例的一般收敛性证明都尚未完成，页面也没有 Lean 或程序执行认证；数值检查是验证证据，不是证明。该页的记号（连续伴随 λ、离散伴随 ψ、扰动 δp）是它自己的，不是十八页所用的自动微分记号。
+
+[`adjoint_burgers_viscous.html`](adjoint_burgers_viscous.html) is not one of the eighteen pages above. It develops the smooth forced steady experiment of Appendix D.3 on its own, at a fixed positive viscosity ν: the PDE, both Dirichlet boundaries and the objective come first, then the same discrete residual is differentiated by tangent and adjoint, and the continuous adjoint is derived with the boundary term that differentiating the source and the boundary data together requires. The browser solves the small grids N = 16, 32, 64, 128 live; larger grids run in the sparse Python of [`python/burgers_viscous/`](python/burgers_viscous/README.md) (run as far as 65,536 cells), and the plots and tables on the page are that program’s actual output with version, command and hashes. Section 9 adds a separate Dirichlet–Neumann paper benchmark, which is not to be mixed with the cell-average model above. The general convergence proof of neither case is complete, and the page carries no Lean or program-execution certificate; the numerical checks are verification evidence, not proofs. The page’s notation (continuous adjoint λ, discrete adjoint ψ, perturbation δp) is its own, not the algorithmic-differentiation notation of the eighteen pages.
 
 ---
 

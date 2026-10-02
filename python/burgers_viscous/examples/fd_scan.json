@@ -1,0 +1,545 @@
+{
+  "provenance": {
+    "version": "1.0.0",
+    "implementation_sha256": "0d36ac3febcd7e74c8f21cf95a1068554264c0982955dbbd6a7ebf9856586e3e",
+    "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 fd_scan.py --cells 128 --output examples/fd_scan.json",
+    "python": "3.14.3",
+    "numpy": "2.4.6",
+    "scipy": "1.18.1",
+    "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "generated_utc": "2026-10-02T08:55:26Z",
+    "formulation": "Appendix D.3 integrated FV, alpha=2, analytic source/Dirichlet, half-cell boundary diffusion",
+    "mathematical_proof": false,
+    "max_cells": 65536
+  },
+  "inputs": {
+    "cells": 128,
+    "nu": 0.01,
+    "amplitude": 0.2,
+    "phase": 0.07,
+    "reconstruction": "none",
+    "direction": [
+      1.0,
+      0.3,
+      0.0
+    ]
+  },
+  "input_sha256": "1387bcd954c190c539222d4961d3368b05fe8bf2491b139826bfabbe5c3b8b68",
+  "source_sha256": {
+    "solve.py": "0d36ac3febcd7e74c8f21cf95a1068554264c0982955dbbd6a7ebf9856586e3e",
+    "fd_scan.py": "314e66c25889eac69de87ab9a67c14ad020f5797c10abd2f2a1e0075b23c5fab"
+  },
+  "baseline_gradient": [
+    -0.16385030460899125,
+    0.09868659173191939,
+    0.15744439903576465
+  ],
+  "baseline_history": [
+    {
+      "iteration": 0,
+      "residual_inf": 0.006560750777641677,
+      "correction_inf": 0.003202680296638512
+    },
+    {
+      "iteration": 1,
+      "residual_inf": 3.2208728774074658e-06,
+      "correction_inf": 3.9751968288158854e-06
+    },
+    {
+      "iteration": 2,
+      "residual_inf": 1.1857181902996672e-12,
+      "correction_inf": 8.634426081347492e-12
+    }
+  ],
+  "stopping_correction_tolerance": 2e-11,
+  "max_newton_iterations": 35,
+  "memory_peak_measured": false,
+  "memory_peak_bytes": null,
+  "elapsed_seconds": 0.054942791000939906,
+  "results": [
+    {
+      "step": 0.01,
+      "finite_difference": -0.13421538954356826,
+      "adjoint_gradient": -0.13424432708941544,
+      "absolute_error": 2.893754584717967e-05,
+      "perturbed_solves": [
+        {
+          "sign": -1,
+          "parameters_amplitude_phase_nu": [
+            0.19,
+            0.067,
+            0.01
+          ],
+          "iterations": 2,
+          "history": [
+            {
+              "iteration": 0,
+              "residual_inf": 0.0062989869963852585,
+              "correction_inf": 0.00304057082042902
+            },
+            {
+              "iteration": 1,
+              "residual_inf": 2.9435565288005172e-06,
+              "correction_inf": 3.5203766996004143e-06
+            },
+            {
+              "iteration": 2,
+              "residual_inf": 9.920952948050399e-13,
+              "correction_inf": 6.6309606651536574e-12
+            }
+          ],
+          "residual_inf": 9.920952948050399e-13,
+          "residual_density_inf": 1.269881977350451e-10,
+          "correction_inf": 6.6309606651536574e-12,
+          "termination_reason": "Newton correction infinity norm <= 2e-11"
+        },
+        {
+          "sign": 1,
+          "parameters_amplitude_phase_nu": [
+            0.21000000000000002,
+            0.07300000000000001,
+            0.01
+          ],
+          "iterations": 2,
+          "history": [
+            {
+              "iteration": 0,
+              "residual_inf": 0.006812627431441842,
+              "correction_inf": 0.003363208425398438
+            },
+            {
+              "iteration": 1,
+              "residual_inf": 3.504414720523208e-06,
+              "correction_inf": 4.461717718491615e-06
+            },
+            {
+              "iteration": 2,
+              "residual_inf": 1.4016565685892601e-12,
+              "correction_inf": 1.109033090761172e-11
+            }
+          ],
+          "residual_inf": 1.4016565685892601e-12,
+          "residual_density_inf": 1.794120407794253e-10,
+          "correction_inf": 1.109033090761172e-11,
+          "termination_reason": "Newton correction infinity norm <= 2e-11"
+        }
+      ],
+      "elapsed_seconds": 0.004234416992403567
+    },
+    {
+      "step": 0.001,
+      "finite_difference": -0.1342440376330689,
+      "adjoint_gradient": -0.13424432708941544,
+      "absolute_error": 2.8945634653054775e-07,
+      "perturbed_solves": [
+        {
+          "sign": -1,
+          "parameters_amplitude_phase_nu": [
+            0.199,
+            0.06970000000000001,
+            0.01
+          ],
+          "iterations": 2,
+          "history": [
+            {
+              "iteration": 0,
+              "residual_inf": 0.006535013560487857,
+              "correction_inf": 0.0031865202850210553
+            },
+            {
+              "iteration": 1,
+              "residual_inf": 3.192843152144409e-06,
+              "correction_inf": 3.92814085802618e-06
+            },
+            {
+              "iteration": 2,
+              "residual_inf": 1.165456620100258e-12,
+              "correction_inf": 8.415082032668409e-12
+            }
+          ],
+          "residual_inf": 1.165456620100258e-12,
+          "residual_density_inf": 1.4917844737283303e-10,
+          "correction_inf": 8.415082032668409e-12,
+          "termination_reason": "Newton correction infinity norm <= 2e-11"
+        },
+        {
+          "sign": 1,
+          "parameters_amplitude_phase_nu": [
+            0.201,
+            0.0703,
+            0.01
+          ],
+          "iterations": 2,
+          "history": [
+            {
+              "iteration": 0,
+              "residual_inf": 0.006586389110549817,
+              "correction_inf": 0.0032188219483627774
+            },
+            {
+              "iteration": 1,
+              "residual_inf": 3.2489648925104753e-06,
+              "correction_inf": 4.022546399198387e-06
+            },
+            {
+              "iteration": 2,
+              "residual_inf": 1.205924249347845e-12,
+              "correction_inf": 8.8584088848005e-12
+            }
+          ],
+          "residual_inf": 1.205924249347845e-12,
+          "residual_density_inf": 1.5435830391652416e-10,
+          "correction_inf": 8.8584088848005e-12,
+          "termination_reason": "Newton correction infinity norm <= 2e-11"
+        }
+      ],
+      "elapsed_seconds": 0.004274958002497442
+    },
+    {
+      "step": 0.0001,
+      "finite_difference": -0.1342443241270086,
+      "adjoint_gradient": -0.13424432708941544,
+      "absolute_error": 2.9624068476064025e-09,
+      "perturbed_solves": [
+        {
+          "sign": -1,
+          "parameters_amplitude_phase_nu": [
+            0.19990000000000002,
+            0.06997,
+            0.01
+          ],
+          "iterations": 2,
+          "history": [
+            {
+              "iteration": 0,
+              "residual_inf": 0.006558181499962956,
+              "correction_inf": 0.0032010651155182377
+            },
+            {
+              "iteration": 1,
+              "residual_inf": 3.2180670838655168e-06,
+              "correction_inf": 3.970478002824575e-06
+            },
+            {
+              "iteration": 2,
+              "residual_inf": 1.1839973446114982e-12,
+              "correction_inf": 8.612263698790256e-12
+            }
+          ],
+          "residual_inf": 1.1839973446114982e-12,
+          "residual_density_inf": 1.5155166011027177e-10,
+          "correction_inf": 8.612263698790256e-12,
+          "termination_reason": "Newton correction infinity norm <= 2e-11"
+        },
+        {
+          "sign": 1,
+          "parameters_amplitude_phase_nu": [
+            0.2001,
+            0.07003000000000001,
+            0.01
+          ],
+          "iterations": 2,
+          "history": [
+            {
+              "iteration": 0,
+              "residual_inf": 0.00656331906647678,
+              "correction_inf": 0.0032042952941610876
+            },
+            {
+              "iteration": 1,
+              "residual_inf": 3.2236792936735092e-06,
+              "correction_inf": 3.979918591050888e-06
+            },
+            {
+              "iteration": 2,
+              "residual_inf": 1.18804965865138e-12,
+              "correction_inf": 8.656756398693752e-12
+            }
+          ],
+          "residual_inf": 1.18804965865138e-12,
+          "residual_density_inf": 1.5207035630737664e-10,
+          "correction_inf": 8.656756398693752e-12,
+          "termination_reason": "Newton correction infinity norm <= 2e-11"
+        }
+      ],
+      "elapsed_seconds": 0.004277875006664544
+    },
+    {
+      "step": 1e-05,
+      "finite_difference": -0.13424432699915556,
+      "adjoint_gradient": -0.13424432708941544,
+      "absolute_error": 9.025988290112252e-11,
+      "perturbed_solves": [
+        {
+          "sign": -1,
+          "parameters_amplitude_phase_nu": [
+            0.19999,
+            0.069997,
+            0.01
+          ],
+          "iterations": 2,
+          "history": [
+            {
+              "iteration": 0,
+              "residual_inf": 0.006560493894366692,
+              "correction_inf": 0.0032025187867819665
+            },
+            {
+              "iteration": 1,
+              "residual_inf": 3.220592270147815e-06,
+              "correction_inf": 3.974724814146753e-06
+            },
+            {
+              "iteration": 2,
+              "residual_inf": 1.1854961456947422e-12,
+              "correction_inf": 8.632224890230727e-12
+            }
+          ],
+          "residual_inf": 1.1854961456947422e-12,
+          "residual_density_inf": 1.51743506648927e-10,
+          "correction_inf": 8.632224890230727e-12,
+          "termination_reason": "Newton correction infinity norm <= 2e-11"
+        },
+        {
+          "sign": 1,
+          "parameters_amplitude_phase_nu": [
+            0.20001000000000002,
+            0.07000300000000001,
+            0.01
+          ],
+          "iterations": 2,
+          "history": [
+            {
+              "iteration": 0,
+              "residual_inf": 0.006561007651029238,
+              "correction_inf": 0.0032028418046586905
+            },
+            {
+              "iteration": 1,
+              "residual_inf": 3.221153490773343e-06,
+              "correction_inf": 3.975668873084696e-06
+            },
+            {
+              "iteration": 2,
+              "residual_inf": 1.1857181902996672e-12,
+              "correction_inf": 8.63675287547323e-12
+            }
+          ],
+          "residual_inf": 1.1857181902996672e-12,
+          "residual_density_inf": 1.517719283583574e-10,
+          "correction_inf": 8.63675287547323e-12,
+          "termination_reason": "Newton correction infinity norm <= 2e-11"
+        }
+      ],
+      "elapsed_seconds": 0.004476374990190379
+    },
+    {
+      "step": 1e-06,
+      "finite_difference": -0.13424432698805333,
+      "adjoint_gradient": -0.13424432708941544,
+      "absolute_error": 1.0136211314737409e-10,
+      "perturbed_solves": [
+        {
+          "sign": -1,
+          "parameters_amplitude_phase_nu": [
+            0.199999,
+            0.06999970000000001,
+            0.01
+          ],
+          "iterations": 2,
+          "history": [
+            {
+              "iteration": 0,
+              "residual_inf": 0.0065607250897590785,
+              "correction_inf": 0.0032026641457352577
+            },
+            {
+              "iteration": 1,
+              "residual_inf": 3.220844816465007e-06,
+              "correction_inf": 3.975149626166509e-06
+            },
+            {
+              "iteration": 2,
+              "residual_inf": 1.185662679148436e-12,
+              "correction_inf": 8.634354151474204e-12
+            }
+          ],
+          "residual_inf": 1.185662679148436e-12,
+          "residual_density_inf": 1.517648229309998e-10,
+          "correction_inf": 8.634354151474204e-12,
+          "termination_reason": "Newton correction infinity norm <= 2e-11"
+        },
+        {
+          "sign": 1,
+          "parameters_amplitude_phase_nu": [
+            0.200001,
+            0.0700003,
+            0.01
+          ],
+          "iterations": 2,
+          "history": [
+            {
+              "iteration": 0,
+              "residual_inf": 0.006560776465425688,
+              "correction_inf": 0.0032026964475230864
+            },
+            {
+              "iteration": 1,
+              "residual_inf": 3.22090093862748e-06,
+              "correction_inf": 3.9752440319872675e-06
+            },
+            {
+              "iteration": 2,
+              "residual_inf": 1.1860512572070547e-12,
+              "correction_inf": 8.634698002008708e-12
+            }
+          ],
+          "residual_inf": 1.1860512572070547e-12,
+          "residual_density_inf": 1.51814560922503e-10,
+          "correction_inf": 8.634698002008708e-12,
+          "termination_reason": "Newton correction infinity norm <= 2e-11"
+        }
+      ],
+      "elapsed_seconds": 0.004166750004515052
+    },
+    {
+      "step": 1e-07,
+      "finite_difference": -0.13424432898645478,
+      "adjoint_gradient": -0.13424432708941544,
+      "absolute_error": 1.8970393311779077e-09,
+      "perturbed_solves": [
+        {
+          "sign": -1,
+          "parameters_amplitude_phase_nu": [
+            0.1999999,
+            0.06999997000000001,
+            0.01
+          ],
+          "iterations": 2,
+          "history": [
+            {
+              "iteration": 0,
+              "residual_inf": 0.006560748208858047,
+              "correction_inf": 0.0032026786815488105
+            },
+            {
+              "iteration": 1,
+              "residual_inf": 3.2208700712077487e-06,
+              "correction_inf": 3.975192108665839e-06
+            },
+            {
+              "iteration": 2,
+              "residual_inf": 1.1856071679972047e-12,
+              "correction_inf": 8.634380599741712e-12
+            }
+          ],
+          "residual_inf": 1.1856071679972047e-12,
+          "residual_density_inf": 1.517577175036422e-10,
+          "correction_inf": 8.634380599741712e-12,
+          "termination_reason": "Newton correction infinity norm <= 2e-11"
+        },
+        {
+          "sign": 1,
+          "parameters_amplitude_phase_nu": [
+            0.20000010000000001,
+            0.07000003,
+            0.01
+          ],
+          "iterations": 2,
+          "history": [
+            {
+              "iteration": 0,
+              "residual_inf": 0.0065607533464246415,
+              "correction_inf": 0.003202681911727584
+            },
+            {
+              "iteration": 1,
+              "residual_inf": 3.220875683329627e-06,
+              "correction_inf": 3.975201549194337e-06
+            },
+            {
+              "iteration": 2,
+              "residual_inf": 1.1859402349045922e-12,
+              "correction_inf": 8.63433675368093e-12
+            }
+          ],
+          "residual_inf": 1.1859402349045922e-12,
+          "residual_density_inf": 1.518003500677878e-10,
+          "correction_inf": 8.63433675368093e-12,
+          "termination_reason": "Newton correction infinity norm <= 2e-11"
+        }
+      ],
+      "elapsed_seconds": 0.0040305419970536605
+    },
+    {
+      "step": 1e-08,
+      "finite_difference": -0.13424433786823897,
+      "adjoint_gradient": -0.13424432708941544,
+      "absolute_error": 1.077882352817916e-08,
+      "perturbed_solves": [
+        {
+          "sign": -1,
+          "parameters_amplitude_phase_nu": [
+            0.19999999000000002,
+            0.06999999700000001,
+            0.01
+          ],
+          "iterations": 2,
+          "history": [
+            {
+              "iteration": 0,
+              "residual_inf": 0.006560750520763381,
+              "correction_inf": 0.003202680135129489
+            },
+            {
+              "iteration": 1,
+              "residual_inf": 3.2208725969096186e-06,
+              "correction_inf": 3.9751963570068846e-06
+            },
+            {
+              "iteration": 2,
+              "residual_inf": 1.185662679148436e-12,
+              "correction_inf": 8.634407668728466e-12
+            }
+          ],
+          "residual_inf": 1.185662679148436e-12,
+          "residual_density_inf": 1.517648229309998e-10,
+          "correction_inf": 8.634407668728466e-12,
+          "termination_reason": "Newton correction infinity norm <= 2e-11"
+        },
+        {
+          "sign": 1,
+          "parameters_amplitude_phase_nu": [
+            0.20000001,
+            0.070000003,
+            0.01
+          ],
+          "iterations": 2,
+          "history": [
+            {
+              "iteration": 0,
+              "residual_inf": 0.006560751034519974,
+              "correction_inf": 0.00320268045814752
+            },
+            {
+              "iteration": 1,
+              "residual_inf": 3.2208731581273575e-06,
+              "correction_inf": 3.9751973008727984e-06
+            },
+            {
+              "iteration": 2,
+              "residual_inf": 1.1855516568459734e-12,
+              "correction_inf": 8.634484874929422e-12
+            }
+          ],
+          "residual_inf": 1.1855516568459734e-12,
+          "residual_density_inf": 1.517506120762846e-10,
+          "correction_inf": 8.634484874929422e-12,
+          "termination_reason": "Newton correction infinity norm <= 2e-11"
+        }
+      ],
+      "elapsed_seconds": 0.0040097500022966415
+    }
+  ],
+  "mathematical_proof": false
+}

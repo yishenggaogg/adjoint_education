@@ -1,0 +1,2 @@
+cells,nu,reconstruction,state_l1_error,state_linf_error,gradient_error_inf,primal_residual_inf,primal_residual_density_inf,newton_correction_inf,adjoint_residual_inf,elapsed_seconds
+65536,0.01,none,2.1428379802513792e-08,2.6502171901476856e-08,3.260693710333742e-06,2.877698079828406e-13,1.885928213596344e-08,2.38064958334315e-16,6.345783714310511e-13,0.29927133400633465
