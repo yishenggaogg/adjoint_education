@@ -1,19 +1,29 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="en" data-lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>离散伴随教学页 / Discrete adjoint, taught page by page</title>
-<meta name="description" content="十九个单文件、可交互的网页，把有限体积法的全离散伴随从头到尾讲一遍：一维 Burgers 方程、二维标量对流方程、二维标量对流扩散方程、拟一维 Euler 方程、一维层流 N–S 方程、二维 Euler 方程、二维层流 N–S 方程与二维 RANS–SA 方程，各有格心与格点两版（二维 RANS–SA 另有伴随一致的一对），并排对照；另有独立的黏性 Burgers 页面与可复现的 Python 程序。">
+<title>Discrete adjoint: interactive lessons</title>
+<meta name="description" content="Nineteen single-file, interactive web pages that teach the fully discrete adjoint of a finite-volume scheme from start to finish: one-dimensional Burgers, two-dimensional scalar advection, advection–diffusion, quasi-one-dimensional Euler, one-dimensional laminar Navier–Stokes, two-dimensional Euler, two-dimensional laminar Navier–Stokes and two-dimensional RANS–SA, each in a cell-centred and a node-centred version (2-D RANS–SA with an extra adjoint-consistent pair), plus an independent viscous Burgers page with reproducible Python programs.">
+<script>
+/* the language is set before the first paint: English unless the reader chose Chinese (the key is the one the lesson pages use) */
+(function () {
+  var lang = "en";
+  try { if (localStorage.getItem("adjlang") === "zh") lang = "zh"; } catch (e) { /* storage blocked: English */ }
+  var root = document.documentElement;
+  root.setAttribute("data-lang", lang);
+  root.setAttribute("lang", lang === "zh" ? "zh-CN" : "en");
+})();
+</script>
 <style>
 :root {
   --ground:#F3F5F7; --surface:#FFFFFF; --sunken:#EAEEF2;
   --ink:#18202B; --ink2:#3A4553; --muted:#667283; --rule:#D3DAE2;
   --primal:#2F5E9E; --tangent:#0B7A69; --adjoint:#B8432A; --violet:#7A4CB0;
   --shadow:0 1px 2px rgba(20,30,45,.06), 0 6px 18px rgba(20,30,45,.05);
-  --font-body:"Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
-  --font-display:"Noto Serif SC","Songti SC","STSong",serif;
-  --font-mono:"JetBrains Mono","SFMono-Regular",Menlo,Consolas,monospace;
+  --font-body:system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC","Source Han Sans SC","Microsoft YaHei","WenQuanYi Micro Hei",sans-serif;
+  --font-display:Georgia,"Times New Roman","Songti SC","SimSun","Noto Serif CJK SC","Source Han Serif SC",serif;
+  --font-mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono","DejaVu Sans Mono",monospace;
   color-scheme:light;
 }
 @media (prefers-color-scheme: dark) {
@@ -32,17 +42,28 @@
   color-scheme:dark;
 }
 * { box-sizing:border-box; }
+html[data-lang="zh"] [lang="en"] { display:none; }
+html[data-lang="en"] [lang="zh"] { display:none; }
 body {
   margin:0; background:var(--ground); color:var(--ink);
   font-family:var(--font-body); line-height:1.75;
   -webkit-font-smoothing:antialiased;
 }
-.wrap { max-width:860px; margin:0 auto; padding:56px 16px 72px; }
-h1 { font-family:var(--font-display); font-weight:600; font-size:clamp(1.5rem,4.2vw,2.1rem); line-height:1.35; margin:0 0 6px; text-wrap:balance; }
-.sub { color:var(--muted); font-size:.98rem; margin:0 0 30px; }
+.wrap { max-width:860px; margin:0 auto; padding:24px 16px 72px; }
+.top { display:flex; justify-content:flex-end; margin:0 0 22px; }
+.btn {
+  font:inherit; font-size:14px; color:var(--ink); background:var(--surface);
+  border:1px solid var(--rule); border-radius:8px; padding:5px 12px; cursor:pointer;
+  display:inline-flex; align-items:center; gap:6px; line-height:1.4;
+}
+.btn:hover { border-color:var(--ink2); }
+.btn:focus-visible, a:focus-visible { outline:2px solid var(--violet); outline-offset:2px; }
+.langtoggle { font-size:13px; padding:3px 10px; }
+h1 { font-family:var(--font-display); font-weight:600; font-size:clamp(1.5rem,4.2vw,2.1rem); line-height:1.35; margin:0 0 18px; text-wrap:balance; }
 .lede { font-size:1.03rem; color:var(--ink2); margin:0 0 34px; }
 .lede b { color:var(--ink); font-weight:600; }
 .cards { display:grid; gap:18px; grid-template-columns:repeat(auto-fit,minmax(290px,1fr)); margin:0 0 34px; }
+a { color:var(--primal); }
 a.card {
   display:block; padding:22px 22px 20px; background:var(--surface);
   border:1px solid var(--rule); border-left:4px solid var(--accent,var(--primal));
@@ -50,15 +71,18 @@ a.card {
   transition:transform .13s ease, box-shadow .13s ease;
 }
 a.card:hover { transform:translateY(-2px); box-shadow:0 2px 4px rgba(20,30,45,.08), 0 10px 26px rgba(20,30,45,.10); }
+@media (prefers-reduced-motion: reduce) { a.card { transition:none; } a.card:hover { transform:none; } }
 a.card.node { --accent:var(--tangent); }
-.card h2 { font-family:var(--font-display); font-size:1.14rem; font-weight:600; margin:0 0 2px; color:var(--accent,var(--primal)); }
-.card .en { font-size:.9rem; color:var(--muted); margin:0 0 12px; }
+.card h2 { font-family:var(--font-display); font-size:1.14rem; font-weight:600; margin:0 0 10px; color:var(--accent,var(--primal)); }
 .card p { margin:0 0 12px; font-size:.94rem; color:var(--ink2); }
 .card .facts { font-family:var(--font-mono); font-size:.78rem; color:var(--muted); line-height:1.65; }
 h3 { font-family:var(--font-display); font-size:1.04rem; font-weight:600; margin:32px 0 10px; }
+.fam { margin:0 0 14px; color:var(--muted); font-size:.93rem; }
 ul { padding-left:1.25em; margin:0 0 12px; }
 li { margin:5px 0; color:var(--ink2); font-size:.95rem; }
-.note { background:var(--sunken); border-radius:8px; padding:14px 18px; font-size:.92rem; color:var(--ink2); }
+.note { background:var(--sunken); border-radius:8px; padding:14px 18px; font-size:.92rem; color:var(--ink2); margin:0 0 26px; }
+.note > p { margin:0 0 8px; }
+.note > p:last-child { margin:0; }
 footer { margin-top:44px; padding-top:20px; border-top:1px solid var(--rule); font-size:.86rem; color:var(--muted); }
 footer a { color:var(--primal); }
 code { font-family:var(--font-mono); font-size:.86em; }
@@ -67,196 +91,195 @@ code { font-family:var(--font-mono); font-size:.86em; }
 <body>
 <div class="wrap">
 
-  <h1>离散伴随教学页</h1>
-<div class="note"><p><b>教学主线与目标：</b>面向学过微积分、线性代数和数值方法的本科生，从模型问题的求解、前向和伴随逐句实现，走向2D非结构网格 RANS 的完整离散伴随。</p><p><b>Learning path:</b> for undergraduates familiar with calculus, linear algebra and numerical methods, implement solvers, tangents and adjoints for model problems statement by statement, toward a complete discrete adjoint for 2D unstructured-grid RANS.</p></div>
-  <p class="sub">Discrete adjoint, taught page by page &middot; 中文 / English</p>
+  <div class="top"><button class="btn langtoggle" type="button" id="langtoggle" aria-label="切换到中文">中文</button></div>
 
-  <p class="lede">
-    十九个<b>单文件、可交互</b>的网页，把有限体积法的<b>全离散伴随</b>从头到尾讲一遍：
-    从一个面上的一维通量开始，把同一个循环依次改写成 primal、matrix-free 前向与 matrix-free 伴随，
-    再做前向与伴随求解、几何导数，最后用有限差分与复数步长逐项校验。
-    八组算例（<b>一维 Burgers</b>、<b>二维标量对流</b>、<b>二维标量对流扩散</b>、<b>拟一维 Euler</b>、<b>一维层流 N–S</b>、<b>二维 Euler</b>、<b>二维层流 N–S</b>与<b>二维 RANS–SA</b>）各有<b>格心</b>与<b>格点</b>两版，二维 RANS–SA 另有<b>伴随一致</b>的一对，
-    <b>十八页成对教学主题相互对应，另有独立黏性 Burgers 页</b>，可以任意两两并排对照。第一次接触离散伴随，请从一维 Burgers 那一对读起。
+  <h1><span lang="zh">离散伴随教学页</span><span lang="en">Discrete adjoint: interactive lessons</span></h1>
+  <div class="note">
+    <p lang="zh"><b>教学主线与目标：</b>面向学过微积分、线性代数和数值方法的本科生，从模型问题的求解、前向和伴随逐句实现，走向2D非结构网格 RANS 的完整离散伴随。</p>
+    <p lang="en"><b>Learning path:</b> for undergraduates familiar with calculus, linear algebra and numerical methods, implement solvers, tangents and adjoints for model problems statement by statement, toward a complete discrete adjoint for 2D unstructured-grid RANS.</p>
+  </div>
+
+  <p class="lede" lang="zh">
+    十九个<b>单文件、可交互</b>的网页，把有限体积法的<b>全离散伴随</b>从头到尾讲一遍：从一个面上的一维通量开始，把同一个循环依次改写成 primal、matrix-free 前向与 matrix-free 伴随，再做前向与伴随求解、几何导数，最后用有限差分与复数步长逐项校验。八组算例（<b>一维 Burgers</b>、<b>二维标量对流</b>、<b>二维标量对流扩散</b>、<b>拟一维 Euler</b>、<b>一维层流 N–S</b>、<b>二维 Euler</b>、<b>二维层流 N–S</b>与<b>二维 RANS–SA</b>）各有<b>格心</b>与<b>格点</b>两版，二维 RANS–SA 另有<b>伴随一致</b>的一对，<b>十八页成对教学主题相互对应，另有独立黏性 Burgers 页</b>，可以任意两两并排对照。第一次接触离散伴随，请从一维 Burgers 那一对读起。
+  </p>
+  <p class="lede" lang="en">
+    Nineteen <b>single-file, interactive</b> web pages that teach the <b>fully discrete adjoint</b> of a finite-volume scheme from start to finish.
+    Starting from a one-dimensional flux on a single face, the same loop is rewritten in turn as the primal, a matrix-free forward mode and a matrix-free adjoint;
+    then come the forward and adjoint solves and the geometric derivatives, and finally everything is checked term by term with finite differences and the complex step.
+    Eight model problems (<b>one-dimensional Burgers</b>, <b>two-dimensional scalar advection</b>, <b>two-dimensional scalar advection–diffusion</b>, <b>quasi-one-dimensional Euler</b>, <b>one-dimensional laminar N–S</b>, <b>two-dimensional Euler</b>, <b>two-dimensional laminar N–S</b> and <b>two-dimensional RANS–SA</b>) each come in a <b>cell-centred</b> and a <b>node-centred</b> version, and the RANS–SA problem has an extra <b>adjoint-consistent</b> pair.
+    <b>The eighteen pages have corresponding teaching topics in pairs, and one independent viscous Burgers page stands apart</b>, so any two can be compared side by side. If the discrete adjoint is new to you, start with the one-dimensional Burgers pair.
   </p>
 
-  <h3 style="margin-top:30px">一维 Burgers 方程/ The one-dimensional Burgers equation</h3>
-  <p style="margin:0 0 14px;color:var(--muted);font-size:.93rem">
-    带源项的定常 Burgers 方程，支持<b>一阶／二阶空间精度切换</b>。二阶线性重构的完整 tangent 与 adjoint 包含斜率和边界导数。
-    原始方程用 GS 预估矫正，线性方程可选 GS 固定点或 <b>GS 预处理 GMRES</b>，并比较网格收敛、求解成本与连续伴随一致性。<br>
-    Steady Burgers with a source, selectable <b>first-/second-order space</b>, exact reconstruction derivatives, GS predictor–corrector and <b>GS-preconditioned GMRES</b>.
-    Interactive studies compare mesh convergence, solver work and continuous-adjoint consistency.
-  </p>
+  <h3><span lang="zh">一维 Burgers 方程</span><span lang="en">The one-dimensional Burgers equation</span></h3>
+  <p class="fam" lang="zh">带源项的定常 Burgers 方程，支持<b>一阶／二阶空间精度切换</b>。二阶线性重构的完整 tangent 与 adjoint 包含斜率和边界导数。原始方程用 GS 预估矫正，线性方程可选 GS 固定点或 <b>GS 预处理 GMRES</b>，并比较网格收敛、求解成本与连续伴随一致性。</p>
+  <p class="fam" lang="en">Steady Burgers with a source, selectable <b>first-/second-order space</b>, exact reconstruction derivatives, GS predictor–corrector and <b>GS-preconditioned GMRES</b>. Interactive studies compare mesh convergence, solver work and continuous-adjoint consistency.</p>
   <div class="cards">
     <a class="card" href="adjoint_1d_cell.html">
-      <h2>格心格式</h2>
-      <p class="en">Cell-centred finite volume</p>
-      <p>未知量是单元平均值。入口值 u<sub>in</sub> 是入口面左侧的 ghost 状态，在通量里<b>弱</b>加。</p>
-      <p class="facts">8 / 16 / 32 个单元 &middot; 一阶 / 二阶 &middot; GS / GMRES / LU（附录 C）<br>adjoint_1d_cell.html</p>
+      <h2><span lang="zh">格心格式</span><span lang="en">Cell-centred finite volume</span></h2>
+      <p><span lang="zh">未知量是单元平均值。入口值 u<sub>in</sub> 是入口面左侧的 ghost 状态，在通量里<b>弱</b>加。</span><span lang="en">The unknowns are cell averages. The inlet value u<sub>in</sub> is the ghost state to the left of the inlet face and is imposed <b>weakly</b>, inside the flux.</span></p>
+      <p class="facts"><span lang="zh">8 / 16 / 32 个单元 &middot; 一阶 / 二阶 &middot; GS / GMRES / LU（附录 C）</span><span lang="en">8 / 16 / 32 cells &middot; first / second order &middot; GS / GMRES / LU (Appendix C)</span><br>adjoint_1d_cell.html</p>
     </a>
     <a class="card node" href="adjoint_1d_node.html">
-      <h2>格点格式</h2>
-      <p class="en">Node-centred, dual volumes</p>
-      <p>入口节点的整行换成 u<sub>0</sub> &minus; u<sub>in</sub>，<b>强</b>加；伴随里「循环前清零、循环后加回」，顺序不能反。</p>
-      <p class="facts">9 / 17 / 33 个节点 &middot; 一阶 / 二阶 &middot; GS / GMRES / LU（附录 C）<br>adjoint_1d_node.html</p>
+      <h2><span lang="zh">格点格式</span><span lang="en">Node-centred, dual volumes</span></h2>
+      <p><span lang="zh">入口节点的整行换成 u<sub>0</sub> &minus; u<sub>in</sub>，<b>强</b>加；伴随里「循环前清零、循环后加回」，顺序不能反。</span><span lang="en">The inlet node&rsquo;s whole row is replaced by u<sub>0</sub> &minus; u<sub>in</sub> and imposed <b>strongly</b>; in the adjoint the row is &ldquo;zeroed before the loop and added back after it&rdquo;, and the order cannot be reversed.</span></p>
+      <p class="facts"><span lang="zh">9 / 17 / 33 个节点 &middot; 一阶 / 二阶 &middot; GS / GMRES / LU（附录 C）</span><span lang="en">9 / 17 / 33 nodes &middot; first / second order &middot; GS / GMRES / LU (Appendix C)</span><br>adjoint_1d_node.html</p>
     </a>
   </div>
 
-  <h3>一维黏性 Burgers / One-dimensional viscous Burgers</h3>
+  <h3><span lang="zh">一维黏性 Burgers</span><span lang="en">One-dimensional viscous Burgers</span></h3>
   <div class="cards">
     <a class="card" href="adjoint_burgers_viscous.html">
-      <h2>固定正黏性：独立模型与可复现结果</h2>
-      <p class="en">Fixed positive viscosity: a separate model and reproducible results</p>
-      <p>沿用附录 D.3 的光滑带源问题、两端 Dirichlet 条件与线性积分目标，完整求导源项和边界；另建混合边界论文基准，附稀疏 Python、梯度检查、解析证明范围及实际网格加密数据。</p>
-      <p class="facts">浏览器 16–128 单元 · Python 已实跑 65,536 单元<br>数值证据与待证数学义务分列 · adjoint_burgers_viscous.html</p>
+      <h2><span lang="zh">固定正黏性：独立模型与可复现结果</span><span lang="en">Fixed positive viscosity: a separate model and reproducible results</span></h2>
+      <p><span lang="zh">沿用附录 D.3 的光滑带源问题、两端 Dirichlet 条件与线性积分目标，完整求导源项和边界；另建混合边界论文基准，附稀疏 Python、梯度检查、解析证明范围及实际网格加密数据。</span><span lang="en">Takes over the smooth forced problem of Appendix D.3, with Dirichlet conditions at both ends and a linear integral objective, and differentiates the source and the boundaries exactly; a separate mixed-boundary paper benchmark comes with sparse Python code, gradient checks, the scope of the analytic proofs and measured mesh-refinement data.</span></p>
+      <p class="facts"><span lang="zh">浏览器 16–128 单元 · Python 已实跑 65,536 单元<br>数值证据与待证数学义务分列</span><span lang="en">16–128 cells in the browser &middot; Python run up to 65,536 cells<br>numerical evidence and open mathematical obligations listed separately</span><br>adjoint_burgers_viscous.html</p>
     </a>
   </div>
-  <p><a href="python/burgers_viscous/README.md">黏性 Burgers 的 Python 程序与实测数据 / Python program and measured data for viscous Burgers</a></p>
+  <p><a href="python/burgers_viscous/README.md"><span lang="zh">黏性 Burgers 的 Python 程序与实测数据</span><span lang="en">Python program and measured data for viscous Burgers</span></a></p>
 
-  <h3 style="margin-top:30px">二维标量对流方程 / A two-dimensional scalar advection equation</h3>
-  <p>保留原有正文、网格图和逐句播放器，各节新增光滑特征边界模型的一阶／二阶扩展；同页附录 B 提供对应连续伴随。精度切换仅作用于新增模型。<br>Original prose, mesh diagrams and players are preserved. Each section adds a first/second-order smooth characteristic-boundary model; Appendix B supplies its continuous adjoint. The order selector controls only the added model.</p>
-  <p style="margin:0 0 14px;color:var(--muted);font-size:.93rem">
-    环形 O 型混合网格，24 个未知量。最小的模型问题：局部导数就是两个数。纯对流，边界条件全部写在通量里。<br>
-    A hybrid annular O-mesh with 24 unknowns &mdash; the smallest model problem, where a local derivative is just two numbers.
-    Pure advection, with every boundary condition inside the flux.
-  </p>
+  <h3><span lang="zh">二维标量对流方程</span><span lang="en">A two-dimensional scalar advection equation</span></h3>
+  <p lang="zh">保留原有正文、网格图和逐句播放器，各节新增光滑特征边界模型的一阶／二阶扩展；同页附录 B 提供对应连续伴随。精度切换仅作用于新增模型。</p>
+  <p lang="en">Original prose, mesh diagrams and players are preserved. Each section adds a first/second-order smooth characteristic-boundary model; Appendix B supplies its continuous adjoint. The order selector controls only the added model.</p>
+  <p class="fam" lang="zh">环形 O 型混合网格，24 个未知量。最小的模型问题：局部导数就是两个数。纯对流，边界条件全部写在通量里。</p>
+  <p class="fam" lang="en">A hybrid annular O-mesh with 24 unknowns &mdash; the smallest model problem, where a local derivative is just two numbers. Pure advection, with every boundary condition inside the flux.</p>
   <div class="cards">
     <a class="card" href="adjoint_cell.html">
-      <h2>格心格式</h2>
-      <p class="en">Cell-centred finite volume</p>
-      <p>未知量是单元平均值。物面采用零数值通量闭合（连续兼容性限制见附录 A），远场按特征方向取来流值或外推——全部在通量里<b>弱</b>加。</p>
-      <p class="facts">24 个单元 &middot; 48 个面 &middot; nnz(A) = 88<br>adjoint_cell.html</p>
+      <h2><span lang="zh">格心格式</span><span lang="en">Cell-centred finite volume</span></h2>
+      <p><span lang="zh">未知量是单元平均值。物面采用零数值通量闭合（连续兼容性限制见附录 A），远场按特征方向取来流值或外推——全部在通量里<b>弱</b>加。</span><span lang="en">The unknowns are cell averages. The body surface is closed by a zero numerical flux (the continuous-compatibility limits are in Appendix A); the far field takes the freestream value or extrapolates along the characteristic direction &mdash; all imposed <b>weakly</b>, inside the flux.</span></p>
+      <p class="facts"><span lang="zh">24 个单元 &middot; 48 个面 &middot; nnz(A) = 88</span><span lang="en">24 cells &middot; 48 faces &middot; nnz(A) = 88</span><br>adjoint_cell.html</p>
     </a>
     <a class="card node" href="adjoint_node.html">
-      <h2>格点格式</h2>
-      <p class="en">Node-centred, median-dual</p>
-      <p>未知量在节点上，控制体是中位对偶体。边界条件同样全部在通量里：纯对流方程放不下 Dirichlet 壁面。</p>
-      <p class="facts">24 个节点 &middot; 80 个面 &middot; nnz(A) = 120<br>adjoint_node.html</p>
+      <h2><span lang="zh">格点格式</span><span lang="en">Node-centred, median-dual</span></h2>
+      <p><span lang="zh">未知量在节点上，控制体是中位对偶体。边界条件同样全部在通量里：纯对流方程放不下 Dirichlet 壁面。</span><span lang="en">The unknowns sit at the nodes and the control volumes are median duals. The boundary conditions again live entirely in the flux: a pure advection equation has no room for a Dirichlet wall.</span></p>
+      <p class="facts"><span lang="zh">24 个节点 &middot; 80 个面 &middot; nnz(A) = 120</span><span lang="en">24 nodes &middot; 80 faces &middot; nnz(A) = 120</span><br>adjoint_node.html</p>
     </a>
   </div>
 
-  <h3 style="margin-top:30px">二维标量对流扩散方程 / A two-dimensional scalar advection&ndash;diffusion equation</h3>
-  <p style="margin:0 0 14px;color:var(--muted);font-size:.93rem">
-    同一张网格、同一个对流通量，加上常数扩散。扩散通量要用最小二乘梯度，残差变成两遍循环；
-    精确 Jacobian 伸到邻居的邻居，Jacobi 迭代只用它的对角元，伴随用精确算子。物面是 Dirichlet 壁面 u = u<sub>w</sub>。<br>
-    The same mesh and convective flux, with a constant diffusion added. The diffusive flux needs least-squares gradients,
+  <h3><span lang="zh">二维标量对流扩散方程</span><span lang="en">A two-dimensional scalar advection&ndash;diffusion equation</span></h3>
+  <p class="fam" lang="zh">同一张网格、同一个对流通量，加上常数扩散。扩散通量要用最小二乘梯度，残差变成两遍循环；精确 Jacobian 伸到邻居的邻居，Jacobi 迭代只用它的对角元，伴随用精确算子。物面是 Dirichlet 壁面 u = u<sub>w</sub>。</p>
+  <p class="fam" lang="en">The same mesh and convective flux, with a constant diffusion added. The diffusive flux needs least-squares gradients,
     so the residual becomes two loops; the exact Jacobian reaches the neighbours of neighbours, the Jacobi iteration uses
-    only its diagonal, and the adjoint the exact operator. The body is a Dirichlet wall, u = u<sub>w</sub>.
-  </p>
+    only its diagonal, and the adjoint the exact operator. The body is a Dirichlet wall, u = u<sub>w</sub>.</p>
   <div class="cards">
     <a class="card" href="adjoint_ad_cell.html">
-      <h2>格心格式</h2>
-      <p class="en">Cell-centred finite volume</p>
-      <p>壁面<b>弱</b>加：u<sub>w</sub> 进入壁面面的通量与最小二乘模板。目标是流进物面的总通量。</p>
-      <p class="facts">24 个单元 &middot; nnz(A) = 200 &middot; 一阶 Ã：88<br>adjoint_ad_cell.html</p>
+      <h2><span lang="zh">格心格式</span><span lang="en">Cell-centred finite volume</span></h2>
+      <p><span lang="zh">壁面<b>弱</b>加：u<sub>w</sub> 进入壁面面的通量与最小二乘模板。目标是流进物面的总通量。</span><span lang="en">The wall is imposed <b>weakly</b>: u<sub>w</sub> enters the wall-face flux and the least-squares stencil. The objective is the total flux into the body surface.</span></p>
+      <p class="facts"><span lang="zh">24 个单元 &middot; nnz(A) = 200 &middot; 一阶 Ã：88</span><span lang="en">24 cells &middot; nnz(A) = 200 &middot; first-order Ã: 88</span><br>adjoint_ad_cell.html</p>
     </a>
     <a class="card node" href="adjoint_ad_node.html">
-      <h2>格点格式</h2>
-      <p class="en">Node-centred, median-dual</p>
-      <p>壁面节点的整行换成 u<sub>i</sub> &minus; u<sub>w</sub>，<b>强</b>加；伴随里「循环前清零、循环后加回」，顺序不能反。</p>
-      <p class="facts">24 个节点 &middot; nnz(A) = 264 &middot; 一阶 Ã<sub>bc</sub>：96<br>adjoint_ad_node.html</p>
+      <h2><span lang="zh">格点格式</span><span lang="en">Node-centred, median-dual</span></h2>
+      <p><span lang="zh">壁面节点的整行换成 u<sub>i</sub> &minus; u<sub>w</sub>，<b>强</b>加；伴随里「循环前清零、循环后加回」，顺序不能反。</span><span lang="en">The wall node&rsquo;s whole row is replaced by u<sub>i</sub> &minus; u<sub>w</sub> and imposed <b>strongly</b>; in the adjoint the row is &ldquo;zeroed before the loop and added back after it&rdquo;, and the order cannot be reversed.</span></p>
+      <p class="facts"><span lang="zh">24 个节点 &middot; nnz(A) = 264 &middot; 一阶 Ã<sub>bc</sub>：96</span><span lang="en">24 nodes &middot; nnz(A) = 264 &middot; first-order Ã<sub>bc</sub>: 96</span><br>adjoint_ad_node.html</p>
     </a>
   </div>
 
-  <h3 style="margin-top:30px">拟一维 Euler 方程 / The quasi-one-dimensional Euler equations</h3>
-  <p style="margin:0 0 14px;color:var(--muted);font-size:.93rem">
-    变截面流道，入口给总压总温、出口给背压，全场亚声速。方程组版本：局部导数是 3×3 块，
-    一阶／二阶重构可切换，提供块 GS 与 GS 预处理 GMRES、完整差分扫描，以及同页连续伴随推导、独立交互计算和附录 C 的 LU 直接伴随求解。<br>
-    A variable-area duct with total conditions in, a back pressure out and subsonic flow throughout.
-    Switch first/second-order reconstruction, solve with block GS or GS-preconditioned GMRES,
-    and explore full finite-difference sweeps, an independent continuous adjoint and Appendix C’s direct LU adjoint solve.
-  </p>
+  <h3><span lang="zh">拟一维 Euler 方程</span><span lang="en">The quasi-one-dimensional Euler equations</span></h3>
+  <p class="fam" lang="zh">变截面流道，入口给总压总温、出口给背压，全场亚声速。方程组版本：局部导数是 3×3 块，一阶／二阶重构可切换，提供块 GS 与 GS 预处理 GMRES、完整差分扫描，以及同页连续伴随推导、独立交互计算和附录 C 的 LU 直接伴随求解。</p>
+  <p class="fam" lang="en">A variable-area duct with total conditions in, a back pressure out and subsonic flow throughout. For the system, local derivatives are 3×3 blocks;
+    switch first/second-order reconstruction, solve with block GS or GS-preconditioned GMRES,
+    and explore full finite-difference sweeps, an independent continuous adjoint and Appendix C’s direct LU adjoint solve.</p>
   <div class="cards">
     <a class="card" href="adjoint_q1d_cell.html">
-      <h2>格心格式</h2>
-      <p class="en">Cell-centred finite volume</p>
-      <p>边界条件<b>弱</b>加：用特征关系重构一个 ghost 状态喂给通量。边界 Jacobian 的<b>秩等于出域特征条数</b>。</p>
-      <p class="facts">12 个单元 &middot; 36 个未知量 &middot; 一阶／二阶 &middot; matrix-free<br>adjoint_q1d_cell.html</p>
+      <h2><span lang="zh">格心格式</span><span lang="en">Cell-centred finite volume</span></h2>
+      <p><span lang="zh">边界条件<b>弱</b>加：用特征关系重构一个 ghost 状态喂给通量。边界 Jacobian 的<b>秩等于出域特征条数</b>。</span><span lang="en">Boundary conditions are imposed <b>weakly</b>: a ghost state is reconstructed from the characteristic relations and fed to the flux. The <b>rank of the boundary Jacobian equals the number of outgoing characteristics</b>.</span></p>
+      <p class="facts"><span lang="zh">12 个单元 &middot; 36 个未知量 &middot; 一阶／二阶 &middot; matrix-free</span><span lang="en">12 cells &middot; 36 unknowns &middot; first/second order &middot; matrix-free</span><br>adjoint_q1d_cell.html</p>
     </a>
     <a class="card node" href="adjoint_q1d_node.html">
-      <h2>格点格式</h2>
-      <p class="en">Node-centred, dual volumes</p>
-      <p>边界节点就在边界上，所以<b>强</b>加——而且是<b>部分行替换</b>：入口 3 行换 2 行，出口换 1 行。</p>
-      <p class="facts">13 个节点 &middot; 39 个未知量 &middot; 3 条约束行<br>adjoint_q1d_node.html</p>
+      <h2><span lang="zh">格点格式</span><span lang="en">Node-centred, dual volumes</span></h2>
+      <p><span lang="zh">边界节点就在边界上，所以<b>强</b>加——而且是<b>部分行替换</b>：入口 3 行换 2 行，出口换 1 行。</span><span lang="en">The boundary nodes lie on the boundary, so conditions are imposed <b>strongly</b> &mdash; by <b>partial row replacement</b>: at the inlet 2 of the 3 rows are replaced, at the outlet 1.</span></p>
+      <p class="facts"><span lang="zh">13 个节点 &middot; 39 个未知量 &middot; 3 条约束行</span><span lang="en">13 nodes &middot; 39 unknowns &middot; 3 constraint rows</span><br>adjoint_q1d_node.html</p>
     </a>
   </div>
 
-  <h3 style="margin-top:30px">一维层流 Navier–Stokes 方程 / One-dimensional laminar Navier–Stokes</h3>
-  <p style="margin:0 0 14px;color:var(--muted);font-size:.93rem">
-    等截面的光滑可压缩流：在 Euler 基础上加入轴向黏性应力、黏性功与热传导，不含湍流模型。
-    常物性／Sutherland 物性、一阶／二阶重构、局部加热和制造解，完整求导梯度、物性与边界。<br>
-    Smooth constant-area compressible flow with molecular stress, viscous work and conduction, without turbulence.
-    Explore constant/Sutherland transport, first/second-order convection, heating and manufactured solutions, with exact derivatives of gradients, transport and boundaries.
-  </p>
+  <h3><span lang="zh">一维层流 Navier–Stokes 方程</span><span lang="en">One-dimensional laminar Navier–Stokes</span></h3>
+  <p class="fam" lang="zh">等截面的光滑可压缩流：在 Euler 基础上加入轴向黏性应力、黏性功与热传导，不含湍流模型。常物性／Sutherland 物性、一阶／二阶重构、局部加热和制造解，完整求导梯度、物性与边界。</p>
+  <p class="fam" lang="en">Smooth constant-area compressible flow with molecular stress, viscous work and conduction, without turbulence.
+    Explore constant/Sutherland transport, first/second-order convection, heating and manufactured solutions, with exact derivatives of gradients, transport and boundaries.</p>
   <div class="cards">
-    <a class="card" href="adjoint_ns1d_cell.html"><h2>格心格式</h2><p class="en">Cell-centred laminar N–S</p>
-      <p>逐面演示对流、应力和热流的装配与反传；完整差分、复数残差、独立连续伴随及 LU 对照。</p>
-      <p class="facts">12 个单元 &middot; 36 个未知量 &middot; 一阶／二阶 &middot; matrix-free<br>adjoint_ns1d_cell.html</p></a>
-    <a class="card node" href="adjoint_ns1d_node.html"><h2>格点格式</h2><p class="en">Node-centred laminar N–S</p>
-      <p>真实对偶控制体与端点梯度；入口三条、出口两条约束行，完整保留边界转置。</p>
-      <p class="facts">13 个节点 &middot; 39 个未知量 &middot; 五条约束行<br>adjoint_ns1d_node.html</p></a>
+    <a class="card" href="adjoint_ns1d_cell.html">
+      <h2><span lang="zh">格心格式</span><span lang="en">Cell-centred laminar N–S</span></h2>
+      <p><span lang="zh">逐面演示对流、应力和热流的装配与反传；完整差分、复数残差、独立连续伴随及 LU 对照。</span><span lang="en">Face by face, the assembly and the reverse pass of the convective, stress and heat fluxes; full finite differences, complex residuals, an independent continuous adjoint and an LU comparison.</span></p>
+      <p class="facts"><span lang="zh">12 个单元 &middot; 36 个未知量 &middot; 一阶／二阶 &middot; matrix-free</span><span lang="en">12 cells &middot; 36 unknowns &middot; first/second order &middot; matrix-free</span><br>adjoint_ns1d_cell.html</p>
+    </a>
+    <a class="card node" href="adjoint_ns1d_node.html">
+      <h2><span lang="zh">格点格式</span><span lang="en">Node-centred laminar N–S</span></h2>
+      <p><span lang="zh">真实对偶控制体与端点梯度；入口三条、出口两条约束行，完整保留边界转置。</span><span lang="en">True dual control volumes and endpoint gradients; three constraint rows at the inlet and two at the outlet, with the boundary transpose kept in full.</span></p>
+      <p class="facts"><span lang="zh">13 个节点 &middot; 39 个未知量 &middot; 五条约束行</span><span lang="en">13 nodes &middot; 39 unknowns &middot; five constraint rows</span><br>adjoint_ns1d_node.html</p>
+    </a>
   </div>
 
-  <h3 style="margin-top:30px">二维 Euler 方程（无激波） / Two-dimensional Euler (shock-free)</h3>
-  <p style="margin:0 0 14px;color:var(--muted);font-size:.93rem">
-    沿用二维标量的同一张混合 O 型网格，承接拟一维 Euler 的热力学与特征边界。低马赫数绕流，滑移壁面保留压力动量通量；
-    一阶通量、matrix-free tangent／adjoint、GS 预处理 GMRES、物面坐标与来流梯度，以及完整重算差分和复数残差验证。<br>
-    The scalar example’s identical hybrid mesh, with four Euler variables, slip-wall pressure flux and subsonic characteristic far field.
-    Matrix-free derivatives and GS-preconditioned GMRES are checked by full-rerun finite differences and complex residuals.
-  </p>
+  <h3><span lang="zh">二维 Euler 方程（无激波）</span><span lang="en">Two-dimensional Euler (shock-free)</span></h3>
+  <p class="fam" lang="zh">沿用二维标量的同一张混合 O 型网格，承接拟一维 Euler 的热力学与特征边界。低马赫数绕流，滑移壁面保留压力动量通量；一阶通量、matrix-free tangent／adjoint、GS 预处理 GMRES、物面坐标与来流梯度，以及完整重算差分和复数残差验证。</p>
+  <p class="fam" lang="en">The scalar example’s identical hybrid mesh, with four Euler variables, slip-wall pressure flux and subsonic characteristic far field.
+    Matrix-free derivatives and GS-preconditioned GMRES are checked by full-rerun finite differences and complex residuals.</p>
   <div class="cards">
-    <a class="card" href="adjoint_euler_cell.html"><h2>格心格式</h2><p class="en">Cell-centred Euler</p>
-      <p>每个单元四个守恒量；逐面查看通量、状态与几何导数。压力目标包含直接法向导数。</p>
-      <p class="facts">24 个单元 &middot; 48 个面 &middot; 96 个状态自由度<br>adjoint_euler_cell.html</p></a>
-    <a class="card node" href="adjoint_euler_node.html"><h2>格点格式</h2><p class="en">Node-centred Euler, median dual</p>
-      <p>中值对偶面与边界半面；滑移壁面和特征远场均通过通量弱加，完整反传边界依赖。</p>
-      <p class="facts">24 个节点 &middot; 80 个面 &middot; 96 个状态自由度<br>adjoint_euler_node.html</p></a>
+    <a class="card" href="adjoint_euler_cell.html">
+      <h2><span lang="zh">格心格式</span><span lang="en">Cell-centred Euler</span></h2>
+      <p><span lang="zh">每个单元四个守恒量；逐面查看通量、状态与几何导数。压力目标包含直接法向导数。</span><span lang="en">Four conserved quantities per cell; inspect the flux, the state and the geometric derivatives face by face. The pressure objective includes the direct normal derivative.</span></p>
+      <p class="facts"><span lang="zh">24 个单元 &middot; 48 个面 &middot; 96 个状态自由度</span><span lang="en">24 cells &middot; 48 faces &middot; 96 state degrees of freedom</span><br>adjoint_euler_cell.html</p>
+    </a>
+    <a class="card node" href="adjoint_euler_node.html">
+      <h2><span lang="zh">格点格式</span><span lang="en">Node-centred Euler, median dual</span></h2>
+      <p><span lang="zh">中值对偶面与边界半面；滑移壁面和特征远场均通过通量弱加，完整反传边界依赖。</span><span lang="en">Median-dual faces and boundary half-faces; the slip wall and the characteristic far field are both imposed weakly through the flux, and the boundary dependence is propagated back in full.</span></p>
+      <p class="facts"><span lang="zh">24 个节点 &middot; 80 个面 &middot; 96 个状态自由度</span><span lang="en">24 nodes &middot; 80 faces &middot; 96 state degrees of freedom</span><br>adjoint_euler_node.html</p>
+    </a>
   </div>
 
-  <h3 style="margin-top:30px">二维层流 Navier–Stokes 方程 / Two-dimensional laminar Navier–Stokes</h3>
-  <p style="margin:0 0 14px;color:var(--muted);font-size:.93rem">
-    沿用二维标量混合网格与页面风格，加入完整应力张量、黏性功和热流。光滑制造解与无滑移绕流分别验证离散精度和边界实现，支持一阶／二阶对流重构、常物性／Sutherland、等温／绝热壁面。<br>
-    The scalar mesh and lesson style with full stress, viscous work and heat flux. Explore smooth manufactured solutions and no-slip flow, first/second-order convection, constant/Sutherland transport and isothermal/adiabatic walls.
-  </p>
+  <h3><span lang="zh">二维层流 Navier–Stokes 方程</span><span lang="en">Two-dimensional laminar Navier–Stokes</span></h3>
+  <p class="fam" lang="zh">沿用二维标量混合网格与页面风格，加入完整应力张量、黏性功和热流。光滑制造解与无滑移绕流分别验证离散精度和边界实现，支持一阶／二阶对流重构、常物性／Sutherland、等温／绝热壁面。</p>
+  <p class="fam" lang="en">The scalar mesh and lesson style with full stress, viscous work and heat flux. Explore smooth manufactured solutions and no-slip flow, first/second-order convection, constant/Sutherland transport and isothermal/adiabatic walls.</p>
   <div class="cards">
-    <a class="card" href="adjoint_ns2d_cell.html"><h2>格心格式</h2><p class="en">Cell-centred 2-D laminar N–S</p>
-      <p>守恒平均与几何矩重构；逐面执行原始、tangent 与 adjoint，检查物性、边界和全部节点坐标导数。</p>
-      <p class="facts">24 个单元 &middot; 48 个面 &middot; 96 个未知量<br>adjoint_ns2d_cell.html</p></a>
-    <a class="card node" href="adjoint_ns2d_node.html"><h2>格点格式</h2><p class="en">Node-centred 2-D laminar N–S</p>
-      <p>中值对偶子面求积与强边界行；差分步长扫描、独立复数残差、GS／GMRES 和显式 LU 对照。</p>
-      <p class="facts">24 个节点 &middot; 80 个面 &middot; 96 个未知量<br>adjoint_ns2d_node.html</p></a>
+    <a class="card" href="adjoint_ns2d_cell.html">
+      <h2><span lang="zh">格心格式</span><span lang="en">Cell-centred laminar N–S</span></h2>
+      <p><span lang="zh">守恒平均与几何矩重构；逐面执行原始、tangent 与 adjoint，检查物性、边界和全部节点坐标导数。</span><span lang="en">Conservative averages and geometric-moment reconstruction; the primal, tangent and adjoint are run face by face, checking transport properties, boundaries and the derivatives with respect to all node coordinates.</span></p>
+      <p class="facts"><span lang="zh">24 个单元 &middot; 48 个面 &middot; 96 个未知量</span><span lang="en">24 cells &middot; 48 faces &middot; 96 unknowns</span><br>adjoint_ns2d_cell.html</p>
+    </a>
+    <a class="card node" href="adjoint_ns2d_node.html">
+      <h2><span lang="zh">格点格式</span><span lang="en">Node-centred laminar N–S</span></h2>
+      <p><span lang="zh">中值对偶子面求积与强边界行；差分步长扫描、独立复数残差、GS／GMRES 和显式 LU 对照。</span><span lang="en">Quadrature on the median-dual sub-faces and strong boundary rows; finite-difference step sweeps, independent complex residuals, GS / GMRES and an explicit-LU comparison.</span></p>
+      <p class="facts"><span lang="zh">24 个节点 &middot; 80 个面 &middot; 96 个未知量</span><span lang="en">24 nodes &middot; 80 faces &middot; 96 unknowns</span><br>adjoint_ns2d_node.html</p>
+    </a>
   </div>
 
-  <h3 style="margin-top:30px">二维 RANS–SA 方程（无激波） / Two-dimensional RANS with Spalart–Allmaras (shock-free)</h3>
-  <p style="margin:0 0 14px;color:var(--muted);font-size:.93rem">
-    沿用二维标量对流页的同一张混合网格与页面结构：可压缩 RANS 与标准 SA 模型，Roe 通量、无权最小二乘重构（不加限制器）与 SU2 式边上粘性通量，页首切换一阶／二阶。伪时间加对称块 Gauss–Seidel（近似 Jacobian 为一阶 Roe 与薄剪切层）；matrix-free tangent／adjoint 逐遍播放，前向、复数步长与重算差分三种办法核对全部 51 个设计导数。来流边界有两种处理：原来的一对<b>伴随不一致</b>（附录 B 说明原因）；另一对<b>伴随一致</b>（格点页来流节点保留质量行、能量行加上动量反作用的功，格心页来流面取边界状态的物理通量），加密时离散伴随在来流附近也趋于连续伴随。四页都有附录 A：同一问题的连续伴随推导、P1 有限元求解与逐级对照。<br>
-    The scalar-advection pages’ hybrid mesh and lesson structure for compressible RANS with the standard SA model: Roe flux, unweighted least squares without a limiter, SU2-style edge viscous flux, and a first/second-order switch. Pseudo-time with symmetric block Gauss–Seidel on a first-order Roe plus thin-shear-layer Jacobian; matrix-free tangent and adjoint played pass by pass; all 51 design derivatives checked by the tangent, the complex step and re-solved finite differences. The inflow boundary comes in two treatments: the original pair is <b>adjoint-inconsistent</b> (Appendix B explains why), the other pair is <b>adjoint-consistent</b> (inflow nodes keep their mass row and the energy row takes the work of the momentum reaction; cell inflow faces take the boundary state’s physical flux), and under refinement its discrete adjoint approaches the continuous one next to the inflow as well. All four pages carry Appendix A: the continuous adjoint of the same problem, derived, solved by P1 finite elements and compared level by level.
-  </p>
+  <h3><span lang="zh">二维 RANS–SA 方程（无激波）</span><span lang="en">Two-dimensional RANS with Spalart–Allmaras (shock-free)</span></h3>
+  <p class="fam" lang="zh">沿用二维标量对流页的同一张混合网格与页面结构：可压缩 RANS 与标准 SA 模型，Roe 通量、无权最小二乘重构（不加限制器）与 SU2 式边上粘性通量，页首切换一阶／二阶。伪时间加对称块 Gauss–Seidel（近似 Jacobian 为一阶 Roe 与薄剪切层）；matrix-free tangent／adjoint 逐遍播放，前向、复数步长与重算差分三种办法核对全部 51 个设计导数。来流边界有两种处理：原来的一对<b>伴随不一致</b>（附录 B 说明原因）；另一对<b>伴随一致</b>（格点页来流节点保留质量行、能量行加上动量反作用的功，格心页来流面取边界状态的物理通量），加密时离散伴随在来流附近也趋于连续伴随。四页都有附录 A：同一问题的连续伴随推导、P1 有限元求解与逐级对照。</p>
+  <p class="fam" lang="en">The scalar-advection pages’ hybrid mesh and lesson structure for compressible RANS with the standard SA model: Roe flux, unweighted least squares without a limiter, SU2-style edge viscous flux, and a first/second-order switch. Pseudo-time with symmetric block Gauss–Seidel on a first-order Roe plus thin-shear-layer Jacobian; matrix-free tangent and adjoint played pass by pass; all 51 design derivatives checked by the tangent, the complex step and re-solved finite differences. The inflow boundary comes in two treatments: the original pair is <b>adjoint-inconsistent</b> (Appendix B explains why), the other pair is <b>adjoint-consistent</b> (inflow nodes keep their mass row and the energy row takes the work of the momentum reaction; cell inflow faces take the boundary state’s physical flux), and under refinement its discrete adjoint approaches the continuous one next to the inflow as well. All four pages carry Appendix A: the continuous adjoint of the same problem, derived, solved by P1 finite elements and compared level by level.</p>
   <div class="cards">
-    <a class="card" href="adjoint_rans_cell.html"><h2>格心格式 · 原远场</h2><p class="en">Cell-centred 2-D RANS–SA, original far field</p>
-      <p>弱条件的无滑移绝热壁：壁面面通量与两组最小二乘权重；梯度、面通量与 SA 源项逐遍执行，伴随倒序转置。来流取 Roe 通量对虚拟状态（伴随不一致）。</p>
-      <p class="facts">24 个单元 &middot; 48 个面 &middot; 120 个未知量<br>adjoint_rans_cell.html</p></a>
-    <a class="card node" href="adjoint_rans_node.html"><h2>格点格式 · 原远场</h2><p class="en">Node-centred 2-D RANS–SA, median dual, original far field</p>
-      <p>强条件壁面行与反作用力目标；伴随先处理被替换的行，再倒序执行各遍。来流节点替换四行（伴随不一致）。</p>
-      <p class="facts">24 个节点 &middot; 80 个面 &middot; 120 个未知量<br>adjoint_rans_node.html</p></a>
-    <a class="card" href="adjoint_rans_dc_cell.html"><h2>格心格式 · 伴随一致</h2><p class="en">Cell-centred 2-D RANS–SA, adjoint-consistent far field</p>
-      <p>来流面取边界状态的物理通量，不加 Roe 耗散；附录 B 逐级比较两种来流处理下离散伴随与连续伴随之差。</p>
-      <p class="facts">24 个单元 &middot; 48 个面 &middot; 120 个未知量<br>adjoint_rans_dc_cell.html</p></a>
-    <a class="card node" href="adjoint_rans_dc_node.html"><h2>格点格式 · 伴随一致</h2><p class="en">Node-centred 2-D RANS–SA, median dual, adjoint-consistent far field</p>
-      <p>来流节点保留质量行，只替换两个速度分量与 SA 变量这三行，能量行加上动量反作用的功；离散伴随在来流附近逐级趋于连续伴随。</p>
-      <p class="facts">24 个节点 &middot; 80 个面 &middot; 120 个未知量<br>adjoint_rans_dc_node.html</p></a>
+    <a class="card" href="adjoint_rans_cell.html">
+      <h2><span lang="zh">格心格式 · 原远场</span><span lang="en">Cell-centred RANS–SA, original far field</span></h2>
+      <p><span lang="zh">弱条件的无滑移绝热壁：壁面面通量与两组最小二乘权重；梯度、面通量与 SA 源项逐遍执行，伴随倒序转置。来流取 Roe 通量对虚拟状态（伴随不一致）。</span><span lang="en">A weakly imposed no-slip adiabatic wall: the wall-face flux and two sets of least-squares weights; the gradients, face fluxes and SA source term are executed pass by pass, and the adjoint transposes them in reverse order. The inflow takes the Roe flux against a ghost state (adjoint-inconsistent).</span></p>
+      <p class="facts"><span lang="zh">24 个单元 &middot; 48 个面 &middot; 120 个未知量</span><span lang="en">24 cells &middot; 48 faces &middot; 120 unknowns</span><br>adjoint_rans_cell.html</p>
+    </a>
+    <a class="card node" href="adjoint_rans_node.html">
+      <h2><span lang="zh">格点格式 · 原远场</span><span lang="en">Node-centred RANS–SA, median dual, original far field</span></h2>
+      <p><span lang="zh">强条件壁面行与反作用力目标；伴随先处理被替换的行，再倒序执行各遍。来流节点替换四行（伴随不一致）。</span><span lang="en">Strongly imposed wall rows and a reaction-force objective; the adjoint treats the replaced rows first, then runs the passes in reverse. The inflow nodes replace four rows (adjoint-inconsistent).</span></p>
+      <p class="facts"><span lang="zh">24 个节点 &middot; 80 个面 &middot; 120 个未知量</span><span lang="en">24 nodes &middot; 80 faces &middot; 120 unknowns</span><br>adjoint_rans_node.html</p>
+    </a>
+    <a class="card" href="adjoint_rans_dc_cell.html">
+      <h2><span lang="zh">格心格式 · 伴随一致</span><span lang="en">Cell-centred RANS–SA, adjoint-consistent far field</span></h2>
+      <p><span lang="zh">来流面取边界状态的物理通量，不加 Roe 耗散；附录 B 逐级比较两种来流处理下离散伴随与连续伴随之差。</span><span lang="en">The inflow faces take the physical flux of the boundary state, with no Roe dissipation; Appendix B compares, level by level, how far the discrete adjoint is from the continuous one under the two inflow treatments.</span></p>
+      <p class="facts"><span lang="zh">24 个单元 &middot; 48 个面 &middot; 120 个未知量</span><span lang="en">24 cells &middot; 48 faces &middot; 120 unknowns</span><br>adjoint_rans_dc_cell.html</p>
+    </a>
+    <a class="card node" href="adjoint_rans_dc_node.html">
+      <h2><span lang="zh">格点格式 · 伴随一致</span><span lang="en">Node-centred RANS–SA, median dual, adjoint-consistent far field</span></h2>
+      <p><span lang="zh">来流节点保留质量行，只替换两个速度分量与 SA 变量这三行，能量行加上动量反作用的功；离散伴随在来流附近逐级趋于连续伴随。</span><span lang="en">The inflow nodes keep their mass row and replace only the three rows of the two velocity components and the SA variable; the energy row takes the work of the momentum reaction. Near the inflow the discrete adjoint approaches the continuous adjoint level by level.</span></p>
+      <p class="facts"><span lang="zh">24 个节点 &middot; 80 个面 &middot; 120 个未知量</span><span lang="en">24 nodes &middot; 80 faces &middot; 120 unknowns</span><br>adjoint_rans_dc_node.html</p>
+    </a>
   </div>
 
-  <p class="note">
-十八个页面都是<b>自包含的单个 HTML 文件</b>：不联网、不需要构建、不需要服务器，直接打开即可。
-    页面右上角可切换中文 / English。<br>
-    All eighteen are <b>self-contained single HTML files</b> — no network, no build step, no server.
-    A 中文 / English toggle sits in the top-right corner of each page.
+  <p class="note" lang="zh">
+    每个页面都是<b>自包含的单个 HTML 文件</b>：不联网、不需要构建、不需要服务器，直接打开即可。页面右上角可切换中文 / English。
+  </p>
+  <p class="note" lang="en">
+    Every page is a <b>self-contained single HTML file</b> &mdash; no network, no build step, no server.
+    A language toggle (Chinese / English) sits in the top-right corner of each page.
   </p>
 
-  <h3>页面上的数字都是实测的 / Every number is measured</h3>
-  <p class="lede" style="font-size:.95rem;margin-bottom:0">
+  <h3><span lang="zh">页面上的数字都是实测的</span><span lang="en">Every number is measured</span></h3>
+  <p class="lede" lang="zh" style="font-size:.95rem;margin-bottom:0">
     离散交互与 Burgers 连续求积在浏览器现场计算；其他连续参考及加密图浏览独立求解后内嵌的离线结果。正文数值均来自实际计算。
-
+  </p>
+  <p class="lede" lang="en" style="font-size:.95rem;margin-bottom:0">
+    The discrete interactive parts and the Burgers continuous quadrature are computed live in the browser; the other continuous references and the refinement plots show offline results that were solved independently and embedded in the page. Every number in the text comes from an actual computation.
   </p>
 
   <footer>
@@ -267,5 +290,23 @@ code { font-family:var(--font-mono); font-size:.86em; }
   </footer>
 
 </div>
+<script>
+/* the language switch: the same key, attributes and button behaviour as the lesson pages (adjweb/i18n.js); English is the default */
+(function () {
+  "use strict";
+  var KEY = "adjlang", root = document.documentElement, btn = document.getElementById("langtoggle");
+  var TITLE = {zh: "离散伴随教学页", en: "Discrete adjoint: interactive lessons"};
+  function paint(lang) {
+    root.setAttribute("data-lang", lang);
+    root.setAttribute("lang", lang === "en" ? "en" : "zh-CN");
+    document.title = TITLE[lang];
+    btn.textContent = lang === "en" ? "中文" : "English";
+    btn.setAttribute("aria-label", lang === "en" ? "切换到中文" : "Switch to English");
+    try { localStorage.setItem(KEY, lang); } catch (e) { /* storage blocked: the choice lasts for this page only */ }
+  }
+  paint(root.getAttribute("data-lang") === "zh" ? "zh" : "en");
+  btn.addEventListener("click", function () { paint(root.getAttribute("data-lang") === "en" ? "zh" : "en"); });
+})();
+</script>
 </body>
 </html>
