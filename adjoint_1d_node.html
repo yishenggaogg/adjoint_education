@@ -8,8 +8,12 @@
 <title>Discrete adjoints for one-dimensional Burgers: node-centred scheme</title>
 <script>
   /* restore the saved language BEFORE first paint, so a Chinese reader
-     never sees a flash of English (English is the default) */
+     never sees a flash of English (English is the default). The pages of the
+     Chinese-default period saved "zh" on every first visit, which was never a
+     choice: the first visit of this version forgets it once (adjlangmig). */
   try {
+    if (localStorage.getItem("adjlangmig") !== "2") {
+      localStorage.removeItem("adjlang"); localStorage.setItem("adjlangmig", "2"); }
     var L = localStorage.getItem("adjlang");
     if (L === "zh") { document.documentElement.setAttribute("data-lang", "zh");
       document.documentElement.setAttribute("lang", "zh-CN"); }
