@@ -1,6 +1,6 @@
 # Discrete adjoint: interactive lessons
 
-Nineteen self-contained, interactive web pages that teach the **fully discrete adjoint** of a finite-volume scheme from start to finish, for undergraduates with a background in calculus, linear algebra and numerical methods. The teaching path leads toward a complete discrete adjoint for industrial unstructured-grid RANS: the 2-D RANS&ndash;SA pages are online (the complete discrete adjoint on a teaching mesh, comparing an adjoint-inconsistent and an adjoint-consistent inflow treatment); industrial scale is still ahead. Continuous adjoints appear only as independent checks for simple cases (Appendix A of the pages); a formal continuous RANS adjoint is not automatically a strict reference for a full industrial algorithm.
+Twenty self-contained, interactive web pages that teach the **fully discrete adjoint** of a finite-volume scheme from start to finish, for undergraduates with a background in calculus, linear algebra and numerical methods. The teaching path leads toward a complete discrete adjoint for industrial unstructured-grid RANS: the 2-D RANS&ndash;SA pages are online (the complete discrete adjoint on a teaching mesh, comparing an adjoint-inconsistent and an adjoint-consistent inflow treatment); industrial scale is still ahead. Continuous adjoints appear only as independent checks for simple cases (Appendix A of the pages); a formal continuous RANS adjoint is not automatically a strict reference for a full industrial algorithm.
 
 **Read online:** <https://yishenggaogg.github.io/adjoint_education/> &mdash; English by default, with a Chinese / English toggle at the top of every page.
 
@@ -10,7 +10,7 @@ Chinese text: see the **中文** block at the end of this page.
 
 ## Pages
 
-Eight model problems &mdash; 1-D Burgers, 2-D scalar advection, 2-D advection&ndash;diffusion, quasi-1-D Euler, 1-D laminar Navier&ndash;Stokes, 2-D Euler, 2-D laminar Navier&ndash;Stokes and 2-D RANS&ndash;SA &mdash; each in a cell-centred and a node-centred version (2-D RANS&ndash;SA also as an adjoint-consistent pair), plus one independent viscous Burgers page. If the discrete adjoint is new to you, start with the 1-D Burgers pair.
+Eight model problems &mdash; 1-D Burgers, 2-D scalar advection, 2-D advection&ndash;diffusion, quasi-1-D Euler, 1-D laminar Navier&ndash;Stokes, 2-D Euler, 2-D laminar Navier&ndash;Stokes and 2-D RANS&ndash;SA &mdash; each in a cell-centred and a node-centred version (2-D RANS&ndash;SA also as an adjoint-consistent pair), plus a cell-centred and a node-centred page for 1-D viscous Burgers. If the discrete adjoint is new to you, start with the 1-D Burgers pair.
 
 | 文件 / File | 算例 / Problem | 格式 / Scheme | 大小 / Size |
 |---|---|---|---|
@@ -32,7 +32,8 @@ Eight model problems &mdash; 1-D Burgers, 2-D scalar advection, 2-D advection&nd
 | [`adjoint_rans_node.html`](adjoint_rans_node.html) | 二维 RANS–SA / 2-D RANS–SA | **格点** / node-centred | 1507 KB |
 | [`adjoint_rans_dc_cell.html`](adjoint_rans_dc_cell.html) | 二维 RANS–SA，伴随一致 / 2-D RANS–SA, adjoint-consistent | **格心** / cell-centred | 1478 KB |
 | [`adjoint_rans_dc_node.html`](adjoint_rans_dc_node.html) | 二维 RANS–SA，伴随一致 / 2-D RANS–SA, adjoint-consistent | **格点** / node-centred | 1511 KB |
-| [`adjoint_burgers_viscous.html`](adjoint_burgers_viscous.html) | 一维黏性 Burgers（独立页）/ 1-D viscous Burgers (independent page) | **格心** / cell-centred（附录 B：格点 / App. B nodal） | 6682 KB |
+| [`adjoint_burgers_viscous_cell.html`](adjoint_burgers_viscous_cell.html) | 一维黏性 Burgers（独立页）/ 1-D viscous Burgers (independent page) | **格心** / cell-centred | 6192 KB |
+| [`adjoint_burgers_viscous_node.html`](adjoint_burgers_viscous_node.html) | 一维黏性 Burgers（独立页）/ 1-D viscous Burgers (independent page) | **格点** / node-centred | 9490 KB |
 
 Each page is one HTML file: open it in a browser &mdash; no network, no build step, no server.
 
@@ -44,7 +45,7 @@ Each page is one HTML file: open it in a browser &mdash; no network, no build st
 
 ## Python
 
-[`python/burgers_viscous/`](python/burgers_viscous/README.md) holds the sparse Python solver, the gradient checks and the measured data behind the viscous Burgers page (run up to 65,536 cells).
+[`python/burgers_viscous/`](python/burgers_viscous/README.md) holds the sparse Python solver, the gradient checks and the measured data behind the viscous Burgers pages (run up to 65,536 cells; the node-centred scheme is in `node/`).
 
 ## Keeping the two repositories in sync
 
@@ -73,7 +74,7 @@ Suggested attribution:
 
 ## 离散伴随教学页
 
-十九个自包含、可交互的网页，把有限体积法的**全离散伴随**从头到尾讲一遍，面向学过微积分、线性代数与数值方法的本科生。教学主线最终走向工业级非结构网格 RANS 的完整离散伴随：二维 RANS–SA 的页面已经上线（教学网格上完整的离散伴随，并对照伴随不一致与伴随一致两种来流处理），工业级规模仍待推进。连续伴随只作为简单算例的独立验证和对比（各页附录 A）；可以为选定的连续 RANS 模型写出形式伴随，但不能把它自动当作含湍流闭合、壁面处理、限幅与边界算法的完整工业离散流程的严格参照。
+二十个自包含、可交互的网页，把有限体积法的**全离散伴随**从头到尾讲一遍，面向学过微积分、线性代数与数值方法的本科生。教学主线最终走向工业级非结构网格 RANS 的完整离散伴随：二维 RANS–SA 的页面已经上线（教学网格上完整的离散伴随，并对照伴随不一致与伴随一致两种来流处理），工业级规模仍待推进。连续伴随只作为简单算例的独立验证和对比（各页附录 A）；可以为选定的连续 RANS 模型写出形式伴随，但不能把它自动当作含湍流闭合、壁面处理、限幅与边界算法的完整工业离散流程的严格参照。
 
 **在线阅读：** <https://yishenggaogg.github.io/adjoint_education/>，默认英文，每页顶部可切换中文 / English。
 
@@ -81,7 +82,7 @@ Suggested attribution:
 
 ### 页面
 
-八组算例——一维 Burgers、二维标量对流、二维标量对流扩散、拟一维 Euler、一维层流 Navier–Stokes、二维 Euler、二维层流 Navier–Stokes 与二维 RANS–SA——各有格心与格点两版（二维 RANS–SA 另有伴随一致的一对），另有一个独立的黏性 Burgers 页。第一次接触离散伴随，请从一维 Burgers 那一对读起。页面表格见上方（文件、算例、格式与大小的列同时标有中英文）。每页都是单个 HTML 文件：不联网、不需要构建、不需要服务器，直接用浏览器打开即可。
+八组算例——一维 Burgers、二维标量对流、二维标量对流扩散、拟一维 Euler、一维层流 Navier–Stokes、二维 Euler、二维层流 Navier–Stokes 与二维 RANS–SA——各有格心与格点两版（二维 RANS–SA 另有伴随一致的一对），另有两个独立的黏性 Burgers 页（格心与格点）。第一次接触离散伴随，请从一维 Burgers 那一对读起。页面表格见上方（文件、算例、格式与大小的列同时标有中英文）。每页都是单个 HTML 文件：不联网、不需要构建、不需要服务器，直接用浏览器打开即可。
 
 ### 各页做什么
 
@@ -91,7 +92,7 @@ Suggested attribution:
 
 ### Python
 
-[`python/burgers_viscous/`](python/burgers_viscous/README.md)：黏性 Burgers 页背后的稀疏 Python 程序、梯度检查与实测数据（已实跑到 65,536 个单元）。
+[`python/burgers_viscous/`](python/burgers_viscous/README.md)：黏性 Burgers 两页背后的稀疏 Python 程序、梯度检查与实测数据（已实跑到 65,536 个单元；格点格式在 `node/`）。
 
 ### 两个仓库的同步
 

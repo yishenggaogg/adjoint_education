@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Discrete adjoint: interactive lessons</title>
-<meta name="description" content="Nineteen single-file, interactive web pages that teach the fully discrete adjoint of a finite-volume scheme from start to finish: one-dimensional Burgers, two-dimensional scalar advection, advection–diffusion, quasi-one-dimensional Euler, one-dimensional laminar Navier–Stokes, two-dimensional Euler, two-dimensional laminar Navier–Stokes and two-dimensional RANS–SA, each in a cell-centred and a node-centred version (2-D RANS–SA with an extra adjoint-consistent pair), plus an independent viscous Burgers page with reproducible Python programs.">
+<meta name="description" content="Twenty single-file, interactive web pages that teach the fully discrete adjoint of a finite-volume scheme from start to finish: one-dimensional Burgers, two-dimensional scalar advection, advection–diffusion, quasi-one-dimensional Euler, one-dimensional laminar Navier–Stokes, two-dimensional Euler, two-dimensional laminar Navier–Stokes and two-dimensional RANS–SA, each in a cell-centred and a node-centred version (2-D RANS–SA with an extra adjoint-consistent pair), plus an independent pair of viscous Burgers pages, cell-centred and node-centred, with reproducible Python programs.">
 <script>
 /* the language is set before the first paint: English unless the reader chose Chinese (the key is the one the lesson pages use) */
 (function () {
@@ -102,14 +102,14 @@ code { font-family:var(--font-mono); font-size:.86em; }
   </div>
 
   <p class="lede" lang="zh">
-    十九个<b>单文件、可交互</b>的网页，把有限体积法的<b>全离散伴随</b>从头到尾讲一遍：从一个面上的一维通量开始，把同一个循环依次改写成 primal、matrix-free 前向与 matrix-free 伴随，再做前向与伴随求解、几何导数，最后用有限差分与复数步长逐项校验。八组算例（<b>一维 Burgers</b>、<b>二维标量对流</b>、<b>二维标量对流扩散</b>、<b>拟一维 Euler</b>、<b>一维层流 N–S</b>、<b>二维 Euler</b>、<b>二维层流 N–S</b>与<b>二维 RANS–SA</b>）各有<b>格心</b>与<b>格点</b>两版，二维 RANS–SA 另有<b>伴随一致</b>的一对，<b>十八页成对教学主题相互对应，另有独立黏性 Burgers 页</b>，可以任意两两并排对照。第一次接触离散伴随，请从一维 Burgers 那一对读起。
+    二十个<b>单文件、可交互</b>的网页，把有限体积法的<b>全离散伴随</b>从头到尾讲一遍：从一个面上的一维通量开始，把同一个循环依次改写成 primal、matrix-free 前向与 matrix-free 伴随，再做前向与伴随求解、几何导数，最后用有限差分与复数步长逐项校验。八组算例（<b>一维 Burgers</b>、<b>二维标量对流</b>、<b>二维标量对流扩散</b>、<b>拟一维 Euler</b>、<b>一维层流 N–S</b>、<b>二维 Euler</b>、<b>二维层流 N–S</b>与<b>二维 RANS–SA</b>）各有<b>格心</b>与<b>格点</b>两版，二维 RANS–SA 另有<b>伴随一致</b>的一对，<b>十八页成对教学主题相互对应，另有独立的黏性 Burgers 两页（格心与格点）</b>，可以任意两两并排对照。第一次接触离散伴随，请从一维 Burgers 那一对读起。
   </p>
   <p class="lede" lang="en">
-    Nineteen <b>single-file, interactive</b> web pages that teach the <b>fully discrete adjoint</b> of a finite-volume scheme from start to finish.
+    Twenty <b>single-file, interactive</b> web pages that teach the <b>fully discrete adjoint</b> of a finite-volume scheme from start to finish.
     Starting from a one-dimensional flux on a single face, the same loop is rewritten in turn as the primal, a matrix-free forward mode and a matrix-free adjoint;
     then come the forward and adjoint solves and the geometric derivatives, and finally everything is checked term by term with finite differences and the complex step.
     Eight model problems (<b>one-dimensional Burgers</b>, <b>two-dimensional scalar advection</b>, <b>two-dimensional scalar advection–diffusion</b>, <b>quasi-one-dimensional Euler</b>, <b>one-dimensional laminar N–S</b>, <b>two-dimensional Euler</b>, <b>two-dimensional laminar N–S</b> and <b>two-dimensional RANS–SA</b>) each come in a <b>cell-centred</b> and a <b>node-centred</b> version, and the RANS–SA problem has an extra <b>adjoint-consistent</b> pair.
-    <b>The eighteen pages have corresponding teaching topics in pairs, and one independent viscous Burgers page stands apart</b>, so any two can be compared side by side. If the discrete adjoint is new to you, start with the one-dimensional Burgers pair.
+    <b>The eighteen pages have corresponding teaching topics in pairs, and an independent pair of viscous Burgers pages (cell-centred and node-centred) stands apart</b>, so any two can be compared side by side. If the discrete adjoint is new to you, start with the one-dimensional Burgers pair.
   </p>
 
   <h3><span lang="zh">一维 Burgers 方程</span><span lang="en">The one-dimensional Burgers equation</span></h3>
@@ -130,10 +130,15 @@ code { font-family:var(--font-mono); font-size:.86em; }
 
   <h3><span lang="zh">一维黏性 Burgers</span><span lang="en">One-dimensional viscous Burgers</span></h3>
   <div class="cards">
-    <a class="card" href="adjoint_burgers_viscous.html">
-      <h2><span lang="zh">固定正黏性：切线、伴随与逐项校验</span><span lang="en">Fixed positive viscosity: tangent, adjoint and term-by-term checks</span></h2>
-      <p><span lang="zh">构造解使每个导数都能与精确值比较的定常黏性 Burgers 方程。格心有限体积（一阶、无限制器线性或光滑限制器）的残差，连同它的切线与伴随，按语句逐条写出，记号与其他各页一致；用带状 Newton、GS 与 GMRES 求解，并与复数步长、有限差分、精度阶实验、Python 实跑到 65,536 单元的结果和连续伴随逐项核对。附录：连续伴随、独立的 Dirichlet–Neumann 格点基准、复现每个数字的方法。</span><span lang="en">The steady viscous Burgers equation with a manufactured solution, so that every derivative can be compared with the exact one. The residual of a cell-centred finite-volume scheme (first order, unlimited or smoothly limited linear reconstruction), its tangent and its adjoint are written statement by statement in the notation of the other pages, solved with banded Newton, GS and GMRES, and checked against the complex step, finite differences, order-of-accuracy runs, Python runs up to 65,536 cells and the continuous adjoint. Appendices: the continuous adjoint, a separate Dirichlet&ndash;Neumann nodal benchmark, and how to reproduce every number.</span></p>
-      <p class="facts"><span lang="zh">浏览器 8–128 单元 · Python 已实跑 65,536 单元<br>88 幅图、71 个实验与逐步播放器 · 数值证据与待证数学义务分列</span><span lang="en">8&ndash;128 cells in the browser &middot; Python run up to 65,536 cells<br>88 figures, 71 labs and step players &middot; numerical evidence and open mathematical obligations listed separately</span><br>adjoint_burgers_viscous.html</p>
+    <a class="card" href="adjoint_burgers_viscous_cell.html">
+      <h2><span lang="zh">格心格式：切线、伴随与逐项校验</span><span lang="en">Cell-centred: tangent, adjoint and term-by-term checks</span></h2>
+      <p><span lang="zh">固定正黏性的定常 Burgers 方程，用构造解使每个导数都能与精确值比较。未知量是单元平均值，边界值进入两个边界面的通量；残差连同它的切线与伴随，按语句逐条写出，记号与其他各页一致；用带状 Newton、GS 与 GMRES 求解，并与复数步长、有限差分、精度阶实验、Python 实跑到 65,536 单元的结果和连续伴随逐项核对。附录：连续伴随、与格点格式的对照、复现每个数字的方法。</span><span lang="en">The steady viscous Burgers equation with a fixed positive viscosity and a manufactured solution, so that every derivative can be compared with the exact one. The unknowns are cell averages and the boundary values enter the flux of the two boundary faces. The residual, its tangent and its adjoint are written statement by statement in the notation of the other pages, solved with banded Newton, GS and GMRES, and checked against the complex step, finite differences, order-of-accuracy runs, Python runs up to 65,536 cells and the continuous adjoint. Appendices: the continuous adjoint, a comparison with the node-centred scheme, and how to reproduce every number.</span></p>
+      <p class="facts"><span lang="zh">浏览器 8–128 单元 · Python 已实跑 65,536 单元<br>84 幅图、67 个实验与逐步播放器 · 数值证据与待证数学义务分列</span><span lang="en">8&ndash;128 cells in the browser &middot; Python run up to 65,536 cells<br>84 figures, 67 labs and step players &middot; numerical evidence and open mathematical obligations listed separately</span><br>adjoint_burgers_viscous_cell.html</p>
+    </a>
+    <a class="card node" href="adjoint_burgers_viscous_node.html">
+      <h2><span lang="zh">格点格式：约束行、对偶区间与边界乘子</span><span lang="en">Node-centred: constraint rows, dual intervals and boundary multipliers</span></h2>
+      <p><span lang="zh">同一个问题，未知量放在网格节点上：两端的行换成边界约束，其余每个节点的行是它周围对偶区间上的守恒平衡。页面与格心页平行（同样的 18 节与三个附录），每个数字都针对这一格式重新推导，并与独立的稀疏 Python 实跑到 65,536 个区间的结果核对，两种格式的差别在页中处处量出。附录：连续伴随、论文中的 Dirichlet–Neumann 格点基准、复现每个数字的方法。</span><span lang="en">The same problem with the unknowns at the mesh nodes: the rows of the two end nodes are replaced by the boundary constraints, and the row of every other node balances the dual interval around it. The page runs parallel to the cell-centred one (the same 18 sections and three appendices); every number is re-derived for this scheme and checked against independent sparse Python runs up to 65,536 intervals, and the pages measure where the two schemes differ. Appendices: the continuous adjoint, the Dirichlet&ndash;Neumann nodal benchmark of the paper, and how to reproduce every number.</span></p>
+      <p class="facts"><span lang="zh">浏览器 8–128 个区间（9–129 个节点） · Python 已实跑 65,536 个区间<br>116 幅图、88 个实验与逐步播放器 · 数值证据与待证数学义务分列</span><span lang="en">8&ndash;128 intervals (9&ndash;129 nodes) in the browser &middot; Python run up to 65,536 intervals<br>116 figures, 88 labs and step players &middot; numerical evidence and open mathematical obligations listed separately</span><br>adjoint_burgers_viscous_node.html</p>
     </a>
   </div>
   <p><a href="python/burgers_viscous/README.md"><span lang="zh">黏性 Burgers 的 Python 程序与实测数据</span><span lang="en">Python program and measured data for viscous Burgers</span></a></p>

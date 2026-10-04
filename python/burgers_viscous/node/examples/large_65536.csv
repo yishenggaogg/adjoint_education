@@ -1,0 +1,2 @@
+cells,nu,reconstruction,state_l1_error,state_linf_error,gradient_error_inf,primal_residual_inf,primal_residual_density_inf,newton_correction_inf,adjoint_residual_inf,elapsed_seconds,psi_0,psi_N,exact_nodal_residual_boundary_rows_inf,exact_nodal_residual_inner_rows_inf
+65536,0.01,none,1.4444635290768247e-10,2.899254170074528e-10,2.6433459783079515e-09,2.8388402739665253e-13,1.860462361946702e-08,1.2527023543720665e-16,6.870401261251623e-13,0.7927980829990702,-1.4265679545825822,-0.022034562184010512,2.851782698876093e-10,3.594902153736257e-13
